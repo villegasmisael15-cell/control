@@ -318,66 +318,173 @@ class MonitoreoClimaRiegoController extends Controller
         return redirect()->route('monitoreo.index')->with('status', 'El registro ha sido eliminado.');
     }
 
-    public function exportarExcel($id)
+   public function exportarExcel($id)
 {
     // Validación estricta de seguridad por rol
     if (auth()->user()->rol !== 'administrador') {
         abort(403, 'Acción no autorizada.');
     }
 
-    $monitoreo = MonitoreoClimaRiego::with('user')->findOrFail($id);
+    // 1. Traemos el monitoreo de forma limpia
+    $monitoreo = MonitoreoClimaRiego::findOrFail($id);
+    
+    // 2. Traemos las características del sector sin cargar relaciones que no existen
     $caracteristicas = \App\Models\SectorCaracteristica::where('sector', $monitoreo->sector)->first();
 
-    $nombreArchivo = "Reporte_Sector_" . str_replace(' ', '_', $monitoreo->sector) . "_ID_" . $monitoreo->id . ".csv";
+    // 3. Buscamos al usuario operador que tenga este sector asignado en su columna de texto
+    $operador = \App\Models\User::where('sectores', 'LIKE', '%' . $monitoreo->sector . '%')
+                                ->where('rol', '!=', 'administrador') // Asegurar que sea el operador de campo
+                                ->first();
 
-    // Configurar cabeceras nativas para descarga de archivo CSV con soporte UTF-8 completo
+    // 4. Asignamos el nombre encontrado o un respaldo legible
+    $operadorDueno = $operador ? $operador->name : 'Sin operador asignado';
+
+    $nombreArchivo = "Reporte_Sector_" . str_replace(' ', '_', $monitoreo->sector) . "_ID_" . $monitoreo->id . ".xls";
+
     $headers = [
-        "Content-type"        => "text/csv; charset=UTF-8",
+        "Content-Type"        => "application/vnd.ms-excel; charset=UTF-8",
         "Content-Disposition" => "attachment; filename=\"$nombreArchivo\"",
         "Pragma"              => "no-cache",
         "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
         "Expires"             => "0"
     ];
 
-    $callback = function() use ($monitoreo, $caracteristicas) {
-        $file = fopen('php://output', 'w');
+    $callback = function() use ($monitoreo, $caracteristicas, $operadorDueno) {
+        $output = fopen('php://output', 'w');
         
-        // Inyectar el BOM UTF-8 para que Excel reconozca e imprima correctamente acentos, eñes y símbolos (°C, m²)
-        fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF));
+        $html = '
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="UTF-8">
+            <style>
+                table { border-collapse: collapse; font-family: Arial, sans-serif; }
+                th { background-color: #1e3a8a; color: #ffffff; font-weight: bold; text-align: center; border: 1px solid #cbd5e1; }
+                td { border: 1px solid #cbd5e1; padding: 6px; text-align: left; }
+                .titulo-principal { font-size: 16px; font-weight: bold; color: #1e3a8a; text-align: center; }
+                .seccion-header { background-color: #f1f5f9; font-weight: bold; color: #334155; }
+                .subtitulo { font-weight: bold; background-color: #f8fafc; }
+            </style>
+        </head>
+        <body>
+            <table>
+                <!-- Título del Reporte -->
+                <tr>
+                    <th colspan="4" class="titulo-principal" style="background-none; color:#1e3a8a; padding: 10px 0;">
+                        BITÁCORA DE CONTROL HIDROPÓNICA
+                    </th>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Fecha de Captura:</td>
+                    <td>' . \Carbon\Carbon::parse($monitoreo->fecha)->format('d/m/Y') . '</td>
+                    <td class="subtitulo">Operador Dueño del Sector:</td>
+                    <td>' . htmlspecialchars($operadorDueno, ENT_QUOTES, 'UTF-8') . '</td>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Sector:</td>
+                    <td colspan="3">' . htmlspecialchars($monitoreo->sector, ENT_QUOTES, 'UTF-8') . '</td>
+                </tr>
+                
+                <!-- Separador -->
+                <tr><td colspan="4" style="border:none; height:10px;"></td></tr>
 
-        // 1. CABECERA GENERAL (Sin el texto "ID de auditoría")
-        fputcsv($file, ['BITÁCORA DE CONTROL HIDORPONÍA']);
-        fputcsv($file, []); // Línea en blanco
-        fputcsv($file, ['Fecha de Captura:', \Carbon\Carbon::parse($monitoreo->fecha)->format('d/m/Y')]);
-        fputcsv($file, ['Sector:', $monitoreo->sector, 'Operador Evaluador:', $monitoreo->user ? $monitoreo->user->name : 'Sistema / Automatizado']);
-        fputcsv($file, []);
+                <!-- Sección 1 -->
+                <tr>
+                    <th colspan="4" class="seccion-header">1. CARACTERÍSTICAS INICIALES DEL ÁREA</th>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Superficie:</td>
+                    <td>' . ($caracteristicas ? $caracteristicas->superficie_m2 : 'Sin datos') . ' m²</td>
+                    <td class="subtitulo">Variedad Instalada:</td>
+                    <td>' . ($caracteristicas ? htmlspecialchars($caracteristicas->variedad, ENT_QUOTES, 'UTF-8') : 'Sin datos') . '</td>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Fecha Trasplante:</td>
+                    <td colspan="3">' . ($caracteristicas ? \Carbon\Carbon::parse($caracteristicas->fecha_trasplante)->format('d/m/Y') : 'Sin datos') . '</td>
+                </tr>
 
-        // 2. CARACTERÍSTICAS INICIALES DEL SECTOR
-        fputcsv($file, ['1. CARACTERÍSTICAS INICIALES DEL ÁREA']);
-        fputcsv($file, ['Superficie:', ($caracteristicas ? $caracteristicas->superficie_m2 : 'Sin datos') . ' m2', 'Variedad Instalada:', $caracteristicas ? $caracteristicas->variedad : 'Sin datos']);
-        fputcsv($file, ['Fecha Trasplante:', $caracteristicas ? \Carbon\Carbon::parse($caracteristicas->fecha_trasplante)->format('d/m/Y') : 'Sin datos']);
-        fputcsv($file, []);
+                <!-- Separador -->
+                <tr><td colspan="4" style="border:none; height:10px;"></td></tr>
 
-        // 3. VARIABLES DIARIAS Y BALANCES
-        fputcsv($file, ['2. VARIABLES MÉTRICAS Y BALANCES DIARIOS']);
-        fputcsv($file, ['Temperatura Ambiente:', $monitoreo->temperatura . ' °C', 'Humedad Relativa:', $monitoreo->humedad . ' %']);
-        fputcsv($file, ['DPV Calculado:', $monitoreo->dpv, 'Estatus General Clima:', $monitoreo->estatus_general]);
-        fputcsv($file, ['Vol. Riego Entrada:', number_format($monitoreo->vol_riego_entrada) . ' mL', 'Vol. Drenaje Salida:', number_format($monitoreo->vol_drenaje_salida) . ' mL']);
-        fputcsv($file, ['Porcentaje Drenaje:', $monitoreo->porcentaje_drenaje . '%', 'Caída Nocturna de Sustrato:', $monitoreo->porcentaje_caida_nocturna . '%']);
-        fputcsv($file, []);
+                <!-- Sección 2 -->
+                <tr>
+                    <th colspan="4" class="seccion-header">2. VARIABLES MÉTRICAS Y BALANCES DIARIOS</th>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Temperatura Ambiente:</td>
+                    <td>' . $monitoreo->temperatura . ' °C</td>
+                    <td class="subtitulo">Humedad Relativa:</td>
+                    <td>' . $monitoreo->humedad . ' %</td>
+                </tr>
+                <tr>
+                    <td class="subtitulo">DPV Calculado:</td>
+                    <td>' . $monitoreo->dpv . ' kPa</td>
+                    <td class="subtitulo">Estatus General Clima:</td>
+                    <td>' . htmlspecialchars($monitoreo->estatus_general, ENT_QUOTES, 'UTF-8') . '</td>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Vol. Riego Entrada:</td>
+                    <td>' . number_format($monitoreo->vol_riego_entrada) . ' mL</td>
+                    <td class="subtitulo">Vol. Drenaje Salida:</td>
+                    <td>' . number_format($monitoreo->vol_drenaje_salida) . ' mL</td>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Porcentaje Drenaje:</td>
+                    <td>' . $monitoreo->porcentaje_drenaje . ' %</td>
+                    <td class="subtitulo">Caída Nocturna Sustrato:</td>
+                    <td>' . $monitoreo->porcentaje_caida_nocturna . ' %</td>
+                </tr>
 
-        // 4. CONDUCTIVIDAD Y PH
-        fputcsv($file, ['3. PARÁMETROS QUÍMICOS Y DIFERENCIALES']);
-        fputcsv($file, ['CE Entrada:', $monitoreo->ce_entrada, 'CE Salida:', $monitoreo->ce_salida, 'Diferencia CE:', $monitoreo->diferencia_ce]);
-        fputcsv($file, ['pH Entrada:', $monitoreo->ph_entrada, 'pH Salida:', $monitoreo->ph_salida, 'Diferencia pH:', $monitoreo->diferencia_ph]);
-        fputcsv($file, []);
+                <!-- Separador -->
+                <tr><td colspan="4" style="border:none; height:10px;"></td></tr>
 
-        // 5. RADIACIÓN SOLAR
-        fputcsv($file, ['4. RADIACIÓN SOLAR Y COMPORTAMIENTO']);
-        fputcsv($file, ['Hora Captura Sol:', \Carbon\Carbon::parse($monitoreo->radiacion_hora)->format('g:i a'), 'Lectura Tomada:', number_format($monitoreo->radiacion_lectura) . ' Lux']);
-        fputcsv($file, ['Semáforo Radiación:', $monitoreo->radiacion_semaforo, 'Acción Ejecutada:', $monitoreo->radiacion_accion_tomada ?? 'Ninguna']);
+                <!-- Sección 3 -->
+                <tr>
+                    <th colspan="4" class="seccion-header">3. PARÁMETROS QUÍMICOS Y DIFERENCIALES</th>
+                </tr>
+                <tr style="text-align:center; font-weight:bold; background-color:#f8fafc;">
+                    <td>Parámetro</td>
+                    <td>Entrada</td>
+                    <td>Salida</td>
+                    <td>Diferencial (Δ)</td>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Conductividad Eléctrica (CE)</td>
+                    <td>' . $monitoreo->ce_entrada . '</td>
+                    <td>' . $monitoreo->ce_salida . '</td>
+                    <td style="font-weight:bold;">' . $monitoreo->diferencia_ce . '</td>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Potencial Hidrógeno (pH)</td>
+                    <td>' . $monitoreo->ph_entrada . '</td>
+                    <td>' . $monitoreo->ph_salida . '</td>
+                    <td style="font-weight:bold;">' . $monitoreo->diferencia_ph . '</td>
+                </tr>
 
-        fclose($file);
+                <!-- Separador -->
+                <tr><td colspan="4" style="border:none; height:10px;"></td></tr>
+
+                <!-- Sección 4 -->
+                <tr>
+                    <th colspan="4" class="seccion-header">4. RADIACIÓN SOLAR Y COMPORTAMIENTO</th>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Hora Captura:</td>
+                    <td>' . \Carbon\Carbon::parse($monitoreo->radiacion_hora)->format('g:i a') . '</td>
+                    <td class="subtitulo">Lectura Tomada:</td>
+                    <td>' . number_format($monitoreo->radiacion_lectura) . ' Lux</td>
+                </tr>
+                <tr>
+                    <td class="subtitulo">Semáforo Radiación:</td>
+                    <td>' . htmlspecialchars($monitoreo->radiacion_semaforo, ENT_QUOTES, 'UTF-8') . '</td>
+                    <td class="subtitulo">Acción Ejecutada:</td>
+                    <td>' . ($monitoreo->radiacion_accion_tomada ? htmlspecialchars($monitoreo->radiacion_accion_tomada, ENT_QUOTES, 'UTF-8') : 'Ninguna') . '</td>
+                </tr>
+            </table>
+        </body>
+        </html>';
+
+        fwrite($output, $html);
+        fclose($output);
     };
 
     return response()->stream($callback, 200, $headers);

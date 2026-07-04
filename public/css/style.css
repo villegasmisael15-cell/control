@@ -150,5 +150,21 @@
             padding-bottom: 10px;
         }
         .link-limpiar:hover { text-decoration: underline; }
+
+         @media (max-width: 768px) {
+            .grid-graficas {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 16px !important;
+            }
+            .col-span-2 {
+                grid-column: span 1 / span 1 !important;
+            }
+            .card-header {
+                flex-direction: column;
+                align-items: flex-start !important;
+                gap: 8px;
+            }
+        }   
    
     

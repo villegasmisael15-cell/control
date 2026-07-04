@@ -79,8 +79,9 @@
                         <p class="card-subtitle">Rango óptimo vegetal: 0.8 a 1.4 kPa</p>
                     </div>
                 </div>
-                <div class="contenedor-canvas" style="height: 280px;">
-                    <canvas id="chartDPV" width="400" height="280"></canvas>
+                <div class="contenedor-canvas" style="height: 280px; position: relative; width: 100%;">
+                    <!-- Se removió width y height fijos -->
+                    <canvas id="chartDPV"></canvas>
                 </div>
             </div>
 
@@ -92,8 +93,9 @@
                         <p class="card-subtitle">Relación porcentual diaria entre el volumen de riego y drenaje</p>
                     </div>
                 </div>
-                <div class="contenedor-canvas" style="height: 280px;">
-                    <canvas id="chartDrenaje" width="400" height="280"></canvas>
+                <div class="contenedor-canvas" style="height: 280px; position: relative; width: 100%;">
+                    <!-- Se removió width y height fijos -->
+                    <canvas id="chartDrenaje"></canvas>
                 </div>
             </div>
 
@@ -105,8 +107,10 @@
                         <p class="card-subtitle">Curva de intensidad lumínica registrada por fecha de monitoreo</p>
                     </div>
                 </div>
-                <div class="contenedor-canvas" style="height: 280px;">
-                    <canvas id="chartLux" width="800" height="280"></canvas>
+                <!-- Para móvil bajamos un poco la altura de las gráficas originalmente anchas para que no se corten visualmente -->
+                <div class="contenedor-canvas" style="height: 280px; position: relative; width: 100%;">
+                    <!-- Se removió width y height fijos -->
+                    <canvas id="chartLux"></canvas>
                 </div>
             </div>
 
@@ -118,8 +122,9 @@
                         <p class="card-subtitle">Balance nutricional absorbido por el sustrato (Salida - Entrada)</p>
                     </div>
                 </div>
-                <div class="contenedor-canvas" style="height: 320px;">
-                    <canvas id="chartCE" width="800" height="320"></canvas>
+                <div class="contenedor-canvas" style="height: 280px; position: relative; width: 100%;">
+                    <!-- Se removió width y height fijos -->
+                    <canvas id="chartCE"></canvas>
                 </div>
             </div>
 
