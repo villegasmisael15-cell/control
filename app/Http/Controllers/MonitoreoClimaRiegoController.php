@@ -322,7 +322,6 @@ class MonitoreoClimaRiegoController extends Controller
 
 public function exportarExcel($id)
 {
-    // Validación estricta de seguridad por rol
     if (auth()->user()->rol !== 'administrador') {
         abort(403, 'Acción no autorizada.');
     }
@@ -330,7 +329,6 @@ public function exportarExcel($id)
     $monitoreo = MonitoreoClimaRiego::findOrFail($id);
     $caracteristicas = \App\Models\SectorCaracteristica::where('sector', $monitoreo->sector)->first();
 
-    // Búsqueda del operador dueño
     $operador = \App\Models\User::where('sectores', 'LIKE', '%' . $monitoreo->sector . '%')
                                 ->where('rol', '!=', 'administrador')
                                 ->first();
@@ -339,10 +337,8 @@ public function exportarExcel($id)
 
     $nombreArchivo = "Reporte_Sector_" . str_replace(' ', '_', $monitoreo->sector) . "_ID_" . $monitoreo->id . ".xlsx";
 
-    // Retorna la descarga nativa en formato XLSX de Excel moderno
     return Excel::download(new ReporteMonitoreoExport($monitoreo, $caracteristicas, $operadorDueno), $nombreArchivo);
 }
-
 public function graficas(Request $request)
 {
     $query = MonitoreoClimaRiego::orderBy('fecha', 'desc');

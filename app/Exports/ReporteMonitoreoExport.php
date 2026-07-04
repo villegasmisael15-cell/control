@@ -1,9 +1,9 @@
 <?php
+
 namespace App\Exports;
 
 use Carbon\Carbon;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithCustomStartCell;
 use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Events\AfterSheet;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
@@ -30,23 +30,23 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
 
-                // Configurar anchos de columna fijos para que el texto no se corte
+                // Anchos de columna fijos para evitar que el texto se corte
                 $sheet->getColumnDimension('A')->setWidth(30);
                 $sheet->getColumnDimension('B')->setWidth(20);
                 $sheet->getColumnDimension('C')->setWidth(20);
                 $sheet->getColumnDimension('D')->setWidth(25);
 
-                // --- 1. TÍTULO PRINCIPAL ---
+                // --- TÍTULO PRINCIPAL ---
                 $sheet->mergeCells('A1:D1');
                 $sheet->setCellValue('A1', 'BITÁCORA DE CONTROL HIDROPÓNICA');
-                $sheet->getStyle('A1')->getFont()->setName('Arial')->setSize(16)->setBold(true)->getColor()->setRGB('FFFFFF');
+                $sheet->getStyle('A1')->getFont()->setName('Arial')->setSize(14)->setBold(true)->getColor()->setRGB('FFFFFF');
                 $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1E3A8A');
 
                 // --- METADATOS ---
                 $sheet->setCellValue('A3', 'Fecha de Captura:');
                 $sheet->setCellValue('B3', Carbon::parse($this->monitoreo->fecha)->format('d/m/Y'));
-                $sheet->setCellValue('C3', 'Operador Dueño:');
+                $sheet->setCellValue('C3', 'Operador:');
                 $sheet->setCellValue('D3', $this->operadorDueno);
                 $sheet->setCellValue('A4', 'Sector:');
                 $sheet->setCellValue('B4', $this->monitoreo->sector);
@@ -82,7 +82,6 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
                     ['Potencial de Hidrógeno (pH)', $this->monitoreo->ph_entrada, $this->monitoreo->ph_salida, $this->monitoreo->diferencia_ph]
                 ], null, 'A17');
 
-                // Estilo especial para la cabecera interna de químicos
                 $sheet->getStyle('A17:D17')->getFont()->setBold(true);
                 $sheet->getStyle('A17:D17')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('F1F5F9');
 
@@ -94,20 +93,18 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
                 $sheet->setCellValue('A23', 'Semáforo Radiación:'); $sheet->setCellValue('B23', $this->monitoreo->radiacion_semaforo);
                 $sheet->setCellValue('C23', 'Acción Ejecutada:');   $sheet->setCellValue('D23', $this->monitoreo->radiacion_accion_tomada ?? 'Ninguna');
 
-                // --- ESTILIZACIÓN AUTOMÁTICA GRUPAL ---
+                // --- ESTILOS VISUALES ---
                 $filasSubtitulos = ['A3', 'C3', 'A4', 'A7', 'C7', 'A8', 'A11', 'C11', 'A12', 'C12', 'A13', 'C13', 'A14', 'C14', 'A22', 'C22', 'A23', 'C23'];
                 foreach ($filasSubtitulos as $celda) {
                     $sheet->getStyle($celda)->getFont()->setBold(true)->getColor()->setRGB('475569');
                 }
 
-                // Estilo para las barras de títulos de sección (Gris Azulado Elegante)
                 $secciones = ['A6', 'A10', 'A16', 'A21'];
                 foreach ($secciones as $seccion) {
                     $sheet->getStyle($seccion)->getFont()->setBold(true)->getColor()->setRGB('1E293B');
                     $sheet->getStyle($seccion)->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('E2E8F0');
                 }
 
-                // Aplicar bordes finos a todo el rango de datos de las tablas
                 $styleBorder = [
                     'borders' => [
                         'allBorders' => [
@@ -128,7 +125,6 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
     public function styles(Worksheet $sheet)
     {
         return [
-            // Aplica tipografía general a toda la hoja
             1 => ['font' => ['name' => 'Arial', 'size' => 11]],
         ];
     }
