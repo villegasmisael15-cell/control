@@ -30,7 +30,6 @@
                 <i class="fa-solid fa-file-invoice {{ $tipo === 'exportacion' ? 'text-blue-600' : 'text-emerald-600' }}"></i>
                 Reporte de Recepción {{ $tipo === 'exportacion' ? 'Exportación' : 'Nacional' }}
             </h1>
-            
         </div>
 
         @if (session('status'))
@@ -110,128 +109,185 @@
                     </div>
                     <div>
                         <span class="text-gray-500 block text-xs">Peso de Exportación Total</span>
-                        <span class="text-lg font-bold text-gray-900">{{ number_format($registro->peso_exportacion, 2) }} kg</span>
+                        <span class="text-lg font-bold text-gray-900">{{ number_format($registro->peso_exportacion, 3) }} kg</span>
                     </div>
                     <div>
                         <span class="text-gray-500 block text-xs">Cajas Restituidas (Devolución)</span>
-                        <span class="text-lg font-bold text-purple-600">uds</span>
+                        <span class="text-lg font-bold text-purple-600">
+                            {{ number_format($registro->restituidas) }} uds
+                        </span>
                     </div>
                     <div>
                         <span class="text-gray-500 block text-xs">Saldo de Cajas Pendientes</span>
-                        <span class="text-lg font-bold text-amber-600"> uds</span>
+                        <span class="text-lg font-bold text-amber-600">
+                            {{ number_format($registro->pendientes) }} uds
+                        </span>
                     </div>
                     @endif
                 </div>
             </div>
 
-          <div class="bg-gray-900 text-white p-6 rounded-xl shadow-md flex flex-col justify-between border border-gray-800">
-    <div>
-        <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
-            {{ $tipo === 'exportacion' ? 'Resumen de Exportación' : 'Totales Calculados' }}
-        </h3>
-        <div class="space-y-4">
-            <div>
-                <span class="text-xs text-gray-400 block">Total Kilogramos Acumulados</span>
-                <span class="text-3xl font-extrabold {{ $tipo === 'exportacion' ? 'text-blue-400' : 'text-amber-400' }} tracking-tight">
-                    @if($tipo === 'exportacion')
+            <div class="bg-gray-900 text-white p-6 rounded-xl shadow-md flex flex-col justify-between border border-gray-800">
+                <div>
+                    <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">
+                        {{ $tipo === 'exportacion' ? 'Resumen de Exportación' : 'Totales Calculados' }}
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <span class="text-xs text-gray-400 block">Total Kilogramos Acumulados</span>
+                            <span class="text-3xl font-extrabold {{ $tipo === 'exportacion' ? 'text-blue-400' : 'text-amber-400' }} tracking-tight">
+                                @if($tipo === 'exportacion')
+                                @php
+                                // 1. Si ya existe un peso neto fijo (congelado), usamos ese directamente
+                                if (!is_null($registro->peso_neto_fijo)) {
+                                $pesoNetoExportacion = $registro->peso_neto_fijo;
+                                } else {
+                                // 2. Si es NULL (primera vez), hacemos el cálculo restando el rechazo actual
+                                $pesoRechazoAcumulado = $registro->recepcionesNacionales ? $registro->recepcionesNacionales->sum('peso_rechazo_procesado') : 0;
+                                $pesoNetoExportacion = $registro->peso_exportacion - $pesoRechazoAcumulado;
+
+                                // Si ya se restó un rechazo real por primera vez (mayor a 0), guardamos el candado en la BD
+                                if ($pesoRechazoAcumulado > 0) {
+                                $registro->update([
+                                'peso_neto_fijo' => $pesoNetoExportacion >= 0 ? $pesoNetoExportacion : 0
+                                ]);
+                                }
+                                }
+                                @endphp
+                                {{ number_format($pesoNetoExportacion >= 0 ? $pesoNetoExportacion : 0, 3) }}
+                                @else
+                                {{ number_format($registro->total_kg, 2) }}
+                                @endif
+                                <span class="text-xs font-normal text-white">kg</span>
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="text-xs text-gray-400 block">{{ $tipo === 'exportacion' ? 'Cajas' : 'Total de Cajas Consolidadas' }}</span>
+                            <span class="text-2xl font-bold text-white tracking-tight">
+                                @if($tipo === 'exportacion')
+                                @php
+                                // Obtenemos las cajas que se desviaron a rechazo nacional
+                                $cajasRechazoAcumuladas = $registro->recepcionesNacionales ? $registro->recepcionesNacionales->sum('cajas_rechazo_procesado') : 0;
+                                // RESTAMOS las cajas de rechazo para obtener el saldo neto real
+                                $cajasNetasExportacion = $registro->cajas_exportacion - $cajasRechazoAcumuladas;
+                                @endphp
+                                {{ number_format($cajasNetasExportacion >= 0 ? $cajasNetasExportacion : 0) }}
+                                @else
+                                {{ number_format($registro->total_cajas) }}
+                                @endif
+                                <span class="text-xs font-normal text-gray-400">uds</span>
+                            </span>
+                        </div>
+                        @can('es-administrador')
+                        @if($tipo === 'exportacion')
                         @php
-                            // Obtenemos el peso que se mandó a rechazo nacional
-                            $pesoRechazoAcumulado = $registro->recepcionesNacionales ? $registro->recepcionesNacionales->sum('peso_rechazo_procesado') : 0;
-                            // RESTAMOS el rechazo al peso de exportación para mostrar el dato neto real
-                            $pesoNetoExportacion = $registro->peso_exportacion - $pesoRechazoAcumulado;
+                        // CORRECCIÓN CLAVE: Mapeamos la fecha formateada idéntica a la agrupación de las tablas
+                        $fechaFiltroDiario = \Carbon\Carbon::parse($registro->fecha_exportacion)->format('Y-m-d');
+
+                        // 1. Buscamos la fila de Agropark que corresponda de manera estricta al DÍA de este embarque
+                        $controlCondensacion = \App\Models\ControlCondensacion::where('fecha', $fechaFiltroDiario)->first();
+                        $cantidadManualGuardada = $controlCondensacion ? (float)$controlCondensacion->agropark : 0.0;
+
+                        // 2. Sumamos todos los pesos netos fijos de los registros de este mismo DÍA
+                        $sumaPesosDiarios = \App\Models\RecepcionExportacion::whereDate('fecha_exportacion', $fechaFiltroDiario)
+                        ->get()
+                        ->sum(function($item) {
+                        return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
+                        });
+
+                        // 3. Aplicamos la fórmula distributiva proporcional por día
+                        $resultadoCondensacionIndividual = 0;
+                        if ($pesoNetoExportacion > 0 && $cantidadManualGuardada > 0 && $sumaPesosDiarios > 0) {
+                        $divisionDiaria = $cantidadManualGuardada / $sumaPesosDiarios;
+                        $resultadoCondensacionIndividual = $pesoNetoExportacion * $divisionDiaria;
+                        }
                         @endphp
-                        {{ number_format($pesoNetoExportacion >= 0 ? $pesoNetoExportacion : 0, 2) }}
-                    @else
-                        {{ number_format($registro->total_kg, 2) }}
-                    @endif
-                    <span class="text-xs font-normal text-white">kg</span>
-                </span>
-            </div>
-            <div>
-                <span class="text-xs text-gray-400 block">{{ $tipo === 'exportacion' ? 'Cajas' : 'Total de Cajas Consolidadas' }}</span>
-                <span class="text-2xl font-bold text-white tracking-tight">
-                    @if($tipo === 'exportacion')
-                        @php
-                            // Obtenemos las cajas que se desviaron a rechazo nacional
-                            $cajasRechazoAcumuladas = $registro->recepcionesNacionales ? $registro->recepcionesNacionales->sum('cajas_rechazo_procesado') : 0;
-                            // RESTAMOS las cajas de rechazo para obtener el saldo neto real
-                            $cajasNetasExportacion = $registro->cajas_exportacion - $cajasRechazoAcumuladas;
-                        @endphp
-                        {{ number_format($cajasNetasExportacion >= 0 ? $cajasNetasExportacion : 0) }}
-                    @else
-                        {{ number_format($registro->total_cajas) }}
-                    @endif
-                    <span class="text-xs font-normal text-gray-400">uds</span>
-                </span>
+
+                        <div class="border-t border-gray-800 pt-3">
+                            <span class="text-xs text-amber-400 font-semibold block uppercase tracking-wider mb-1">Condensación del Embarque</span>
+                            @if($cantidadManualGuardada > 0)
+                            <span class="text-xl font-black text-emerald-400 tracking-tight">
+                                {{ number_format($resultadoCondensacionIndividual, 3) }} <span class="text-xs font-normal text-white">kg</span>
+                            </span>
+                            <div class="text-[10px] text-gray-500 mt-0.5">
+                                Proporción Diaria aplicada: {{ number_format(($cantidadManualGuardada / $sumaPesosDiarios), 4) }}%
+                            </div>
+                            @else
+                            <span class="text-xs font-medium text-gray-500 italic block">
+                                <i class="fa-solid fa-circle-info text-[10px] mr-0.5"></i> Requiere capturar el valor de Agropark para el día {{ \Carbon\Carbon::parse($fechaFiltroDiario)->format('d/m/Y') }}.
+                            </span>
+                            @endif
+                        </div>
+                        @endif
+                        @endcan
+
+                        @if($tipo === 'nacional' && $registro->cajas_vacias_totales > 0)
+                        <div class="border-t border-gray-800 pt-3">
+                            <span class="text-xs text-gray-400 block">Cajas Vacías Sueltas del Día</span>
+                            <span class="text-sm font-semibold text-gray-300">{{ number_format($registro->cajas_vacias_totales) }} vacías</span>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+
+                <div class="mt-6 text-[11px] text-gray-400 bg-gray-800/40 p-3 rounded-lg border border-gray-800">
+                    <span class="block"><i class="fa-solid fa-clock"></i> Creado: {{ $registro->created_at->format('d/m/Y H:i') }}</span>
+                </div>
             </div>
 
-            @if($tipo === 'nacional' && $registro->cajas_vacias_totales > 0)
-            <div class="border-t border-gray-800 pt-3">
-                <span class="text-xs text-gray-400 block">Cajas Vacías Sueltas del Día</span>
-                <span class="text-sm font-semibold text-gray-300">{{ number_format($registro->cajas_vacias_totales) }} vacías</span>
+            @if($tipo === 'nacional' && (auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial'))
+            <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="border-b border-gray-100 pb-3 mb-4">
+                    <h3 class="text-base font-bold text-gray-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-weight-scale text-emerald-600"></i>
+                        Ajuste Operativo de Pesos en Báscula
+                    </h3>
+                    <p class="text-xs text-gray-500">
+                        Se ingresan los pesos definitivos obtenidos tras el almacenamiento o reajuste en los procesos de selección.
+                    </p>
+                </div>
+
+                <form action="{{ route('recepcion.updateNacional', $registro->id) }}" method="POST" class="space-y-4">
+                    @csrf
+                    @method('PUT')
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">
+                                Peso Comercial Final (Kg) <span class="text-gray-400 font-normal">(Actual: {{ $registro->peso_comercializar }})</span>
+                            </label>
+                            <input type="number"
+                                name="peso_comercializar"
+                                value=""
+                                placeholder="{{ $registro->peso_comercializar }}"
+                                step="any"
+                                min="0"
+                                class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-red-700 uppercase mb-1">
+                                Peso de Rechazo Final (Kg) <span class="text-gray-400 font-normal">(Actual: {{ $registro->peso_rechazo_procesado }})</span>
+                            </label>
+                            <input type="number"
+                                name="peso_rechazo_procesado"
+                                value=""
+                                placeholder="{{ $registro->peso_rechazo_procesado }}"
+                                step="any"
+                                min="0"
+                                class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-2">
+                        <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg text-sm transition shadow flex items-center justify-center gap-1.5 cursor-pointer h-[40px]">
+                            <i class="fa-solid fa-floppy-disk"></i>
+                            Actualizar Pesos de Salida
+                        </button>
+                    </div>
+                </form>
             </div>
             @endif
-
-            @if($tipo === 'exportacion' && false)
-            <div class="border-t border-gray-800 pt-3">
-                <span class="text-xs text-gray-400 block">Estado del Saldo de Cajas</span>
-                @if($registro->pendientes > 0)
-                <span class="inline-flex items-center gap-1 mt-1 px-2 py-1 text-xs font-bold bg-amber-500/20 text-amber-400 rounded-md border border-amber-500/30">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Con Pendientes
-                </span>
-                @else
-                <span class="inline-flex items-center gap-1 mt-1 px-2 py-1 text-xs font-bold bg-emerald-500/20 text-emerald-400 rounded-md border border-emerald-500/30">
-                    <i class="fa-solid fa-circle-check"></i> Saldo Conciliado
-                </span>
-                @endif
-            </div>
-            @endif
-        </div>
-    </div>
-
-    <div class="mt-6 text-[11px] text-gray-400 bg-gray-800/40 p-3 rounded-lg border border-gray-800">
-        <span class="block"><i class="fa-solid fa-clock"></i> Creado: {{ $registro->created_at->format('d/m/Y H:i') }}</span>
-    </div>
-</div>
-        </div>
-
-        @if($tipo === 'nacional' && (auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial'))
-        <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="border-b border-gray-100 pb-3 mb-4">
-                <h3 class="text-base font-bold text-gray-800 flex items-center gap-1.5">
-                    <i class="fa-solid fa-weight-scale text-emerald-600"></i>
-                    Ajuste Operativo de Pesos en Báscula
-                </h3>
-                <p class="text-xs text-gray-500">
-                    Se ingresan los pesos definitivos obtenidos tras el almacenamiento o reajuste en los procesos de selección.
-                </p>
-            </div>
-
-            <form action="{{ route('recepcion.updateNacional', $registro->id) }}" method="POST" class="space-y-4">
-                @csrf
-                @method('PUT')
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Peso Comercial Final (Kg)</label>
-                        <input type="number" name="peso_comercializar" value="{{ $registro->peso_comercializar }}" step="0.01" min="0" required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-red-700 uppercase mb-1">Peso de Rechazo Final (Kg)</label>
-                        <input type="number" name="peso_rechazo_procesado" value="{{ $registro->peso_rechazo_procesado }}" step="0.01" min="0" required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                <div class="flex justify-end pt-2">
-                    <button type="submit" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg text-sm transition shadow flex items-center justify-center gap-1.5 cursor-pointer h-[40px]">
-                        <i class="fa-solid fa-floppy-disk"></i>
-                        Actualizar Pesos de Salida
-                    </button>
-                </div>
-            </form>
-        </div>
-        @endif
 
     </main>
 

@@ -32,6 +32,12 @@
         </div>
 
         <div>
+            <x-input-label for="macetas_por_gotero" value="Número de Macetas por Gotero" />
+            <x-text-input id="macetas_por_gotero" class="block mt-1 w-full" type="number" name="macetas_por_gotero" min="1" step="1" required placeholder="Ej: 2" />
+            <x-input-error :messages="$errors->get('macetas_por_gotero')" class="mt-2" />
+        </div>
+
+        <div>
             <x-input-label for="fecha_trasplante" value="Fecha de Trasplante" />
             <x-text-input id="fecha_trasplante" class="block mt-1 w-full" type="date" name="fecha_trasplante" required />
             <x-input-error :messages="$errors->get('fecha_trasplante')" class="mt-2" />

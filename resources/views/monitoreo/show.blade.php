@@ -47,7 +47,7 @@
                         <i class="fa-solid fa-circle-info text-emerald-600"></i> Características Iniciales del Área
                     </h3>
                     @if($caracteristicas)
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
                             <div class="p-2 bg-emerald-50 rounded-md text-emerald-600"><i class="fa-solid fa-maximize"></i></div>
                             <div>
@@ -60,6 +60,13 @@
                             <div>
                                 <span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wide">Variedad</span>
                                 <span class="text-sm font-bold text-gray-800">{{ $caracteristicas->variedad }}</span>
+                            </div>
+                        </div>
+                        <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
+                            <div class="p-2 bg-emerald-50 rounded-md text-emerald-600"><i class="fa-solid fa-提出 text-xs font-bold">M</i></div>
+                            <div>
+                                <span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wide">Macetas / Gotero</span>
+                                <span class="text-sm font-bold text-gray-800">{{ $caracteristicas->macetas_por_gotero ?? 1 }}</span>
                             </div>
                         </div>
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
@@ -100,8 +107,8 @@
                             <i class="fa-solid fa-droplet text-blue-500"></i> Riego y Hidratación
                         </h3>
                         <div class="flex justify-between items-center text-sm">
-                            <span class="text-gray-500">Vol. Riego Entrada:</span>
-                            <span class="font-semibold text-gray-800">{{ number_format($monitoreo->vol_riego_entrada) }} mL</span>
+                            <span class="text-gray-500">Vol. Riego por Maceta:</span>
+                            <span class="font-semibold text-emerald-700 font-bold">{{ number_format($monitoreo->vol_riego_entrada) }} mL</span>
                         </div>
                         <div class="flex justify-between items-center text-sm">
                             <span class="text-gray-500">Vol. Drenaje Salida:</span>

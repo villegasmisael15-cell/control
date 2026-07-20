@@ -18,6 +18,7 @@ class RecepcionExportacion extends Model
     'sector_registro',
     'cajas_exportacion', 
     'peso_exportacion',
+    'peso_neto_fijo',
     'restituidas',       
     'pendientes',        
     'capturado_por_id',

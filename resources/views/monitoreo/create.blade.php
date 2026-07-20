@@ -38,15 +38,20 @@
                     <div class="mb-4">
                         <label for="sector" class="block text-sm font-bold text-gray-700 uppercase mb-2">Sector / Nave:</label>
                         <div class="relative">
-                            <select name="sector" id="sector" class="form-select" required>
-                                <option value="">Seleccione un sector</option>
-                                @foreach($sectores as $sector)
-                                <option value="{{ $sector }}" {{ old('sector') == $sector ? 'selected' : '' }}>{{ $sector }}</option>
+                            <select name="sector" id="sector" class="form-select border border-gray-300 rounded w-full p-2" required>
+                                <option value=" ">Seleccione un sector</option>
+                                @foreach($sectores as $sectorNombre)
+                                @php
+                                $caracteristica = \App\Models\SectorCaracteristica::where('sector', $sectorNombre)->first();
+                                $macetas = $caracteristica ? $caracteristica->macetas_por_gotero : 1;
+                                @endphp
+                                <option value="{{ $sectorNombre }}"
+                                    data-macetas="{{ $macetas }}"
+                                    {{ old('sector') == $sectorNombre ? 'selected' : '' }}>
+                                    {{ $sectorNombre }}
+                                </option>
                                 @endforeach
                             </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                                <i class="fa-solid fa-chevron-down text-xs"></i>
-                            </div>
                         </div>
                         @error('sector')
                         <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
@@ -79,6 +84,10 @@
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-0.5">Vol. Riego Entrada (mL)</label>
                             <input type="number" id="vol_riego_entrada" name="vol_riego_entrada" class="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:outline-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-600 mb-0.5">Vol. Efectivo por Maceta (mL)</label>
+                            <input type="text" id="vol_riego_maceta_view" disabled class="w-full bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-lg px-2.5 py-1.5 text-sm font-bold">
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-0.5">Vol. Drenaje Salida (mL)</label>
@@ -201,6 +210,9 @@
             'peso_tarde_anterior', 'peso_manana', 'radiacion_lectura'
         ];
 
+        // Escuchamos también el cambio de sector para recalcular inmediatamente
+        document.getElementById('sector').addEventListener('change', calcularValores);
+
         inputs.forEach(id => {
             document.getElementById(id).addEventListener('input', calcularValores);
         });
@@ -208,7 +220,7 @@
         function calcularValores() {
             const temp = parseFloat(document.getElementById('temperatura').value);
             const hum = parseFloat(document.getElementById('humedad').value);
-            const volEnt = parseFloat(document.getElementById('vol_riego_entrada').value);
+            const volEntOriginal = parseFloat(document.getElementById('vol_riego_entrada').value);
             const volSal = parseFloat(document.getElementById('vol_drenaje_salida').value);
             const ceEnt = parseFloat(document.getElementById('ce_entrada').value);
             const ceSal = parseFloat(document.getElementById('ce_calida').value);
@@ -217,6 +229,21 @@
             const pTarde = parseFloat(document.getElementById('peso_tarde_anterior').value);
             const pManana = parseFloat(document.getElementById('peso_manana').value);
             const lux = parseFloat(document.getElementById('radiacion_lectura').value);
+
+            // Obtener las macetas del sector seleccionado dinámicamente
+            const sectorSelect = document.getElementById('sector');
+            const selectedOption = sectorSelect.options[sectorSelect.selectedIndex];
+            const macetas = selectedOption ? parseFloat(selectedOption.getAttribute('data-macetas')) : 1;
+
+            // --- Lógica Nueva: Modificación del volumen de riego ---
+            let volEnt = volEntOriginal;
+            if (!isNaN(volEntOriginal) && macetas > 0) {
+                // Dividimos el volumen de entrada entre el número de macetas por gotero
+                volEnt = volEntOriginal / macetas;
+                document.getElementById('vol_riego_maceta_view').value = volEnt.toFixed(1) + " mL";
+            } else {
+                document.getElementById('vol_riego_maceta_view').value = "";
+            }
 
             // 1. Cálculo DPV y Caja Predictiva General
             const eBox = document.getElementById('estatus_box');
@@ -243,7 +270,7 @@
                 eText.innerText = "—";
             }
 
-            // 2. % Drenaje
+            // 2. % Drenaje utilizando el NUEVO VALOR DIVIDIDO (volEnt)
             if (!isNaN(volEnt) && !isNaN(volSal) && volEnt > 0) {
                 document.getElementById('porcentaje_drenaje_view').value = ((volSal / volEnt) * 100).toFixed(1) + "%";
             } else {

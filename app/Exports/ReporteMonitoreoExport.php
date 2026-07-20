@@ -50,6 +50,10 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
                 $sheet->setCellValue('D3', $this->operadorDueno);
                 $sheet->setCellValue('A4', 'Sector:');
                 $sheet->setCellValue('B4', $this->monitoreo->sector);
+                
+                // NUEVO METADATO: Relación de macetas por gotero del sector
+                $sheet->setCellValue('C4', 'Macetas / Gotero:');
+                $sheet->setCellValue('D4', $this->caracteristicas ? ($this->caracteristicas->macetas_por_gotero ?? 1) : 1);
 
                 // --- SECCIÓN 1: CARACTERÍSTICAS ---
                 $sheet->mergeCells('A6:D6');
@@ -68,7 +72,9 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
                 $sheet->setCellValue('C11', 'Humedad Relativa:');      $sheet->setCellValue('D11', $this->monitoreo->humedad . ' %');
                 $sheet->setCellValue('A12', 'DPV Calculado:');         $sheet->setCellValue('B12', $this->monitoreo->dpv . ' kPa');
                 $sheet->setCellValue('C12', 'Estatus General Clima:'); $sheet->setCellValue('D12', $this->monitoreo->estatus_general);
-                $sheet->setCellValue('A13', 'Vol. Riego Entrada:');    $sheet->setCellValue('B13', number_format($this->monitoreo->vol_riego_entrada) . ' mL');
+                
+                // AJUSTE DE ETIQUETA: Cambiado a Vol. Riego por Maceta
+                $sheet->setCellValue('A13', 'Vol. Riego por Maceta:');   $sheet->setCellValue('B13', number_format($this->monitoreo->vol_riego_entrada) . ' mL');
                 $sheet->setCellValue('C13', 'Vol. Drenaje Salida:');   $sheet->setCellValue('D13', number_format($this->monitoreo->vol_drenaje_salida) . ' mL');
                 $sheet->setCellValue('A14', 'Porcentaje Drenaje:');    $sheet->setCellValue('B14', $this->monitoreo->porcentaje_drenaje . ' %');
                 $sheet->setCellValue('C14', 'Caída Nocturna Sustrato:');$sheet->setCellValue('D14', $this->monitoreo->porcentaje_caida_nocturna . ' %');
@@ -94,7 +100,8 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
                 $sheet->setCellValue('C23', 'Acción Ejecutada:');   $sheet->setCellValue('D23', $this->monitoreo->radiacion_accion_tomada ?? 'Ninguna');
 
                 // --- ESTILOS VISUALES ---
-                $filasSubtitulos = ['A3', 'C3', 'A4', 'A7', 'C7', 'A8', 'A11', 'C11', 'A12', 'C12', 'A13', 'C13', 'A14', 'C14', 'A22', 'C22', 'A23', 'C23'];
+                // Se agregó 'C4' al grupo de celdas en negrita
+                $filasSubtitulos = ['A3', 'C3', 'A4', 'C4', 'A7', 'C7', 'A8', 'A11', 'C11', 'A12', 'C12', 'A13', 'C13', 'A14', 'C14', 'A22', 'C22', 'A23', 'C23'];
                 foreach ($filasSubtitulos as $celda) {
                     $sheet->getStyle($celda)->getFont()->setBold(true)->getColor()->setRGB('475569');
                 }

@@ -108,7 +108,7 @@
                             <th class="py-3 px-4">Sector</th>
                             <th class="py-3 px-4">Operador</th>
                             <th class="py-3 px-4">DPV</th>
-                            <th class="py-3 px-4 bg-blue-50/50">% Drenaje</th>
+                            <th class="py-3 px-4 bg-blue-50/50">% Drenaje (Maceta)</th>
                             <th class="py-3 px-4 bg-amber-50/50">Dif. CE</th>
                             <th class="py-3 px-4 bg-purple-50/50">Dif. pH</th>
                             <th class="py-3 px-4 bg-stone-50">% Caída Noct.</th>

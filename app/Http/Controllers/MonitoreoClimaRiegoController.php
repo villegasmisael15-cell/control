@@ -107,7 +107,7 @@ class MonitoreoClimaRiegoController extends Controller
         return view('monitoreo.create', compact('sectores'));
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
         // Se inyecta automáticamente la hora actual del servidor antes de validar
         $request->merge([
@@ -139,6 +139,19 @@ class MonitoreoClimaRiegoController extends Controller
             'user_id' => 'required|exists:users,id',
         ]);
 
+        // --- NUEVA LÓGICA: DIVIDIR EL RIEGO ENTRE EL NÚMERO DE MACETAS ---
+        if ($request->filled('vol_riego_entrada')) {
+            $caracteristica = \App\Models\SectorCaracteristica::where('sector', $request->sector)->first();
+            $macetas = $caracteristica ? $caracteristica->macetas_por_gotero : 1;
+            
+            if ($macetas > 0) {
+                // Modificamos el valor directamente en el Request
+                $request->merge([
+                    'vol_riego_entrada' => (int) round($request->vol_riego_entrada / $macetas)
+                ]);
+            }
+        }
+
         // --- CÁLCULOS AUTOMATIZADOS CON CONTROL DE NULOS (BACKEND) ---
         
         // 1. DPV e Inyección de Estatus General
@@ -152,7 +165,7 @@ class MonitoreoClimaRiegoController extends Controller
             $estatus_general = ($dpv >= 0.8 && $dpv <= 1.4) ? 'ÓPTIMO' : 'REVISAR CLIMA';
         }
 
-        // 2. Porcentaje Drenaje
+        // 2. Porcentaje Drenaje (Utilizará automáticamente el valor ya dividido)
         $porcentaje_drenaje = null;
         if ($request->filled('vol_riego_entrada') && $request->filled('vol_drenaje_salida') && $request->vol_riego_entrada > 0) {
             $porcentaje_drenaje = round(($request->vol_drenaje_salida / $request->vol_riego_entrada) * 100, 1);

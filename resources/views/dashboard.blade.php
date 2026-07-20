@@ -41,9 +41,9 @@
             <p class="text-gray-600 text-sm mt-1">Bienvenido al sistema. Selecciona un módulo para comenzar a trabajar.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-         @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
+            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
@@ -54,6 +54,40 @@
                 </div>
                 <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
                     <a href="{{ route('monitoreo.index') }}" class="text-sm text-emerald-600 hover:text-emerald-700 font-bold flex items-center gap-1">
+                        Ingresar al módulo <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
+                <div class="p-6 flex-grow">
+                    <div class="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-700 text-xl mb-4">
+                        <i class="fa-solid fa-mound"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Suelo</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Monitoreo periódico y control de las condiciones directas del suelo, humedad de la tierra, nutrientes y análisis edafológicos del cultivo.</p>
+                </div>
+                <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
+                    <a href="{{ route('suelo.index') }}" class="text-sm text-stone-600 hover:text-stone-700 font-bold flex items-center gap-1">
+                        Ingresar al módulo <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            @endif
+
+            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
+                <div class="p-6 flex-grow">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-red-600 text-xl mb-4">
+                        <i class="fa-solid fa-prescription-bottle-medical"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Sanidad y Nutrición</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Bitácora unificada para el manejo fitosanitario de agroquímicos y control nutricional de tanques de fertilizantes.</p>
+                </div>
+                <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
+                    <a href="{{ route('sanidad.index') }}" class="text-sm text-red-600 hover:text-red-700 font-bold flex items-center gap-1">
                         Ingresar al módulo <i class="fa-solid fa-arrow-right text-xs"></i>
                     </a>
                 </div>
@@ -93,7 +127,24 @@
                 </div>
             </div>
             @endif
-            
+
+            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
+                <div class="p-6 flex-grow">
+                    <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-xl mb-4">
+                        <i class="fa-solid fa-chart-simple"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Reportes</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Módulo de Reportes de la Bitácora de Embarques de Exportación. Consulta de estatus de contenedores, aduanas y seguimiento logístico.</p>
+                </div>
+                <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
+                    <a href="{{ route('reportes.index') }}" class="text-sm text-indigo-600 hover:text-indigo-700 font-bold flex items-center gap-1">
+                        Ver reportes <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
+            </div>
+            @endif
+
             @can('es-administrador')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">

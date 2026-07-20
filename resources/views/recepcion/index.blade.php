@@ -7,6 +7,7 @@
     <title>Recepción - Sistema Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/style.css">
 </head>
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
@@ -56,17 +57,28 @@
                 <p class="text-gray-500 text-xs sm:text-sm mt-0.5">Gestión e ingresos de huertas nacionales y exportación.</p>
             </div>
 
-           <form method="GET" action="{{ route('recepcion.index') }}" class="w-full sm:w-auto sm:max-w-xs flex-shrink-0">
-    <label for="semana" class="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Filtrar por Semana:</label>
-    <div class="relative flex items-center gap-1.5">
-<input type="week" name="semana" id="semana" value="{{ $semanaActiva }}" onchange="this.form.submit()" class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2 cursor-pointer shadow-sm outline-none">
-        @if(request()->filled('semana'))
-        <a href="{{ route('recepcion.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 rounded-lg p-2 text-sm transition h-[38px] flex items-center justify-center" title="Limpiar Filtro">
-            <i class="fa-solid fa-filter-circle-xmark"></i>
-        </a>
-        @endif
-    </div>
-</form>
+            <form method="GET" action="{{ route('recepcion.index') }}" id="formSemana" class="w-full sm:w-auto flex-shrink-0">
+                <label for="semana_picker" class="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Filtrar por Semana:</label>
+
+                <div class="flex items-center gap-2">
+                    <!-- Input real que se envía a Laravel -->
+                    <input type="hidden" name="semana" id="semana_final_input" value="{{ $semanaActiva }}">
+
+                    <!-- Input estético controlado por el calendario Flatpickr -->
+                    <input type="text"
+                        id="semana_picker"
+                        placeholder="Seleccione un día..."
+                        readonly
+                        class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2 cursor-pointer shadow-sm outline-none">
+
+                    {{-- Botón para limpiar filtro --}}
+                    @if(request()->filled('semana'))
+                    <a href="{{ route('recepcion.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 rounded-lg p-2 text-sm transition h-[38px] flex items-center justify-center" title="Limpiar Filtro">
+                        <i class="fa-solid fa-filter-circle-xmark"></i>
+                    </a>
+                    @endif
+                </div>
+            </form>
         </div>
 
         <div class="mb-6 bg-white p-1.5 rounded-xl shadow-sm border border-gray-200 flex flex-col sm:flex-row gap-1.5">
@@ -78,143 +90,188 @@
             <button onclick="cambiarPestaña('exportacion')" id="btn-tab-exportacion" class="w-full sm:w-auto px-5 py-2.5 font-bold text-sm rounded-lg transition flex items-center justify-center gap-2 cursor-pointer bg-gray-100 text-gray-600 hover:bg-gray-200">
                 <i class="fa-solid fa-plane-departure"></i> Exportación
             </button>
+
+
             @endif
+
+
         </div>
 
         <!-- CONTENIDO NACIONAL -->
-       <div id="contenido-nacional" class="block space-y-6">
-    <div class="bg-white shadow-sm rounded-xl border border-gray-200">
-        <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
-            <h3 class="text-base sm:text-lg font-bold text-gray-800">Recepción Nacional</h3>
+        <div id="contenido-nacional" class="block space-y-6">
 
-            <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
-                <button onclick="abrirModalNacional('recepcion')" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
-                    <i class="fa-solid fa-plus"></i> Registrar Recepción
-                </button>
-                @endif
-
-                @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_rechazo')
-                <button onclick="abrirModalNacional('rechazo')" class="w-full sm:w-auto justify-center bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
-                    <i class="fa-solid fa-ban"></i> Capturar Kg de Rechazo
-                </button>
-                @endif
-            </div>
-        </div>
-
-        <div class="overflow-x-auto w-full block">
-            <table class="w-full text-sm text-left text-gray-500 min-w-[900px]">
-                <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b border-gray-200 tracking-wider">
-                    <tr>
-                        <th scope="col" class="px-4 py-3 text-center" rowspan="2">Semana #</th>
-                        <th scope="col" class="px-4 py-3" rowspan="2">Fecha</th>
-                        <th scope="col" class="px-4 py-3" rowspan="2">Productor</th>
-                        <th scope="col" class="px-4 py-2 text-center bg-emerald-50 text-emerald-800 border-x border-gray-200" colspan="2">Nacional Recepcion</th>
-                        <th scope="col" class="px-4 py-2 text-center bg-red-50 text-red-800 border-x border-gray-200" colspan="2">Nacional Rechazo</th>
-                        <th scope="col" class="px-4 py-2 text-center bg-gray-200 text-gray-800" colspan="2">Totales Acumulados</th>
-                        <th scope="col" class="px-4 py-3 text-center" rowspan="2">Acciones</th>
-                    </tr>
-                    <tr class="bg-gray-50 border-b border-gray-200">
-                        <th class="px-3 py-2 text-center border-x border-gray-200 text-xs font-semibold text-emerald-700">Cajas</th>
-                        <th class="px-3 py-2 text-center border-x border-gray-200 text-xs font-semibold text-emerald-700">Peso (Kg)</th>
-                        <th class="px-3 py-2 text-center border-x border-gray-200 text-xs font-semibold text-red-700">Cajas</th>
-                        <th class="px-3 py-2 text-center border-x border-gray-200 text-xs font-semibold text-red-700">Peso (Kg)</th>
-                        <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700">Total Cajas</th>
-                        <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700">Total Kg</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-200 bg-white">
-                    @forelse($recepcionesNacionales as $nacional)
-                    <tr class="hover:bg-gray-50/70 transition">
-                        <td class="px-4 py-3 font-bold text-gray-900 text-center">{{ $nacional->semana_nacional }}</td>
-                        <td class="px-4 py-3 whitespace-nowrap text-gray-700">
-                            {{ \Carbon\Carbon::parse($nacional->fecha_nacional)->format('d/m/Y') }}
-                        </td>
-                        <td class="px-4 py-3 font-medium text-gray-800">{{ $nacional->productor->name ?? 'N/A' }}</td>
-                        <td class="px-3 py-3 text-center bg-emerald-50/20 font-semibold text-gray-900">
-                            <div>{{ number_format($nacional->cajas_comerciales_vigentes) }}</div>
-                            @if($nacional->fue_ajustado)
-                            <span class="text-[11px] text-gray-400 line-through block font-normal mt-0.5">Orig: {{ number_format($nacional->cajas_comercializar) }}</span>
-                            @endif
-                        </td>
-                        <td class="px-3 py-3 text-center bg-emerald-50/20 text-gray-700">
-                            <div class="font-medium">{{ number_format($nacional->peso_comercial_vigente, 2) }} kg</div>
-                            @if($nacional->fue_ajustado)
-                            <span class="text-[11px] text-gray-400 line-through block mt-0.5">Orig: {{ number_format($nacional->peso_comercializar, 2) }}</span>
-                            @endif
-                        </td>
-                        <td class="px-3 py-3 text-center bg-red-50/20 font-semibold text-gray-900">{{ number_format($nacional->cajas_rechazo_procesado) }}</td>
-                        <td class="px-3 py-3 text-center bg-red-50/20 text-gray-700">{{ number_format($nacional->peso_rechazo_procesado, 2) }}</td>
-                        <td class="px-3 py-3 text-center bg-gray-50 font-bold text-gray-900">{{ number_format($nacional->total_cajas) }}</td>
-                        <td class="px-3 py-3 text-center bg-gray-50 font-bold text-amber-700">{{ number_format($nacional->total_kg, 2) }}</td>
-                        <td class="px-4 py-3 text-center whitespace-nowrap">
-                            <div class="flex items-center justify-center gap-2">
-                                <a href="{{ route('recepcion.showNacional', $nacional->id) }}" class="text-emerald-600 hover:text-emerald-800 p-1" title="Ver Reporte">
-                                    <i class="fa-solid fa-eye"></i>
-                                </a>
-                                @can('es-administrador')
-                                <form action="{{ route('recepcion.destroyNacional', $nacional->id) }}" method="POST" onsubmit="return confirm('¿Seguro de eliminar?');" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800 p-1 transition cursor-pointer">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </button>
-                                </form>
-                                @endcan
-                            </div>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="10" class="px-6 py-10 text-center text-sm text-gray-400 font-medium">No hay registros nacionales.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-
-                @if($recepcionesNacionales->count() > 0)
-                <tfoot class="border-t-2 border-gray-300 bg-gray-100 font-bold text-gray-900">
-                    <tr>
-                        <td class="px-4 py-3 text-center text-xs uppercase text-gray-500 tracking-wider" colspan="3">
-                            Nacional Procesado
-                        </td>
-                        <td class="px-3 py-3 text-center bg-emerald-100/60 text-gray-950 font-extrabold">
-                            {{ number_format($recepcionesNacionales->sum('cajas_comerciales_vigentes')) }}
-                        </td>
-                        <td class="px-3 py-3 text-center bg-emerald-100/60 text-gray-950 font-extrabold">
-                            {{ number_format($recepcionesNacionales->sum('peso_comercial_vigente'), 2) }} kg
-                        </td>
-                        <td class="px-3 py-3 text-center bg-red-100/60 text-red-950 font-extrabold">
-                            {{ number_format($recepcionesNacionales->sum('cajas_rechazo_procesado')) }}
-                        </td>
-                        <td class="px-3 py-3 text-center bg-red-100/60 text-red-950 font-extrabold">
-                            {{ number_format($recepcionesNacionales->sum('peso_rechazo_procesado'), 2) }} kg
-                        </td>
-                        <td class="px-3 py-3 text-center bg-gray-200 text-gray-950 font-black">
-                            {{ number_format($recepcionesNacionales->sum('total_cajas')) }}
-                        </td>
-                        <td class="px-3 py-3 text-center bg-gray-200 text-amber-900 font-black">
-                            {{ number_format($recepcionesNacionales->sum('total_kg'), 2) }} kg
-                        </td>
-                        <td class="bg-gray-100"></td>
-                    </tr>
-                </tfoot>
-                @endif
-            </table>
-        </div>
-    </div>
-</div>
-        <!-- CONTENIDO EXPORTACIÓN -->
-        <div id="contenido-exportacion" class="hidden space-y-6">
             <div class="bg-white shadow-sm rounded-xl border border-gray-200">
-                <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
+                <div class="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50 rounded-xl">
                     <div>
-                        <h3 class="text-base sm:text-lg font-bold text-gray-800">Bitácora de Embarques de Exportación</h3>
+                        <h3 class="text-base sm:text-lg font-bold text-gray-800">Panel de Acciones Nacional</h3>
+                        <p class="text-xs text-gray-500">Registros y mermas operativas del día seleccionado.</p>
                     </div>
-                    @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
-                    <button onclick="abrirModalExportacion()" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
-                        <i class="fa-solid fa-plus"></i> Registrar Exportación
-                    </button>
-                    @endif
+
+                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                        <button onclick="abrirModalNacional('recepcion')" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-plus"></i> Registrar Recepción
+                        </button>
+                        @endif
+
+                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_rechazo')
+                        <button onclick="abrirModalNacional('rechazo')" class="w-full sm:w-auto justify-center bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-ban"></i> Capturar Kg de Rechazo
+                        </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            @php
+            $nacionalesAgrupados = $recepcionesNacionales->groupBy(function($item) {
+            return \Carbon\Carbon::parse($item->fecha_nacional)->format('Y-m-d');
+            });
+            @endphp
+
+            @forelse($nacionalesAgrupados as $fechaKey => $grupoNacional)
+            <div class="bg-white shadow-sm rounded-xl border border-gray-200 mb-6">
+                <div class="p-4 sm:p-6 border-b border-gray-100 bg-gray-50/50 rounded-t-xl">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-day text-amber-600"></i>
+                        Recepciones del Día: {{ \Carbon\Carbon::parse($fechaKey)->format('d/m/Y') }}
+                    </h3>
+                </div>
+
+                <div class="overflow-x-auto w-full block">
+                    <table class="w-full text-sm text-left text-gray-500 min-w-[900px]">
+                        <thead class="text-xs text-gray-700 uppercase bg-gray-100 border-b border-gray-200 tracking-wider">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 text-center" rowspan="2">Semana #</th>
+                                <th scope="col" class="px-4 py-3" rowspan="2">Fecha</th>
+                                <th scope="col" class="px-4 py-3" rowspan="2">Productor</th>
+                                <th scope="col" class="px-4 py-2 text-center bg-emerald-50 text-emerald-800 border-x border-gray-200" colspan="2">Nacional Recepcion</th>
+                                <th scope="col" class="px-4 py-2 text-center bg-red-50 text-red-800 border-x border-gray-200" colspan="2">Nacional Rechazo</th>
+                                <th scope="col" class="px-4 py-2 text-center bg-gray-200 text-gray-800" colspan="2">Totales Acumulados</th>
+                                <th scope="col" class="px-4 py-3 text-center" rowspan="2">Acciones</th>
+                            </tr>
+                            <tr class="bg-gray-50 border-b border-gray-200">
+                                <th class="px-3 py-2 text-center border-x border-gray-200 text-xs font-semibold text-emerald-700">Cajas</th>
+                                <th class="px-3 py-2 text-center border-x border-gray-200 text-xs font-semibold text-emerald-700">Peso (Kg)</th>
+                                <th class="px-3 py-2 text-center border-x border-gray-200 text-xs font-semibold text-red-700">Cajas</th>
+                                <th class="px-3 py-2 text-center border-x border-gray-200 text-xs font-semibold text-red-700">Peso (Kg)</th>
+                                <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700">Total Cajas</th>
+                                <th class="px-3 py-2 text-center text-xs font-semibold text-gray-700">Total Kg</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200 bg-white">
+                            @foreach($grupoNacional as $nacional)
+                            <tr class="hover:bg-gray-50/70 transition">
+                                <td class="px-4 py-3 font-bold text-gray-900 text-center">{{ $nacional->semana_nacional }}</td>
+                                <td class="px-4 py-3 whitespace-nowrap text-gray-700">
+                                    {{ \Carbon\Carbon::parse($nacional->fecha_nacional)->format('d/m/Y') }}
+                                </td>
+                                <td class="px-4 py-3 font-medium text-gray-800">{{ $nacional->productor->name ?? 'N/A' }}</td>
+                                <td class="px-3 py-3 text-center bg-emerald-50/20 font-semibold text-gray-900">
+                                    <div>{{ number_format($nacional->cajas_comerciales_vigentes) }}</div>
+                                    @if($nacional->fue_ajustado)
+                                    <span class="text-[11px] text-gray-400 line-through block font-normal mt-0.5">Orig: {{ number_format($nacional->cajas_comercializar) }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3 text-center bg-emerald-50/20 text-gray-700">
+                                    <div class="font-medium">{{ number_format($nacional->peso_comercial_vigente, 2) }} kg</div>
+                                    @if($nacional->fue_ajustado)
+                                    <span class="text-[11px] text-gray-400 line-through block mt-0.5">Orig: {{ number_format($nacional->peso_comercializar, 2) }}</span>
+                                    @endif
+                                </td>
+                                <td class="px-3 py-3 text-center bg-red-50/20 font-semibold text-gray-900">{{ number_format($nacional->cajas_rechazo_procesado) }}</td>
+                                <td class="px-3 py-3 text-center bg-red-50/20 text-gray-700">{{ number_format($nacional->peso_rechazo_procesado, 2) }}</td>
+                                <td class="px-3 py-3 text-center bg-gray-50 font-bold text-gray-900">{{ number_format($nacional->total_cajas) }}</td>
+                                <td class="px-3 py-3 text-center bg-gray-50 font-bold text-amber-700">{{ number_format($nacional->total_kg, 2) }}</td>
+                                <td class="px-4 py-3 text-center whitespace-nowrap">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="{{ route('recepcion.showNacional', $nacional->id) }}" class="text-emerald-600 hover:text-emerald-800 p-1" title="Ver Reporte">
+                                            <i class="fa-solid fa-eye"></i>
+                                        </a>
+                                        @can('es-administrador')
+                                        <form action="{{ route('recepcion.destroyNacional', $nacional->id) }}" method="POST" onsubmit="return confirm('¿Seguro de eliminar?');" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="text-red-600 hover:text-red-800 p-1 transition cursor-pointer">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </form>
+                                        @endcan
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                        <tfoot class="border-t-2 border-gray-300 bg-gray-100 font-bold text-gray-900">
+                            <tr>
+                                <td class="px-4 py-3 text-center text-xs uppercase text-gray-500 tracking-wider" colspan="3">Subtotal Día</td>
+                                <td class="px-3 py-3 text-center bg-emerald-100/60 text-gray-950 font-extrabold">{{ number_format($grupoNacional->sum('cajas_comerciales_vigentes')) }}</td>
+                                <td class="px-3 py-3 text-center bg-emerald-100/60 text-gray-950 font-extrabold">{{ number_format($grupoNacional->sum('peso_comercial_vigente'), 2) }} kg</td>
+                                <td class="px-3 py-3 text-center bg-red-100/60 text-red-950 font-extrabold">{{ number_format($grupoNacional->sum('cajas_rechazo_procesado')) }}</td>
+                                <td class="px-3 py-3 text-center bg-red-100/60 text-red-950 font-extrabold">{{ number_format($grupoNacional->sum('peso_rechazo_procesado'), 2) }} kg</td>
+                                <td class="px-3 py-3 text-center bg-gray-200 text-gray-950 font-black">{{ number_format($grupoNacional->sum('total_cajas')) }}</td>
+                                <td class="px-3 py-3 text-center bg-gray-200 text-amber-900 font-black">{{ number_format($grupoNacional->sum('total_kg'), 2) }} kg</td>
+                                <td class="bg-gray-100"></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+            @empty
+            <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 text-center text-sm text-gray-400 font-medium">
+                No hay registros nacionales en esta semana.
+            </div>
+            @endforelse
+        </div>
+
+        <!-- CONTENIDO EXPORTACIÓN -->
+
+        <div id="contenido-exportacion" class="hidden space-y-6">
+
+            <div class="bg-white shadow-sm rounded-xl border border-gray-200">
+                <div class="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50 rounded-xl">
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-gray-800">Panel de Acciones Exportación</h3>
+                        <p class="text-xs text-gray-500">Bitácora de embarques y control de saldos semanal.</p>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                        <button onclick="abrirModalExportacion()" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-plus"></i> Registrar Exportación
+                        </button>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            @php
+            $exportacionesAgrupadas = $recepcionesExportaciones->groupBy(function($item) {
+            return \Carbon\Carbon::parse($item->fecha_exportacion)->format('Y-m-d');
+            });
+            @endphp
+
+            @forelse($exportacionesAgrupadas as $fechaKey => $grupoExportacion)
+            <div class="bg-white shadow-sm rounded-xl border border-gray-200 mb-6 overflow-hidden">
+                <div class="p-4 sm:p-6 border-b border-gray-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
+                    <h3 class="text-base sm:text-lg font-bold text-gray-800 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-day text-blue-600"></i>
+                        Embarques del Día: {{ \Carbon\Carbon::parse($fechaKey)->format('d/m/Y') }}
+                    </h3>
+
+                    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
+                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                        <button onclick="abrirModalRestituidasPorFecha('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                            <i class="fa-solid fa-boxes-packing"></i> Restituir Cajas
+                        </button>
+                        @endif
+
+                        @if(auth()->user()->rol === 'administrador')
+                        <button onclick="abrirModalCondensacion('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+                            <i class="fa-solid fa-percentage"></i> Agropark
+                        </button>
+                        @endif
+                    </div>
                 </div>
 
                 <div class="overflow-x-auto w-full block">
@@ -232,35 +289,95 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
-                            @forelse($recepcionesExportaciones as $exportacion)
+                            @foreach($grupoExportacion as $exportacion)
                             <tr class="hover:bg-gray-50/70 transition">
                                 <td class="px-4 py-3 font-bold text-gray-900 text-center">{{ $exportacion->semana_exportacion }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ \Carbon\Carbon::parse($exportacion->fecha_exportacion)->format('d/m/Y') }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-800">{{ $exportacion->productor->name ?? 'N/A' }}</td>
                                 <td class="px-4 py-3 text-center bg-blue-50/10 font-semibold text-gray-900">{{ number_format($exportacion->cajas_exportacion) }}</td>
-                                <td class="px-4 py-3 text-center bg-blue-50/10 text-gray-700 font-medium">{{ number_format($exportacion->peso_exportacion, 2) }}</td>
-                                <td class="px-4 py-3 text-center bg-purple-50/10 font-medium text-purple-700">-</td>
-                                <td class="px-4 py-3 text-center bg-amber-50/10 font-bold text-amber-700">-</td>
+                                <td class="px-4 py-3 text-center bg-blue-50/10 text-gray-700 font-medium">
+                                    <div>{{ number_format($exportacion->peso_exportacion, 3) }} kg</div>
+                                    @if(auth()->user()->rol === 'administrador')
+                                    <div class="text-[11px] font-bold text-red-600 mt-1 bg-red-50 rounded px-1.5 py-0.5 inline-block border border-red-100" title="Valor neto congelado en primer rechazo">
+                                        <i class="fa-solid fa-lock text-[9px] mr-0.5"></i> Neto: {{ !is_null($exportacion->peso_neto_fijo) ? number_format($exportacion->peso_neto_fijo, 2) . ' kg' : 'Sin congelar' }}
+                                    </div>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-3 text-center bg-purple-50/10 font-medium text-purple-700">{{ number_format($exportacion->restituidas) }} uds</td>
+                                <td class="px-4 py-3 text-center bg-amber-50/10 font-bold text-amber-700">{{ number_format($exportacion->pendientes) }} uds</td>
                                 <td class="px-4 py-3 text-center whitespace-nowrap">
                                     <div class="flex items-center justify-center gap-2">
                                         <a href="{{ route('recepcion.showExportacion', $exportacion->id) }}" class="text-emerald-600 hover:text-emerald-800 p-1" title="Ver Reporte">
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         @can('es-administrador')
-                                        <button class="text-red-600 hover:text-red-800 p-1" title="Eliminar"><i class="fa-solid fa-trash-can"></i></button>
+                                        <form action="{{ route('recepcion.destroyExportacion', $exportacion->id) }}" method="POST" id="form-delete-{{ $exportacion->id }}" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" onclick="confirmarEliminacion({{ $exportacion->id }})" class="text-red-600 hover:text-red-800 p-1 cursor-pointer" title="Eliminar">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </button>
+                                        </form>
                                         @endcan
                                     </div>
                                 </td>
                             </tr>
-                            @empty
-                            <tr>
-                                <td colspan="8" class="px-6 py-10 text-center text-sm text-gray-400 font-medium">No hay embarques de exportación.</td>
-                            </tr>
-                            @endforelse
+                            @endforeach
                         </tbody>
                     </table>
                 </div>
+
+                {{-- RESUMEN DE CONDENSACIÓN INDEPENDIENTE POR TABLA DIARIA --}}
+                @if(auth()->user()->rol === 'administrador')
+                @php
+                $sumaPesosNetosFijosDiarios = (float) $grupoExportacion->sum(function($item) {
+                return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
+                });
+
+                $condensacionDelDia = \App\Models\ControlCondensacion::where('fecha', $fechaKey)->first();
+                $cantidadManualGuardada = $condensacionDelDia ? (float)$condensacionDelDia->agropark : 0.0;
+                $porcentajeCondensacionDiario = 0;
+
+                if ($sumaPesosNetosFijosDiarios > 0 && $cantidadManualGuardada > 0) {
+                $resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
+                $porcentajeExacto = (1 - $resultadoDivision) * 100;
+                $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
+                }
+                @endphp
+                <div class="bg-gray-900 text-white font-bold p-4 shadow border border-gray-700 border-t-0 rounded-b-xl">
+                    <div class="flex flex-wrap items-center justify-between gap-4 text-sm">
+                        <div class="uppercase tracking-wider text-xs font-extrabold text-amber-400">
+                            <i class="fa-solid fa-chart-pie mr-1"></i> Resumen Condensación del Día
+                        </div>
+                        <div class="flex flex-wrap items-center gap-8">
+                            <div>
+                                <span class="text-xs text-gray-400 block uppercase font-medium">Suma Pesos Netos Fijos</span>
+                                <span class="text-base text-red-400 font-extrabold">
+                                    <i class="fa-solid fa-calculator mr-1"></i> {{ number_format($sumaPesosNetosFijosDiarios, 3) }} kg
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-gray-400 block uppercase font-medium">Agropark</span>
+                                <span class="text-base text-blue-400 font-extrabold">
+                                    {{ $cantidadManualGuardada > 0 ? number_format($cantidadManualGuardada, 3) . ' kg' : 'Sin capturar' }}
+                                </span>
+                            </div>
+                            <div>
+                                <span class="text-xs text-amber-400 block uppercase font-medium">Porcentaje de Condensación</span>
+                                <span class="text-lg text-emerald-400 font-black">
+                                    {{ number_format($porcentajeCondensacionDiario, 2) }} %
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
+            @empty
+            <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 text-center text-sm text-gray-400 font-medium">
+                No hay embarques de exportación en esta semana.
+            </div>
+            @endforelse
         </div>
     </main>
 
@@ -277,9 +394,10 @@
                 </button>
             </div>
 
-            <form action="{{ route('recepcion.storeNacional') }}" method="POST" class="p-6 space-y-4 overflow-y-auto flex-grow max-h-[calc(95vh-120px)] scrollbar-thin scrollbar-thumb-gray-300">
+            <form action="{{ route('recepcion.storeNacional') }}" method="POST" id="form-modal-nacional" class="p-6 space-y-4 overflow-y-auto flex-grow max-h-[calc(95vh-120px)] scrollbar-thin scrollbar-thumb-gray-300">
                 @csrf
 
+                <!-- Único control de modo operativo -->
                 <input type="hidden" name="es_rechazo_operativo" id="es_rechazo_operativo" value="0">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -305,6 +423,7 @@
                     </select>
                 </div>
 
+                <!-- Tu bloque original de rastreo de exportación intacto -->
                 <div id="contenedor-embarque-origen" class="hidden mt-3 drop-shadow-sm">
                     <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Embarque de Exportación de Origen (Rastreo)</label>
                     <select name="recepcion_exportacion_id" id="recepcion_exportacion_select" class="w-full border border-blue-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-blue-50/40 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium">
@@ -325,6 +444,7 @@
 
                 <hr class="border-gray-200 my-2">
 
+                <!-- Bloques originales de captura comercial y rechazo intactos -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
                         <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
@@ -332,48 +452,26 @@
                         </h4>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">Cajas Comerciales</label>
-                            <input type="number" name="cajas_comercializar" id="cajas_com" value="0" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_rechazo' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 {{ auth()->user()->rol === 'usuario_rechazo' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
+                            <input type="number" name="cajas_comercializar" id="cajas_com" placeholder="0" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_rechazo' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 {{ auth()->user()->rol === 'usuario_rechazo' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">Peso Comercial (Kg)</label>
-                            <input type="number" name="peso_comercializar" id="peso_com" value="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_rechazo' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 {{ auth()->user()->rol === 'usuario_rechazo' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
+                            <input type="number" name="peso_comercializar" id="peso_com" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_rechazo' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 {{ auth()->user()->rol === 'usuario_rechazo' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
                         </div>
                     </div>
+
                     <div class="space-y-3 bg-red-50/40 p-4 rounded-xl border border-red-100">
                         <h4 class="text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-1">
                             <i class="fa-solid fa-ban"></i> Procesado (Rechazo)
                         </h4>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">Cajas de Rechazo</label>
-                            <input type="number" name="cajas_rechazo_procesado" id="cajas_rec" value="0" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_comercial' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 {{ auth()->user()->rol === 'usuario_comercial' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
+                            <input type="number" name="cajas_rechazo_procesado" id="cajas_rec" placeholder="0" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_comercial' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 {{ auth()->user()->rol === 'usuario_comercial' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
                         </div>
                         <div>
                             <label class="block text-xs text-gray-600 mb-1">Peso Rechazo (Kg)</label>
-                            <input type="number" name="peso_rechazo_procesado" id="peso_rec" value="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_comercial' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 {{ auth()->user()->rol === 'usuario_comercial' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
+                            <input type="number" name="peso_rechazo_procesado" id="peso_rec" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_comercial' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 {{ auth()->user()->rol === 'usuario_comercial' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
                         </div>
-                    </div>
-                </div>
-
-                <div class="bg-gray-100 p-4 rounded-xl grid grid-cols-2 gap-4 border border-gray-200">
-                    @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_rechazo')
-                    <div class="bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300 col-span-2">
-                        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1 mb-2">
-                            <i class="fa-solid fa-boxes-stacked text-amber-600"></i> Registro Aparte (Sin Productor)
-                        </h4>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Cajas Vacías Totales del Día</label>
-                            <input type="number" name="cajas_vacias_totales" value="0" min="0" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                            <p class="text-[11px] text-gray-400 mt-1">*Nota: Si vas a registrar solo cajas vacías, selecciona un productor genérico o de uso interno arriba.</p>
-                        </div>
-                    </div>
-                    @endif
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Total Cajas</label>
-                        <input type="number" name="total_cajas" id="total_cajas_input" value="0" readonly class="w-full bg-transparent border-none text-lg font-bold text-gray-900 p-0 focus:ring-0 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Total Kilogramos</label>
-                        <input type="number" name="total_kg" id="total_kg_input" value="0.00" step="0.01" readonly class="w-full bg-transparent border-none text-lg font-bold text-amber-700 p-0 focus:ring-0 outline-none">
                     </div>
                 </div>
 
@@ -384,8 +482,7 @@
             </form>
         </div>
     </div>
-
-    <!-- MODAL EXPORTACIÓN CORREGIDO -->
+    <!-- MODAL EXPORTACIÓN LIMPIO -->
     <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50">
         <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl mx-4 overflow-hidden">
             <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
@@ -432,26 +529,21 @@
                 </div>
 
                 <hr class="border-gray-200 my-2">
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/30 p-4 rounded-xl border border-blue-100">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Cajas Exportadas</label>
-                        <input type="number" name="cajas_exportadas" id="cajas_exp" value="0" min="0" oninput="calcularSaldosExportacion()" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <input type="number" name="cajas_exportadas" id="cajas_exp" placeholder="0" min="0" oninput="calcularSaldosExportacion()" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Peso de Exportación (Kg)</label>
-                        <input type="number" name="peso_exportacion" value="0.00" step="0.01" min="0" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                        <input type="number" name="peso_exportacion" placeholder="0.000" step="any" min="0" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-purple-50/30 p-4 rounded-xl border border-purple-100">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Cajas Restituidas (Devolución)</label>
-                        <input type="number" name="cajas_restituidas" id="cajas_res" value="0" min="0" oninput="calcularSaldosExportacion()" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-purple-500 focus:ring-1 focus:ring-purple-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-600 uppercase mb-1">Saldo Pendiente (Diferencia)</label>
-                        <input type="number" name="cajas_pendientes" id="cajas_pen_input" value="0" readonly class="w-full bg-transparent border-none text-lg font-bold text-amber-700 p-0 focus:ring-0 outline-none">
-                    </div>
-                </div>
+
+                <!-- Campo oculto para inicializar el saldo pendiente idéntico a las cajas exportadas -->
+                <input type="hidden" name="cajas_pendientes" id="cajas_pen_input" value="0">
+
                 <div class="flex justify-end gap-3 pt-2">
                     <button type="button" onclick="cerrarModalExportacion()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
                     <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Embarque</button>
@@ -460,11 +552,95 @@
         </div>
     </div>
 
+    <div id="modalRestituidas" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md overflow-hidden transform transition-all">
+            <div class="bg-purple-700 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm sm:text-base uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-boxes-packing"></i> Registrar Cajas Restituidas
+                </h3>
+                <button onclick="cerrarModalRestituidas()" class="text-white/80 hover:text-white cursor-pointer outline-none">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form action="{{ route('recepcion.storeRestituidas') }}" method="POST" class="p-6 space-y-4">
+                @csrf
+                <div>
+                    <label for="recepcion_exportacion_id" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Seleccionar Embarque Pendiente:</label>
+                    <select name="recepcion_exportacion_id" id="recepcion_exportacion_id" required class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 p-2.5 outline-none cursor-pointer">
+                        <option value="">-- Seleccione Fecha / Operador / Sector --</option>
+                        @foreach($embarquesPendientesDeCajas as $emb)
+                        <option value="{{ $emb->id }}" data-fecha="{{ \Carbon\Carbon::parse($emb->fecha_exportacion)->format('Y-m-d') }}">
+                            {{ \Carbon\Carbon::parse($emb->fecha_exportacion)->format('d/m/Y') }} - {{ $emb->productor->name ?? 'N/A' }} ({{ $emb->sector_registro }}) - [Pendientes: {{ number_format($emb->pendientes) }} uds]
+                        </option>
+                        @endforeach
+
+                    </select>
+                </div>
+
+                <div>
+                    <label for="cajas_a_restituir" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Cantidad de Cajas Devueltas:</label>
+                    <input type="number" name="cajas_a_restituir" id="cajas_a_restituir" min="1" required placeholder="Ej. 50" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 p-2.5 outline-none">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="cerrarModalRestituidas()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-purple-700 hover:bg-purple-800 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow cursor-pointer">
+                        Guardar Devolución
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    @if(auth()->user()->rol === 'administrador')
+    <div id="modalCondensacion" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md transform transition-all overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
+                <h3 class="text-base font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-percentage text-red-600"></i> Captura de Condensación
+                </h3>
+                <button onclick="cerrarModalCondensacion()" class="text-gray-400 hover:text-gray-600 text-lg cursor-pointer">&times;</button>
+            </div>
+
+            <form action="{{ route('condensacion.guardar') }}" method="POST" class="p-6 space-y-4">
+                @csrf
+
+                <input type="hidden" name="semana" value="{{ $semanaActual ?? ($recepcionesExportaciones->first()->semana_exportacion ?? 1) }}">
+                <input type="hidden" name="fecha" id="condensacion_fecha_input" required>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Cantidad Manual (Agropark Kg)</label>
+                    <div class="relative">
+                        <input type="number" step="any" name="agropark" id="condensacion_agropark_input" required min="0.01" placeholder="Ej. 45000.00" class="w-full bg-gray-50 border border-gray-300 rounded-lg pl-3 pr-10 py-2 text-sm focus:ring-2 focus:ring-red-500 focus:outline-none font-medium text-gray-900">
+                        <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                            <span class="text-xs text-gray-400 font-bold">kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 flex justify-end gap-2">
+                    <button type="button" onclick="cerrarModalCondensacion()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-bold transition cursor-pointer">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition shadow flex items-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Fijo
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    @endif
+
     <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500 w-full mt-auto">
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
+
     <link class="hidden" id="flatpickr-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
@@ -494,6 +670,55 @@
                     calcularSemanaDesdeFecha('exportacion');
                 }
             });
+
+            // NUEVO: Calendario de apoyo para el filtro por semanas (Sin Plugins Inestables)
+            flatpickr("#semana_picker", {
+                locale: "es",
+                disableMobile: "true",
+                dateFormat: "Y-m-d",
+
+                // Al cargar la página, calculamos un día de esa semana para mostrarla en el input visual
+                onReady: function(selectedDates, dateStr, instance) {
+                    const valActual = document.getElementById('semana_final_input').value; // Ej: "2026-W27"
+                    if (valActual) {
+                        const partes = valActual.split('-W');
+                        if (partes.length === 2) {
+                            const año = parseInt(partes[0]);
+                            const sem = parseInt(partes[1]);
+                            // Obtiene el jueves de esa semana (punto medio ISO estándar)
+                            const d = new Date(año, 0, 4);
+                            d.setDate(d.getDate() + (sem - 1) * 7 - (d.getDay() + 6) % 7 + 3);
+
+                            instance.setDate(d, false);
+                            document.getElementById('semana_picker').value = `Semana ${sem} / ${año}`;
+                        }
+                    }
+                },
+
+                // Al seleccionar un día, calculamos su semana de forma automática
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length === 0) return;
+
+                    const fecha = selectedDates[0];
+                    const target = new Date(fecha.valueOf());
+                    const dayNr = (fecha.getDay() + 6) % 7;
+                    target.setDate(target.getDate() - dayNr + 3);
+                    const firstThursday = target.valueOf();
+                    target.setMonth(0, 1);
+                    if (target.getDay() !== 4) {
+                        target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+                    }
+
+                    const numeroSemana = 1 + Math.ceil((firstThursday - target) / 604800000);
+                    const añoSemana = new Date(firstThursday).getFullYear();
+
+                    // Armamos el string exacto para tu backend (Ej: 2026-W27)
+                    const formattedWeek = añoSemana + "-W" + String(numeroSemana).padStart(2, '0');
+
+                    document.getElementById('semana_final_input').value = formattedWeek;
+                    document.getElementById('formSemana').submit();
+                }
+            });
         });
 
         function cambiarPestaña(tab) {
@@ -519,7 +744,6 @@
             }
         }
 
-        // ACEPTA PARÁMETRO PARA DETERMINAR SI ES CAPTURA DE RECHAZO O RECEPCIÓN VIGENTE
         function abrirModalNacional(tipo = 'recepcion') {
             const modal = document.getElementById('modal-nacional');
             const titulo = document.getElementById('modal-nacional-titulo');
@@ -535,6 +759,8 @@
                 if (titulo) titulo.innerHTML = '<i class="fa-solid fa-ban text-red-500"></i> Capturar Kg de Rechazo de Exportación';
                 if (esRechazoInput) esRechazoInput.value = "1";
                 if (selectEmbarque) selectEmbarque.required = true;
+                // Muestra tu contenedor original removiendo el hidden
+                if (contenedorEmbarque) contenedorEmbarque.classList.remove('hidden');
             } else {
                 if (titulo) titulo.innerHTML = '<i class="fa-solid fa-house-chimney text-emerald-500"></i> Registrar Entrada Nacional';
                 if (esRechazoInput) esRechazoInput.value = "0";
@@ -590,14 +816,13 @@
 
         function calcularSaldosExportacion() {
             const inputCajasExp = document.getElementById('cajas_exp');
-            const inputCajasRes = document.getElementById('cajas_res');
             const inputCajasPen = document.getElementById('cajas_pen_input');
 
             const cajasExp = inputCajasExp ? (parseInt(inputCajasExp.value) || 0) : 0;
-            const cajasRes = inputCajasRes ? (parseInt(inputCajasRes.value) || 0) : 0;
 
-            const diferencia = cajasExp - cajasRes;
-            if (inputCajasPen) inputCajasPen.value = diferencia >= 0 ? diferencia : 0;
+            if (inputCajasPen) {
+                inputCajasPen.value = cajasExp >= 0 ? cajasExp : 0;
+            }
         }
 
         function calcularSemanaDesdeFecha(tipo) {
@@ -620,23 +845,20 @@
             semanaInput.value = numeroSemana;
         }
 
-        // FUNCIÓN MAESTRA: FILTRA SECTORES Y EMBARQUES DE EXPORTACIÓN BASADO EN EL OPERADOR SELECCIONADO
         function filtrarDatosPorOperador() {
             const selectProductor = document.getElementById('productor_select');
-            const contenedorEmbarque = document.getElementById('contenedor-sector-exportacion'); // Contenedor del select de rastreo
+            const contenedorEmbarque = document.getElementById('contenedor-sector-exportacion');
             const opcionesEmbarque = document.querySelectorAll('.opcion-embarque');
             const selectEmbarque = document.getElementById('recepcion_exportacion_select');
 
             if (!selectProductor) return;
             const idOperador = selectProductor.value;
 
-            // 1. Ejecuta la carga dinámica de sectores original
             cargarSectoresDelProductor();
 
-            // 2. Filtra el universo de embarques de exportación para este operador específico
             const divEmbarque = document.getElementById('contenedor-embarque-origen');
             if (modoCaptura === 'rechazo' && idOperador) {
-                if (selectEmbarque) selectEmbarque.value = ""; // Resetea selecciones previas para evitar contaminación
+                if (selectEmbarque) selectEmbarque.value = "";
 
                 opcionesEmbarque.forEach(opcion => {
                     if (opcion.getAttribute('data-operador') == idOperador) {
@@ -741,6 +963,139 @@
                 contenedorSector.classList.remove('hidden');
             }
         }
+
+        function abrirModalRestituidas() {
+            document.getElementById('modalRestituidas').classList.remove('hidden');
+            document.getElementById('modalRestituidas').classList.add('flex');
+        }
+
+        function cerrarModalRestituidas() {
+            document.getElementById('modalRestituidas').classList.remove('flex');
+            document.getElementById('modalRestituidas').classList.add('hidden');
+        }
+
+        function abrirModalCondensacion(fecha) {
+            const modal = document.getElementById('modalCondensacion');
+            const inputFecha = document.getElementById('condensacion_fecha_input');
+            const inputAgropark = document.getElementById('condensacion_agropark_input');
+
+            if (!modal) return;
+
+            // 1. Inyectamos la fecha del día al input oculto del formulario
+            if (inputFecha && fecha) {
+                inputFecha.value = fecha;
+            }
+
+            // 2. Buscamos el contenedor .bg-white de la tabla del día correspondiente
+            // Esto se logra buscando el botón exacto que disparó esta fecha y subiendo a su contenedor global
+            const botonDisparador = document.querySelector(`button[onclick="abrirModalCondensacion('${fecha}')"]`);
+            if (!botonDisparador) return;
+
+            const contenedorTabla = botonDisparador.closest('.bg-white');
+            if (!contenedorTabla) return;
+
+            // 3. Si la tabla de este día ya tiene un valor de Agropark renderizado en su resumen gris, lo precargamos
+            if (inputAgropark) {
+                const celdaAgroparkTexto = contenedorTabla.querySelector('.text-blue-400') ? contenedorTabla.querySelector('.text-blue-400').innerText : '';
+                let valorActual = parseFloat(celdaAgroparkTexto.replace(/[^0-9.-]+/g, ""));
+
+                // Si hay un valor numérico real, lo precargamos; si no, dejamos el input limpio para nueva captura
+                inputAgropark.value = (!isNaN(valorActual) && valorActual > 0) ? valorActual : '';
+            }
+
+            // 4. Mostramos el modal de condensación
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            // 5. Lógica de cálculo dinámico visual acoplada estrictamente a la tabla de este día
+            if (inputAgropark) {
+                // Obtenemos el peso neto fijo específico del día actual
+                const textoSuma = contenedorTabla.querySelector('.text-red-400') ? contenedorTabla.querySelector('.text-red-400').innerText : '0';
+                let sumaPesosFijos = parseFloat(textoSuma.replace(/[^0-9.-]+/g, ""));
+
+                // Clonamos el input para destruir listeners viejos de otras fechas y evitar acumulaciones en memoria
+                const nuevoInput = inputAgropark.cloneNode(true);
+                inputAgropark.parentNode.replaceChild(nuevoInput, inputAgropark);
+
+                nuevoInput.addEventListener('input', function() {
+                    let cantidadManual = parseFloat(this.value);
+                    let celdaPorcentaje = contenedorTabla.querySelector('.text-emerald-400');
+                    let celdaAgropark = contenedorTabla.querySelector('.text-blue-400');
+
+                    if (!isNaN(cantidadManual) && cantidadManual > 0 && sumaPesosFijos > 0) {
+                        // Nueva Fórmula: (1 - (Manual / Suma)) * 100
+                        let division = cantidadManual / sumaPesosFijos;
+                        let porcentaje = (1 - division) * 100;
+
+                        // Actualizar vistas del bloque gris diario en tiempo real
+                        if (celdaPorcentaje) celdaPorcentaje.innerText = porcentaje.toFixed(2) + ' %';
+                        if (celdaAgropark) {
+                            let formateado = cantidadManual.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }) + ' kg';
+                            celdaAgropark.innerHTML = `<i class="fa-solid fa-pen-to-square text-xs mr-1"></i> ${formateado}`;
+                        }
+                    }
+                });
+            }
+        }
+
+        function cerrarModalCondensacion() {
+            const modal = document.getElementById('modalCondensacion');
+            const inputFecha = document.getElementById('condensacion_fecha_input');
+
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+
+            // Al cerrar limpiamos el input oculto de fecha para evitar conflictos en la siguiente apertura
+            if (inputFecha) {
+                inputFecha.value = "";
+            }
+        }
+
+        function confirmarEliminacion(id) {
+            if (confirm('¿Estás seguro de que deseas eliminar? Esta acción no se puede deshacer.')) {
+                document.getElementById('form-delete-' + id).submit();
+            }
+        }
+
+        function abrirModalRestituidasPorFecha(fechaSeleccionada) {
+    const modal = document.getElementById('modalRestituidas');
+    const selectEmbarques = document.getElementById('recepcion_exportacion_id');
+    
+    if (!modal || !selectEmbarques) return;
+
+    // Resetear el select a la opción por defecto
+    selectEmbarques.value = "";
+
+    // Obtener todas las opciones del select
+    const opciones = selectEmbarques.querySelectorAll('option');
+
+    opciones.forEach(opcion => {
+        // La opción por defecto (vacía) siempre se queda visible
+        if (opcion.value === "") {
+            opcion.classList.remove('hidden');
+            return;
+        }
+
+        // Leemos la fecha de la opción
+        const fechaOpcion = opcion.getAttribute('data-fecha');
+
+        // Si coincide con la fecha de la tabla actual, la mostramos; si no, la ocultamos
+        if (fechaOpcion === fechaSeleccionada) {
+            opcion.classList.remove('hidden');
+        } else {
+            opcion.classList.add('hidden');
+        }
+    });
+
+    // Abrimos el modal con flex
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
     </script>
 </body>
 
