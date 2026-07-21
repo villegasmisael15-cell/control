@@ -130,7 +130,7 @@
                                         <th class="p-2 text-left">Tipo Aplicación</th>
                                         <th class="p-2 text-left">Producto</th>
                                         <th class="p-2">Dosis / Unidad</th>
-                                        <th class="p-2">IS (Días)</th>
+                                        <th class="p-2">IS</th>
                                         <th class="p-2">Variedad</th>
                                         <th class="p-2">N° Plantas</th>
                                         <th class="p-2">Sol. Madre</th>

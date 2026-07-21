@@ -97,7 +97,7 @@
                                     <th class="p-2 border border-gray-200 w-36">Tipo Aplicación</th>
                                     <th class="p-2 border border-gray-200">Producto</th>
                                     <th class="p-2 border border-gray-200 w-64">Dosis / Unidad</th>
-                                    <th class="p-2 border border-gray-200 w-20">IS (Días)</th>
+                                    <th class="p-2 border border-gray-200 w-20">IS</th>
                                     <th class="p-2 border border-gray-200">Variedad</th>
                                     <th class="p-2 border border-gray-200 w-24">N° Plantas</th>
                                     <th class="p-2 border border-gray-200">Sol. Madre</th>
