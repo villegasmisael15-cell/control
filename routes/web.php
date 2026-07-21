@@ -79,6 +79,15 @@ Route::put('/reportes/{recepcion_id}', [ReporteController::class, 'update'])->na
     // 3. IMPLEMENTACIÓN: REGISTRO OBLIGATORIO DE CARACTERÍSTICAS DE SECTOR
     // Estas rutas manejan la pantalla de bloqueo técnico para operadores sin datos base
 Route::get('/sectores/configurar-inicial', function () {
+
+$user = auth()->user();
+
+    // ─── AQUÍ AGREGAMOS LA LLAMADA A TU NUEVO ROL ───
+    // Si el usuario es el 'admin_general', se salta el bloqueo y va directo al dashboard
+    if ($user->rol === 'admin_general') {
+        return redirect('/dashboard');
+    }
+
     $sectoresTexto = auth()->user()->sectores;
     $primerSector = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto))[0] : null;
 
