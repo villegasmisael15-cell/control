@@ -149,7 +149,7 @@
                                         <td class="p-2">
                                             @if($arq->is_intervalo_seguridad)
                                             <span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[10px]">
-                                                {{ $arq->is_intervalo_seguridad }} d
+                                                {{ $arq->is_intervalo_seguridad }} 
                                             </span>
                                             @else
                                             <span class="text-gray-400">—</span>
