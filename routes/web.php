@@ -64,7 +64,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/sectores/configurar-inicial', function () {
         $user = auth()->user();
 
-        // BYPASS: Si es el admin general, ignoramos por completo el bloqueo y va al dashboard
+        // BYPASS: Si el usuario es 'admin_general', salta el bloqueo directo al dashboard
         if ($user->rol === 'admin_general') {
             return redirect('/dashboard');
         }
@@ -102,7 +102,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return redirect('/dashboard')->with('status', 'Sector configurado correctamente.');
     })->name('sectores.guardar_inicial');
 
-
     Route::get('/suelo', [SueloMonitoreoController::class, 'index'])->name('suelo.index');
     Route::get('/suelo/nuevo', [SueloMonitoreoController::class, 'create'])->name('suelo.create');
     Route::post('/suelo/guardar', [SueloMonitoreoController::class, 'store'])->name('suelo.store');
@@ -128,56 +127,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/recepcion/exportacion/{id}', [RecepcionController::class, 'destroyExportacion'])->name('recepcion.destroyExportacion');
     });
 
-});
-
-
-    // 3. IMPLEMENTACIÓN: REGISTRO OBLIGATORIO DE CARACTERÍSTICAS DE SECTOR
-    // Estas rutas manejan la pantalla de bloqueo técnico para operadores sin datos base
-Route::get('/sectores/configurar-inicial', function () {
-
-$user = auth()->user();
-
-    // ─── AQUÍ AGREGAMOS LA LLAMADA A TU NUEVO ROL ───
-    // Si el usuario es el 'admin_general', se salta el bloqueo y va directo al dashboard
-    if ($user->rol === 'admin_general') {
-        return redirect('/dashboard');
-    }
-
-    $sectoresTexto = auth()->user()->sectores;
-    $primerSector = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto))[0] : null;
-
-    $sector = session('sector_pendiente') ?? $primerSector;
-
-    if (!$sector) {
-        return redirect('/dashboard');
-    }
-    return view('sectores.configurar_inicial', compact('sector'));
-})->name('sectores.configurar');
-
-Route::post('/sectores/configurar-inicial', function (Request $request) {
-    // 1. Añadimos 'macetas_por_gotero' a la validación
-    $request->validate([
-        'sector'             => 'required|string',
-        'superficie_m2'      => 'required|integer|min:1',
-        'variedad'           => 'required|string|max:255',
-        'macetas_por_gotero' => 'required|integer|min:1', 
-        'fecha_trasplante'   => 'required|date',
-    ]);
-
-    // 2. Añadimos el campo al guardar en la base de datos
-    \App\Models\SectorCaracteristica::updateOrCreate(
-        ['sector' => $request->sector],
-        [
-            'superficie_m2'      => $request->superficie_m2,
-            'variedad'           => $request->variedad,
-            'macetas_por_gotero' => $request->macetas_por_gotero, // <-- NUEVO CAMPO A GUARDAR
-            'fecha_trasplante'   => $request->fecha_trasplante
-        ]
-    );
-
-    return redirect('/dashboard')->with('status', 'Sector configurado correctamente.');
-})->name('sectores.guardar_inicial');
-
+}); // Cierre correcto del middleware global group
 
 // Las rutas de autenticación de Breeze (Login, Registro, etc.) se cargan aquí:
 require __DIR__ . '/auth.php';
