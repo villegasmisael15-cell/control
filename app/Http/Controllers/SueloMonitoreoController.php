@@ -20,7 +20,7 @@ class SueloMonitoreoController extends Controller
             $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
             $query->whereIn('sector', $sectoresAsignados);
         } else {
-            // Buscador unificado para el Administrador
+            // Buscador unificado para el Administrator
             if ($request->filled('buscar_termino')) {
                 $termino = $request->input('buscar_termino');
                 $query->where(function ($q) use ($termino) {
@@ -65,12 +65,17 @@ class SueloMonitoreoController extends Controller
             $request->session()->forget('ultimo_filtro_suelo');
         }
 
-        $monitoreos = $query->get();
+        // 💡 CORRECCIÓN AQUI: Mapeamos los resultados para buscar al dueño real del sector
+        $monitoreos = $query->get()->map(function($monitoreo) {
+            $dueno = User::where('sectores', 'LIKE', '%' . trim($monitoreo->sector) . '%')->first();
+            $monitoreo->dueno_sector = $dueno ? $dueno->name : 'Sin asignar / General';
+            return $monitoreo;
+        });
 
         return view('suelo.index', compact('monitoreos'));
     }
 
-    public function create()
+  public function create()
     {
         $user = auth()->user();
 
@@ -98,10 +103,18 @@ class SueloMonitoreoController extends Controller
 
     public function store(Request $request)
     {
-        // Forzamos hora actual y ID del operador en el request
+        // 1. Identificamos dinámicamente quién es el verdadero dueño del sector enviado
+        $sectorBuscado = trim($request->input('sector'));
+        
+        $duenoSector = User::where('sectores', 'LIKE', '%' . $sectorBuscado . '%')->first();
+        
+        // Si por alguna razón extraña no encontramos un dueño asignado, usamos el ID logueado como respaldo de seguridad
+        $idDuenoReal = $duenoSector ? $duenoSector->id : auth()->id();
+
+        // 2. Forzamos la hora actual y el ID del DUEÑO REAL del sector en el request antes de validar
         $request->merge([
             'radiacion_hora' => now()->format('H:i:s'),
-            'user_id' => auth()->id()
+            'user_id'        => $idDuenoReal // <-- AQUÍ SE REALIZA LA MAGIA
         ]);
 
         $request->validate([
@@ -119,6 +132,34 @@ class SueloMonitoreoController extends Controller
             'radiacion_semaforo' => 'required|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
+
+            // Alertas condicionales
+            'alerta_opcion'           => 'nullable|array',
+            'alerta_opcion.*'         => 'string|in:EPS,ECP',
+
+            // Análisis Rápido
+            'analisis_rapido_cumplio' => 'required|string|in:si,no',
+            'rapido_no3'              => 'nullable|string|max:50',
+            'rapido_k'                => 'nullable|string|max:50',
+            'rapido_ca'               => 'nullable|string|max:50',
+            'rapido_na'               => 'nullable|string|max:50',
+            'rapido_p'                => 'nullable|string|max:50',
+            'rapido_ph'               => 'nullable|string|max:50',
+            'rapido_ce'               => 'nullable|string|max:50',
+
+            // Análisis de Laboratorio
+            'lab_mo'                  => 'nullable|string|max:50',
+            'lab_p_bray'              => 'nullable|string|max:50',
+            'lab_k'                   => 'nullable|string|max:50',
+            'lab_mg'                  => 'nullable|string|max:50',
+            'lab_na'                  => 'nullable|string|max:50',
+            'lab_fe'                  => 'nullable|string|max:50',
+            'lab_zn'                  => 'nullable|string|max:50',
+            'lab_mn'                  => 'nullable|string|max:50',
+            'lab_cu'                  => 'nullable|string|max:50',
+            'lab_b'                   => 'nullable|string|max:50',
+            'lab_s'                   => 'nullable|string|max:50',
+            'lab_n_no3'               => 'nullable|string|max:50',
         ]);
 
         // --- PROCESAMIENTO BIOCLIMÁTICO AUTOMATIZADO ---
@@ -132,10 +173,20 @@ class SueloMonitoreoController extends Controller
             $estatus_general = ($dpv >= 0.8 && $dpv <= 1.4) ? 'ÓPTIMO' : 'REVISAR CLIMA';
         }
 
-        SueloMonitoreo::create(array_merge($request->all(), [
-            'dpv' => $dpv,
-            'estatus_general' => $estatus_general,
-        ]));
+        // --- PROCESAMIENTO DE ALERTAS DE CONDUCTIVIDAD ELÉCTRICA (CE) ---
+        $alertaCeOpcion = null;
+        if ($request->filled('ce') && (float)$request->ce > 3.0 && $request->has('alerta_opcion')) {
+            $alertaCeOpcion = implode(', ', $request->alerta_opcion);
+        }
+
+        // --- MAPEADO FORZADO E INSERCIÓN BLINDADA ---
+        $datosAGuardar = array_merge($request->all(), [
+            'dpv'              => $dpv,
+            'estatus_general'  => $estatus_general,
+            'alerta_ce_opcion' => $alertaCeOpcion,
+        ]);
+
+        SueloMonitoreo::create($datosAGuardar);
 
         return redirect()->route('suelo.index')->with('status', '¡Registro de Suelo guardado con éxito!');
     }

@@ -29,6 +29,34 @@ class SueloMonitoreo extends Model
         'radiacion_lectura',
         'radiacion_semaforo',
         'radiacion_accion_tomada',
+        
+        // 💡 NUEVOS CAMPOS AÑADIDOS:
+        // Control de Alerta CE
+        'alerta_ce_opcion',
+
+        // Análisis Rápido
+        'analisis_rapido_cumplio',
+        'rapido_no3',
+        'rapido_k',
+        'rapido_ca',
+        'rapido_na',
+        'rapido_p',
+        'rapido_ph',
+        'rapido_ce',
+
+        // Análisis de Laboratorio
+        'lab_mo',
+        'lab_p_bray',
+        'lab_k',
+        'lab_mg',
+        'lab_na',
+        'lab_fe',
+        'lab_zn',
+        'lab_mn',
+        'lab_cu',
+        'lab_b',
+        'lab_s',
+        'lab_n_no3',
     ];
 
     /**

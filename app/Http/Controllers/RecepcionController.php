@@ -382,26 +382,32 @@ class RecepcionController extends Controller
     /**
      * Almacena o modifica la condensación diaria (Agropark) de forma segura.
      */
-    public function guardarCondensacion(Request $request): RedirectResponse
+   public function guardarCondensacion(Request $request): RedirectResponse
     {
-        // Validación: Hacemos los totales globales opcionales para permitir el registro limpio del Agropark solo
+        // Validación: Agregamos las cajas_enviadas como opcionales a la lista existente
         $request->validate([
             'fecha'                  => ['required', 'date'],
             'total_empacados_global' => ['nullable', 'numeric', 'min:0'],
             'total_nacional_global'  => ['nullable', 'numeric', 'min:0'],
             'agropark'               => ['nullable', 'numeric', 'min:0'],
+            'cajas_enviadas'         => ['nullable', 'integer', 'min:1'], // <-- Agregado
         ]);
 
         try {
             $fechaFormateada = \Carbon\Carbon::parse($request->fecha)->format('Y-m-d');
 
-            // CORRECCIÓN DE NAMESPACE: Añadido \ antes de DB
+            // Buscamos el registro actual de condensación para este día
             $controlCondensacion = \DB::table('control_condensaciones')->whereDate('fecha', $fechaFormateada)->first();
 
             // Si se envía un nuevo valor de Agropark lo tomamos; si no, conservamos el actual de la BD
             $agroparkExistente = $request->has('agropark') && $request->agropark !== null
                 ? (float)$request->agropark
                 : ($controlCondensacion->agropark ?? 0.0);
+
+            // 💡 NUEVO: Si se envía un nuevo valor de Cajas Enviadas lo tomamos; si no, conservamos el de la BD
+            $cajasEnviadasExistentes = $request->has('cajas_enviadas') && $request->cajas_enviadas !== null
+                ? (int)$request->cajas_enviadas
+                : ($controlCondensacion->cajas_enviadas ?? 0);
 
             // Rescatamos los totales globales del formulario o mantenemos los actuales (0 por defecto)
             $empacadosGlobal = $request->filled('total_empacados_global') ? (float)$request->total_empacados_global : ($controlCondensacion->total_empacados_global ?? 0.00);
@@ -420,12 +426,13 @@ class RecepcionController extends Controller
                 ? (int)$request->semana
                 : (int)\Carbon\Carbon::parse($fechaFormateada)->weekOfYear;
 
-            // CORRECCIÓN DE NAMESPACE: Añadido \ antes de DB para el guardado físico del Agropark
+            // Guardamos o actualizamos incluyendo la nueva columna sin pisar datos anteriores
             \DB::table('control_condensaciones')->updateOrInsert(
                 ['fecha' => $fechaFormateada],
                 [
                     'semana'                 => $semanaCalculada,
                     'agropark'               => $agroparkExistente,
+                    'cajas_enviadas'         => $cajasEnviadasExistentes, // <-- CAMPO EN BASE DE DATOS INYECTADO
                     'total_empacados_global' => $empacadosGlobal,
                     'total_nacional_global'  => $nacionalGlobal,
                     'factor_multiplicador'   => $resultado2_factor,
@@ -471,12 +478,12 @@ class RecepcionController extends Controller
                         if ($empacadosFinalCalculado < 0) $empacadosFinalCalculado = 0;
                     }
 
-                    // OBTENEMOS EL RECHAZO POSTERIOR EXISTENTE (si ya había uno guardado en la BD)
+                    // OBTENEMOS EL RECHAZO POSTERIOR EXISTENTE
                     $rechazoPostExistente = \DB::table('reportes')
                         ->where('recepcion_exportacion_id', $registro->id)
                         ->value('rechazo_post') ?? 0.00;
 
-                    // Los kilos aceptados finales que se guardan en caliente son: Peso Neto Inicial - Rechazo Posterior
+                    // Los kilos aceptados finales que se guardan en caliente
                     $aceptadosKgGuardar = $pesoNeto - (float)$rechazoPostExistente;
                     $aceptadosKgGuardar = $aceptadosKgGuardar >= 0 ? $aceptadosKgGuardar : 0.00;
 
@@ -491,7 +498,7 @@ class RecepcionController extends Controller
                                 'participacion' => $participacionCalculada,
                                 'nacional'      => $resultado3_nacional,
                                 'empacados'     => $empacadosFinalCalculado,
-                                'aceptados_kg'  => $aceptadosKgGuardar, // <--- SE GUARDA DIRECTAMENTE AQUÍ
+                                'aceptados_kg'  => $aceptadosKgGuardar,
                                 'aprobado'      => \DB::table('reportes')->where('recepcion_exportacion_id', $registro->id)->value('aprobado') ?? false,
                                 'created_at'    => \DB::table('reportes')->where('recepcion_exportacion_id', $registro->id)->value('created_at') ?? now(),
                                 'updated_at'    => now()
@@ -500,9 +507,11 @@ class RecepcionController extends Controller
                 }
             }
 
-            return redirect()->back()->with('success', '¡Agropark y parámetros del día guardados con éxito!');
+            return redirect()->back()->with('success', '¡Parámetros y cajas del día guardados con éxito!');
         } catch (\Exception $e) {
             return redirect()->back()->withErrors(['error' => 'Error crítico al guardar los datos: ' . $e->getMessage()]);
         }
     }
+
+    
 }

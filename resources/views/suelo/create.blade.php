@@ -85,7 +85,6 @@
                         <div class="mt-2">
                             <label class="block text-[11px] font-bold text-gray-500 uppercase mb-1">Estado del Suelo:</label>
                             <input type="text" id="tensiometro_alerta_view" value="Esperando lectura..." disabled class="w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center">
-                            
                             <input type="hidden" id="tensiometro_estatus" name="tensiometro_estatus" value="">
                         </div>
                     </div>
@@ -99,6 +98,19 @@
                         <div>
                             <label class="block text-xs font-medium text-gray-600 mb-0.5">Potencial de Hidrógeno (pH)</label>
                             <input type="number" step="0.1" id="ph" name="ph" placeholder="Ej: 6.2" class="w-full bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm focus:outline-emerald-500">
+                        </div>
+
+                        {{-- ALERTA CONDICIONAL PARA CE > 3.0 --}}
+                        <div id="alerta_ce" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg space-y-2">
+                            <span class="text-[11px] font-bold text-red-700 uppercase block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Alerta: CE Excesiva (> 3.0)</span>
+                            <div class="flex flex-wrap gap-3 text-xs font-semibold text-gray-700">
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="checkbox" name="alerta_opcion[]" value="EPS" class="rounded text-red-600 focus:ring-red-500"> EPS
+                                </label>
+                                <label class="flex items-center gap-1 cursor-pointer">
+                                    <input type="checkbox" name="alerta_opcion[]" value="ECP" class="rounded text-red-600 focus:ring-red-500"> ECP
+                                </label>
+                            </div>
                         </div>
                     </div>
 
@@ -136,6 +148,111 @@
 
                 </div>
 
+                {{-- APARTADO: ANÁLISIS RÁPIDO --}}
+                <div id="seccion_analisis_rapido" class="hidden bg-cyan-50/40 p-5 rounded-xl border border-cyan-200 space-y-4">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-cyan-200 pb-2 gap-2">
+                        <h3 class="font-bold text-base text-cyan-900 flex items-center gap-1.5">
+                            <i class="fa-solid fa-bolt-lightning text-cyan-600"></i> Análisis Rápido
+                        </h3>
+                        <div class="flex items-center gap-2">
+                            <label class="text-xs font-bold text-gray-700 uppercase tracking-wider">¿Se cumplió?</label>
+                            <select name="analisis_rapido_cumplio" id="analisis_rapido_cumplio" onchange="evaluarCumplimiento()" class="bg-white border border-gray-300 rounded-lg p-1.5 text-xs font-bold outline-none text-gray-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500">
+                                <option value="si" selected>SÍ</option>
+                                <option value="no">NO</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">No3</label>
+                            <input type="text" name="rapido_no3" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">K</label>
+                            <input type="text" name="rapido_k" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Ca</label>
+                            <input type="text" name="rapido_ca" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Na</label>
+                            <input type="text" name="rapido_na" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">P</label>
+                            <input type="text" name="rapido_p" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">PH</label>
+                            <input type="text" name="rapido_ph" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Ce</label>
+                            <input type="text" name="rapido_ce" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                        </div>
+                    </div>
+                </div>
+
+                {{-- APARTADO: ANÁLISIS DE LABORATORIO --}}
+                <div id="seccion_laboratorio" class="hidden bg-emerald-50/30 p-5 rounded-xl border border-emerald-200 space-y-4">
+                    <h3 class="font-bold text-base text-emerald-900 border-b border-emerald-200 pb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-microscope text-emerald-600"></i> Análisis de Laboratorio
+                    </h3>
+                    
+                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">MO</label>
+                            <input type="text" name="lab_mo" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">P-Bray</label>
+                            <input type="text" name="lab_p_bray" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">K</label>
+                            <input type="text" name="lab_k" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Mg</label>
+                            <input type="text" name="lab_mg" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Na</label>
+                            <input type="text" name="lab_na" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Fe</label>
+                            <input type="text" name="lab_fe" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Zn</label>
+                            <input type="text" name="lab_zn" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Mn</label>
+                            <input type="text" name="lab_mn" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Cu</label>
+                            <input type="text" name="lab_cu" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">B</label>
+                            <input type="text" name="lab_b" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">S</label>
+                            <input type="text" name="lab_s" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">N-NO3</label>
+                            <input type="text" name="lab_n_no3" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-emerald-500">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="flex justify-end pt-4">
                     <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-3 rounded-lg shadow-md transition cursor-pointer">
                         <i class="fa-solid fa-floppy-disk mr-2"></i> Guardar Registro Suelo
@@ -146,7 +263,7 @@
     </main>
 
     <script>
-    const inputs = ['temperatura', 'humedad', 'radiacion_lectura', 'lectura_tensiometro'];
+    const inputs = ['temperatura', 'humedad', 'radiacion_lectura', 'lectura_tensiometro', 'ce'];
 
     inputs.forEach(id => {
         document.getElementById(id).addEventListener('input', calcularValores);
@@ -157,8 +274,26 @@
         const hum = parseFloat(document.getElementById('humedad').value);
         const lux = parseFloat(document.getElementById('radiacion_lectura').value);
         const tensio = parseFloat(document.getElementById('lectura_tensiometro').value);
+        const ceValor = parseFloat(document.getElementById('ce').value);
 
-        // 1. Cálculo DPV y Caja Predictiva General
+        const divAlertaCe = document.getElementById('alerta_ce');
+        const divAnalisisRapido = document.getElementById('seccion_analisis_rapido');
+        const divSeccionLab = document.getElementById('seccion_laboratorio');
+        const selectCumplio = document.getElementById('analisis_rapido_cumplio');
+
+        if (!isNaN(ceValor) && ceValor > 3.0) {
+            divAlertaCe.classList.remove('hidden');
+            divAnalisisRapido.classList.remove('hidden');
+            if (selectCumplio.value === 'no') {
+                divSeccionLab.classList.remove('hidden');
+            }
+        } else {
+            divAlertaCe.classList.add('hidden');
+            divAnalisisRapido.classList.add('hidden');
+            divSeccionLab.classList.add('hidden');
+        }
+
+        // 1. Cálculo DPV
         const eBox = document.getElementById('estatus_box');
         const eText = document.getElementById('estatus_text');
 
@@ -183,7 +318,7 @@
             eText.innerText = "—";
         }
 
-        // 2. Semáforo del Tensiómetro con asignación al input Hidden
+        // 2. Tensiómetro
         const tAlertaView = document.getElementById('tensiometro_alerta_view');
         const tEstatusHidden = document.getElementById('tensiometro_estatus');
         
@@ -214,7 +349,7 @@
             tEstatusHidden.value = "";
         }
 
-        // 3. Semáforo Radiación y Acciones
+        // 3. Radiación
         const rSemaforoView = document.getElementById('radiacion_semaforo_view');
         const rSemaforoHidden = document.getElementById('radiacion_semaforo');
         const rAccionTomada = document.getElementsByName('radiacion_accion_tomada')[0];
@@ -251,6 +386,17 @@
             rSemaforoView.value = "Esperando datos...";
             rSemaforoHidden.value = "";
             rAccionTomada.value = "";
+        }
+    }
+
+    function evaluarCumplimiento() {
+        const seleccion = document.getElementById('analisis_rapido_cumplio').value;
+        const seccionLab = document.getElementById('seccion_laboratorio');
+        
+        if (seleccion === 'no') {
+            seccionLab.classList.remove('hidden');
+        } else {
+            seccionLab.classList.add('hidden');
         }
     }
 </script>

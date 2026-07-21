@@ -74,39 +74,55 @@ class SanidadNutricionBitacoraController extends Controller
         return view('sanidad.index', compact('bitacoras'));
     }
 
-   public function create()
-{
-    $user = auth()->user();
+    public function create()
+    {
+        $user = auth()->user();
 
-    // 1. NUEVO: Obtener todos los operadores con sus sectores para el mapeo dinámico en JS
-    $operadores = User::where('rol', 'operador')
-        ->select('id', 'name', 'sectores')
-        ->orderBy('name', 'asc')
-        ->get();
+        // 1. Obtener todos los operadores para el mapeo en el selector inicial
+        $operadores = User::where('rol', 'operador')
+            ->select('id', 'name', 'sectores')
+            ->orderBy('name', 'asc')
+            ->get();
 
-    // 2. Mantenemos tu lógica original intacta para la obtención de sectores según el rol
-    if ($user->rol === 'administrador') {
-        $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
-        $sectoresUnicos = [];
-        foreach ($todosLosSectoresTexto as $cadena) {
-            $partes = explode(',', $cadena);
-            foreach ($partes as $sector) {
-                $sectorLimpio = trim($sector);
-                if (!empty($sectorLimpio)) {
-                    $sectoresUnicos[] = $sectorLimpio;
+        // 2. Obtener lista de sectores crudos según los permisos del rol
+        if ($user->rol === 'administrador') {
+            $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
+            $sectoresUnicos = [];
+            foreach ($todosLosSectoresTexto as $cadena) {
+                $partes = explode(',', $cadena);
+                foreach ($partes as $sector) {
+                    $sectorLimpio = trim($sector);
+                    if (!empty($sectorLimpio)) {
+                        $sectoresUnicos[] = $sectorLimpio;
+                    }
                 }
             }
+            $listaSectores = array_unique($sectoresUnicos);
+        } else {
+            $sectoresTexto = $user->sectores;
+            $listaSectores = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
         }
-        $sectores = array_unique($sectoresUnicos);
-        sort($sectores);
-    } else {
-        $sectoresTexto = $user->sectores;
-        $sectores = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
-    }
 
-    // 3. Pasamos tanto tus sectores como la nueva colección de operadores a la vista
-    return view('sanidad.create', compact('sectores', 'operadores'));
-}
+        // 3. 💡 RECTIFICADO: Estructura bidimensional para amarrar variedad y fecha de trasplante juntas
+        $sectoresConVariedad = [];
+        foreach ($listaSectores as $sectorName) {
+            $caracteristica = DB::table('sector_caracteristicas')
+                ->where('sector', $sectorName)
+                ->first();
+
+            // Guardamos ambos campos mapeados estructurados por llave de sector
+            $sectoresConVariedad[$sectorName] = [
+                'variedad'         => $caracteristica ? $caracteristica->variedad : '',
+                'fecha_trasplante' => $caracteristica ? $caracteristica->fecha_trasplante : ''
+            ];
+        }
+
+        // Ordenamos alfabéticamente por sector
+        ksort($sectoresConVariedad);
+
+        // 4. Mandamos las colecciones completas a la vista
+        return view('sanidad.create', compact('operadores', 'sectoresConVariedad'));
+    }
 
     public function store(Request $request)
     {
@@ -115,6 +131,7 @@ class SanidadNutricionBitacoraController extends Controller
             // Datos Maestro
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
+            'operador_id' => 'required|exists:users,id',
 
             // Arreglos de Manejo de Agroquímicos
             'fecha_aplicacion' => 'required|array',
@@ -130,9 +147,12 @@ class SanidadNutricionBitacoraController extends Controller
             'is_intervalo_seguridad' => 'nullable|array',
             'variedad' => 'nullable|array',
             'numero_plantas' => 'nullable|array',
-            'solucion_madre' => 'nullable|array',
+            
+            // 💡 CAMBIO DE VALIDACIÓN: Se valida el selector dual
+            'tipo_solucion' => 'required|array',
+            'tipo_solucion.*' => 'required|string|in:SOLUCION MADRE,SOLUCION DIARIA',
+
             'fecha_trasplante' => 'nullable|array',
-            'solucion_diaria' => 'nullable|array',
             'agroquimicos_observaciones' => 'nullable|array',
 
             // Arreglos de Manejo de Fertilizantes
@@ -159,6 +179,14 @@ class SanidadNutricionBitacoraController extends Controller
 
             // 2. Procesar e insertar bloque: Manejo de Agroquímicos
             foreach ($request->aplicacion as $index => $val) {
+                
+                // 💡 DETERMINAR QUÉ COLUMNA RELLENAR EN LA BD SEGÚN LA OPCIÓN ELEGIDA
+                $opcionSolucion = $request->tipo_solucion[$index];
+                $valSolucionMadre = ($opcionSolucion === 'SOLUCION MADRE') ? 'SÍ' : null; 
+                $valSolucionDiaria = ($opcionSolucion === 'SOLUCION DIARIA') ? 'SÍ' : null;
+                // Nota: Si en tu base de datos guardas el texto literal (ej. "Solución Madre" en lugar de un indicador SÍ/NO), 
+                // puedes asignar directamente la variable $opcionSolucion a la columna que prefieras.
+
                 ManejoAgroquimico::create([
                     'bitacora_id'            => $bitacora->id,
                     'fecha_aplicacion'       => $request->fecha_aplicacion[$index],
@@ -170,9 +198,12 @@ class SanidadNutricionBitacoraController extends Controller
                     'is_intervalo_seguridad' => $request->is_intervalo_seguridad[$index] ?? null,
                     'variedad'               => $request->variedad[$index] ?? null,
                     'numero_plantas'         => $request->numero_plantas[$index] ?? null,
-                    'solucion_madre'         => $request->solucion_madre[$index] ?? null,
+                    
+                    // 💡 ASIGNACIÓN DINÁMICA: Guarda el valor según el tipo seleccionado
+                    'solucion_madre'         => $valSolucionMadre,
+                    'solucion_diaria'        => $valSolucionDiaria,
+
                     'fecha_trasplante'       => $request->fecha_trasplante[$index] ?? null,
-                    'solucion_diaria'        => $request->solucion_diaria[$index] ?? null,
                     'observaciones'          => $request->agroquimicos_observaciones[$index] ?? null,
                 ]);
             }
@@ -180,22 +211,20 @@ class SanidadNutricionBitacoraController extends Controller
             // 3. Procesar e insertar bloque: Manejo de Fertilizantes
             foreach ($request->tanque as $index => $val) {
                 ManejoFertilizante::create([
-                    'bitacora_id'        => $bitacora->id,
-                    'tanque'             => $request->tanque[$index],
-                    'cantidad'           => $request->cantidad[$index],
-                    'unidad_cantidad'    => $request->unidad_cantidad[$index],
+                    'bitacora_id'    => $bitacora->id,
+                    'tanque'         => $request->tanque[$index],
+                    'cantidad'       => $request->cantidad[$index],
+                    'unidad_cantidad'=> $request->unidad_cantidad[$index],
                     'labores_culturales' => $request->labores_culturales[$index] ?? null,
-                    'observaciones'      => $request->fertilizantes_observaciones[$index] ?? null,
+                    'observaciones'  => $request->fertilizantes_observaciones[$index] ?? null,
                 ]);
             }
 
-            // Si todo salió bien, confirmamos los cambios permanentes
             DB::commit();
 
             return redirect()->route('sanidad.index')->with('status', '¡Bitácora de Sanidad y Nutrición guardada con éxito!');
 
         } catch (\Exception $e) {
-            // Si algo falla, cancelamos todo el proceso para evitar datos corruptos
             DB::rollBack();
             return redirect()->back()->withInput()->withErrors(['error' => 'Error al guardar el registro: ' . $e->getMessage()]);
         }

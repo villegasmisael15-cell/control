@@ -68,7 +68,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-bold text-gray-700 uppercase mb-1">2. Sector / Nave Autorizada:</label>
-                        <select name="sector" id="sector" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-gray-100" required disabled>
+                        <select name="sector" id="sector" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-gray-100" required disabled onchange="cambiarDatosPorSector()">
                             <option value="">Primero elija un operador...</option>
                         </select>
                         @error('sector')
@@ -100,9 +100,8 @@
                                     <th class="p-2 border border-gray-200 w-20">IS</th>
                                     <th class="p-2 border border-gray-200">Variedad</th>
                                     <th class="p-2 border border-gray-200 w-24">N° Plantas</th>
-                                    <th class="p-2 border border-gray-200">Sol. Madre</th>
+                                    <th class="p-2 border border-gray-200 w-40">Tipo Solución</th>
                                     <th class="p-2 border border-gray-200 w-32">F. Trasplante</th>
-                                    <th class="p-2 border border-gray-200">Sol. Diaria</th>
                                     <th class="p-2 border border-gray-200">Observaciones</th>
                                     <th class="p-2 border border-gray-200 text-center w-12">Acción</th>
                                 </tr>
@@ -136,11 +135,18 @@
                                     </td>
 
                                     <td class="p-1 border border-gray-200"><input type="number" name="is_intervalo_seguridad[]" placeholder="0" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                                    <td class="p-1 border border-gray-200"><input type="text" name="variedad[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
+                                    <td class="p-1 border border-gray-200"><input type="text" name="variedad[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500 campo-variedad-dinamico"></td>
                                     <td class="p-1 border border-gray-200"><input type="number" name="numero_plantas[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                                    <td class="p-1 border border-gray-200"><input type="text" name="solucion_madre[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                                    <td class="p-1 border border-gray-200"><input type="date" name="fecha_trasplante[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                                    <td class="p-1 border border-gray-200"><input type="text" name="solucion_diaria[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
+                                    
+                                    <!-- 💡 CAMBIO PRINCIPAL: Selector dual para elegir Solución Madre o Solución Diaria -->
+                                    <td class="p-1 border border-gray-200">
+                                        <select name="tipo_solucion[]" required class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500 bg-white font-medium text-emerald-800">
+                                            <option value="SOLUCION MADRE">Solución Madre</option>
+                                            <option value="SOLUCION DIARIA">Solución Diaria</option>
+                                        </select>
+                                    </td>
+
+                                    <td class="p-1 border border-gray-200"><input type="date" name="fecha_trasplante[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500 campo-trasplante-dinamico"></td>
                                     <td class="p-1 border border-gray-200"><input type="text" name="agroquimicos_observaciones[]" placeholder="..." class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
                                     <td class="p-1 border border-gray-200 text-center">
                                         <button type="button" onclick="eliminarFila(this)" class="text-red-500 hover:text-red-700 text-sm cursor-pointer disabled:opacity-30" disabled>&times;</button>
@@ -168,7 +174,6 @@
                             <thead>
                                 <tr class="bg-gray-100 text-gray-700 font-semibold text-xs border-b border-gray-200">
                                     <th class="p-2 border border-gray-200 w-1/2">Tanque</th>
-                                    <!-- CORREGIDO: Encabezado Unificado Cantidad / Unidad -->
                                     <th class="p-2 border border-gray-200 w-1/2">Cantidad / Unidad</th>
                                     <th class="p-2 border border-gray-200 text-center w-12">Acción</th>
                                 </tr>
@@ -178,7 +183,6 @@
                                     <td class="p-1.5 border border-gray-200">
                                         <input type="text" name="tanque[]" placeholder="Ej: Tanque A" required class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500">
                                     </td>
-                                    <!-- CORREGIDO: Campos Juntos en la Misma Celda con Desglose Híbrido -->
                                     <td class="p-1.5 border border-gray-200">
                                         <div class="flex flex-col gap-1">
                                             <div class="flex gap-1">
@@ -225,6 +229,9 @@
 
     <script>
         const hoy = "{{ date('Y-m-d') }}";
+        const mapaSectoresData = @json($sectoresConVariedad);
+        let variedadActualCargada = "";
+        let trasplanteActualCargado = "";
 
         function evaluarUnidadManual(elementoSelect) {
             const contenedor = elementoSelect.parentElement.parentElement;
@@ -249,6 +256,10 @@
             const cadenaSectores = opcionSeleccionada.getAttribute('data-sectores');
 
             selectSector.innerHTML = '';
+            document.querySelectorAll('.campo-variedad-dinamico').forEach(input => input.value = "");
+            document.querySelectorAll('.campo-trasplante-dinamico').forEach(input => input.value = "");
+            variedadActualCargada = "";
+            trasplanteActualCargado = "";
 
             if (!cadenaSectores || cadenaSectores.trim() === '') {
                 selectSector.innerHTML = '<option value="">Este operador no tiene sectores asignados</option>';
@@ -274,6 +285,26 @@
                     opt.textContent = sector;
                     selectSector.appendChild(opt);
                 }
+            });
+        }
+
+        function cambiarDatosPorSector() {
+            const sectorSeleccionado = document.getElementById('sector').value.trim();
+            
+            if (sectorSeleccionado === "" || !mapaSectoresData.hasOwnProperty(sectorSeleccionado)) {
+                variedadActualCargada = "";
+                trasplanteActualCargado = "";
+            } else {
+                variedadActualCargada = mapaSectoresData[sectorSeleccionado].variedad || "";
+                trasplanteActualCargado = mapaSectoresData[sectorSeleccionado].fecha_trasplante || "";
+            }
+
+            document.querySelectorAll('.campo-variedad-dinamico').forEach(input => {
+                input.value = variedadActualCargada;
+            });
+
+            document.querySelectorAll('.campo-trasplante-dinamico').forEach(input => {
+                input.value = trasplanteActualCargado;
             });
         }
 
@@ -309,11 +340,18 @@
                 </td>
 
                 <td class="p-1 border border-gray-200"><input type="number" name="is_intervalo_seguridad[]" placeholder="0" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                <td class="p-1 border border-gray-200"><input type="text" name="variedad[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
+                <td class="p-1 border border-gray-200"><input type="text" name="variedad[]" value="${variedadActualCargada}" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500 campo-variedad-dinamico"></td>
                 <td class="p-1 border border-gray-200"><input type="number" name="numero_plantas[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                <td class="p-1 border border-gray-200"><input type="text" name="solucion_madre[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                <td class="p-1 border border-gray-200"><input type="date" name="fecha_trasplante[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                <td class="p-1 border border-gray-200"><input type="text" name="solucion_diaria[]" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
+                
+                <!-- 💡 Selector duplicado en filas dinámicas -->
+                <td class="p-1 border border-gray-200">
+                    <select name="tipo_solucion[]" required class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500 bg-white font-medium text-emerald-800">
+                        <option value="SOLUCION MADRE">Solución Madre</option>
+                        <option value="SOLUCION DIARIA">Solución Diaria</option>
+                    </select>
+                </td>
+
+                <td class="p-1 border border-gray-200"><input type="date" name="fecha_trasplante[]" value="${trasplanteActualCargado}" class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500 campo-trasplante-dinamico"></td>
                 <td class="p-1 border border-gray-200"><input type="text" name="agroquimicos_observaciones[]" placeholder="..." class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
                 <td class="p-1 border border-gray-200 text-center">
                     <button type="button" onclick="eliminarFila(this)" class="text-red-500 hover:text-red-700 text-sm cursor-pointer">&times;</button>
@@ -329,8 +367,6 @@
             nuevaFila.className = "hover:bg-gray-50/50";
             nuevaFila.innerHTML = `
                 <td class="p-1.5 border border-gray-200"><input type="text" name="tanque[]" placeholder="Ej: Tanque A" required class="w-full border border-gray-300 rounded p-1 text-xs focus:outline-emerald-500"></td>
-                
-                <!-- CORREGIDO EN DINÁMICO FERTILIZANTES: Fusión de cantidad y select híbrido -->
                 <td class="p-1.5 border border-gray-200">
                     <div class="flex flex-col gap-1">
                         <div class="flex gap-1">

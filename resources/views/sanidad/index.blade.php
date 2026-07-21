@@ -113,62 +113,89 @@
                     </span>
                 </div>
 
-                <!-- DETALLES ACOMODADOS VERTICALMENTE -->
+                <!-- DETALLES ACOMODADOS -->
                 <div class="p-6 space-y-8 divide-y divide-gray-100">
                     
                     <!-- 1. MANEJO DE AGROQUÍMICOS -->
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         <h4 class="text-sm font-bold text-orange-600 uppercase tracking-wider flex items-center gap-1.5">
                             <i class="fa-solid fa-spray-can text-lg"></i>
                             1. Sección: Manejo de Agroquímicos
                         </h4>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-xs text-gray-600 border border-gray-200 min-w-[1100px]">
-                                <thead>
-                                    <tr class="bg-orange-50/50 text-orange-800 border-b border-gray-200 font-semibold text-center">
-                                        <th class="p-2 text-left">F. Aplicación</th>
-                                        <th class="p-2 text-left">Tipo Aplicación</th>
-                                        <th class="p-2 text-left">Producto</th>
-                                        <th class="p-2">Dosis / Unidad</th>
-                                        <th class="p-2">IS</th>
-                                        <th class="p-2">Variedad</th>
-                                        <th class="p-2">N° Plantas</th>
-                                        <th class="p-2">Sol. Madre</th>
-                                        <th class="p-2">F. Trasplante</th>
-                                        <th class="p-2">Sol. Diaria</th>
-                                        <th class="p-2 text-left">Observaciones</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    @forelse($bitacora->agroquimicos as $arq)
-                                    <tr class="hover:bg-gray-50/50 text-center">
-                                        <td class="p-2 text-left whitespace-nowrap">{{ \Carbon\Carbon::parse($arq->fecha_aplicacion)->format('d/m/Y') }}</td>
-                                        <td class="p-2 text-left font-medium text-stone-700">{{ $arq->aplicacion }}</td>
-                                        <td class="p-2 text-left font-bold text-gray-900">{{ $arq->producto }}</td>
-                                        <td class="p-2 font-mono font-semibold text-orange-700 bg-orange-50/20 rounded">{{ $arq->dosis }} {{ $arq->unidad_dosis }}</td>
-                                        <td class="p-2">
+
+                        <div class="space-y-4">
+                            @forelse($bitacora->agroquimicos as $arq)
+                            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden border-l-4 border-l-orange-500">
+                                
+                                <!-- LÍNEA 1: Variedad (Centrada en su propia franja superior) -->
+                                <div class="bg-orange-50/40 px-4 py-2.5 border-b border-gray-100 flex items-center justify-center gap-2">
+                                    <span class="text-[11px] font-bold text-orange-900 uppercase tracking-wider">Variedad:</span>
+                                    <span class="text-xs font-extrabold text-gray-900 bg-white px-3 py-0.5 rounded border border-orange-200 shadow-2xs">{{ $arq->variedad ?? '—' }}</span>
+                                </div>
+
+                                <div class="p-4 space-y-3 text-xs">
+                                    <!-- LÍNEA 2: N° Plantas (Izquierda) | F. Trasplante (Derecha) -->
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-3 border-b border-gray-100 items-center">
+                                        <div class="flex items-center gap-3">
+                                            <span class="text-gray-400 font-bold uppercase tracking-wider text-[10px]">N° Plantas:</span>
+                                            <span class="font-mono font-bold text-gray-800">{{ $arq->numero_plantas ? number_format($arq->numero_plantas) : '—' }}</span>
+                                        </div>
+                                        <div class="flex items-center sm:justify-end gap-3">
+                                            <span class="text-gray-400 font-bold uppercase tracking-wider text-[10px]">Fecha Trasplante:</span>
+                                            <span class="font-bold text-gray-800">{{ $arq->fecha_trasplante ? \Carbon\Carbon::parse($arq->fecha_trasplante)->format('d/m/Y') : '—' }}</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- LÍNEA 3: Solución Madre o Solución Diaria -->
+                                    <div class="bg-emerald-50/40 p-2 rounded-lg border border-emerald-100 flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-droplet text-emerald-600 text-[10px]"></i>
+                                        <span class="text-[11px] font-bold text-emerald-900 uppercase tracking-wider">Tipo de Solución:</span>
+                                        <span class="font-extrabold text-emerald-700 text-xs">
+                                            {{ $arq->solucion_madre == 'SÍ' ? 'SOLUCIÓN MADRE' : ($arq->solucion_diaria == 'SÍ' ? 'SOLUCIÓN DIARIA' : 'ESTÁNDAR') }}
+                                        </span>
+                                    </div>
+
+                                    <!-- LÍNEA 4: Tipo Aplicación | Fecha Aplicación | Producto | Dosis | Observaciones | IS -->
+                                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 pt-2 items-center text-left">
+                                        <div>
+                                            <span class="text-gray-400 font-bold uppercase tracking-wider text-[9px] block">Tipo Aplicación</span>
+                                            <span class="font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded inline-block mt-0.5">{{ $arq->aplicacion }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400 font-bold uppercase tracking-wider text-[9px] block">Fecha Aplicación</span>
+                                            <span class="font-medium text-gray-700">{{ \Carbon\Carbon::parse($arq->fecha_aplicacion)->format('d/m/Y') }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400 font-bold uppercase tracking-wider text-[9px] block">Producto</span>
+                                            <span class="font-bold text-gray-900 truncate block" title="{{ $arq->producto }}">{{ $arq->producto }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400 font-bold uppercase tracking-wider text-[9px] block">Dosis / Unidad</span>
+                                            <span class="font-mono font-bold text-orange-700 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100">{{ $arq->dosis }} {{ $arq->unidad_dosis }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400 font-bold uppercase tracking-wider text-[9px] block">Observaciones</span>
+                                            <span class="text-gray-500 italic truncate block" title="{{ $arq->observaciones }}">{{ $arq->observaciones ?? '—' }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-gray-400 font-bold uppercase tracking-wider text-[9px] block">lS</span>
                                             @if($arq->is_intervalo_seguridad)
-                                            <span class="bg-amber-100 text-amber-800 font-bold px-1.5 py-0.5 rounded text-[10px]">
-                                                {{ $arq->is_intervalo_seguridad }} 
-                                            </span>
+                                                <span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px] inline-block mt-0.5">
+                                                    {{ $arq->is_intervalo_seguridad }} 
+                                                </span>
                                             @else
-                                            <span class="text-gray-400">—</span>
+                                                <span class="text-gray-400">—</span>
                                             @endif
-                                        </td>
-                                        <td class="p-2 text-gray-700">{{ $arq->variedad ?? '—' }}</td>
-                                        <td class="p-2 font-mono">{{ $arq->numero_plantas ? number_format($arq->numero_plantas) : '—' }}</td>
-                                        <td class="p-2 italic text-stone-600">{{ $arq->solucion_madre ?? '—' }}</td>
-                                        <td class="p-2 whitespace-nowrap">{{ $arq->fecha_trasplante ? \Carbon\Carbon::parse($arq->fecha_trasplante)->format('d/m/Y') : '—' }}</td>
-                                        <td class="p-2 font-medium text-stone-700">{{ $arq->solucion_diaria ?? '—' }}</td>
-                                        <td class="p-2 text-left text-gray-500 max-w-xs truncate" title="{{ $arq->observaciones }}">{{ $arq->observaciones ?? '—' }}</td>
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="11" class="p-4 text-center text-gray-400 italic bg-gray-50/50">Sin aplicaciones de agroquímicos registradas en esta orden.</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                            @empty
+                            <div class="p-4 text-center text-gray-400 italic bg-gray-50/50 rounded-xl border border-gray-200">
+                                Sin aplicaciones de agroquímicos registradas en esta orden.
+                            </div>
+                            @endforelse
                         </div>
                     </div>
 
@@ -178,22 +205,21 @@
                             <i class="fa-solid fa-flask-vial text-lg"></i>
                             2. Sección: Manejo de Fertilizantes
                         </h4>
-                        <!-- CORREGIDO: Contenedor flex con 'justify-center' para centrar la tabla completa en la bitácora -->
                         <div class="flex justify-center w-full overflow-x-auto">
-                            <table class="w-full text-xs text-gray-600 border border-gray-200 max-w-xl">
+                            <table class="w-full text-xs text-gray-600 border border-gray-200 max-w-xl shadow-2xs rounded-lg overflow-hidden">
                                 <thead>
                                     <tr class="bg-emerald-50/50 text-emerald-800 border-b border-gray-200 font-semibold text-center">
-                                        <th class="p-2 w-1/2">Tanque</th>
-                                        <th class="p-2 w-1/2">Cantidad / Unidad</th>
+                                        <th class="p-2.5 w-1/2">Tanque</th>
+                                        <th class="p-2.5 w-1/2">Cantidad / Unidad</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-gray-100">
                                     @forelse($bitacora->fertilizantes as $fer)
                                     <tr class="hover:bg-gray-50/50 text-center">
-                                        <td class="p-2 font-medium text-gray-900">
+                                        <td class="p-2.5 font-medium text-gray-900">
                                             {{ $fer->tanque }}
                                         </td>
-                                        <td class="p-2 font-mono font-bold text-emerald-700 bg-emerald-50/10 rounded">
+                                        <td class="p-2.5 font-mono font-bold text-emerald-700 bg-emerald-50/10 rounded">
                                             {{ $fer->cantidad }} {{ $fer->unidad_cantidad }}
                                         </td>
                                     </tr>
@@ -210,11 +236,11 @@
                     <!-- 3. CAMPOS COMPLEMENTARIOS GLOBALES -->
                     @if(($bitacora->fertilizantes->first() && $bitacora->fertilizantes->first()->labores_culturales) || ($bitacora->fertilizantes->first() && $bitacora->fertilizantes->first()->observaciones))
                     <div class="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-600">
-                        <div class="bg-stone-50 p-3 rounded-lg border border-gray-150">
+                        <div class="bg-stone-50 p-3 rounded-lg border border-stone-200 shadow-2xs">
                             <span class="font-bold text-stone-700 block uppercase tracking-wider text-[10px] mb-1">Labores Culturales Realizadas:</span>
                             <p class="italic text-stone-600">{{ $bitacora->fertilizantes->first()->labores_culturales ?? 'Ninguna registrada.' }}</p>
                         </div>
-                        <div class="bg-stone-50 p-3 rounded-lg border border-gray-150">
+                        <div class="bg-stone-50 p-3 rounded-lg border border-stone-200 shadow-2xs">
                             <span class="font-bold text-stone-700 block uppercase tracking-wider text-[10px] mb-1">Observaciones Generales de la Mezcla:</span>
                             <p class="italic text-stone-600">{{ $bitacora->fertilizantes->first()->observaciones ?? 'Sin observaciones generales.' }}</p>
                         </div>

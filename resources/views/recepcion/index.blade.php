@@ -90,16 +90,11 @@
             <button onclick="cambiarPestaña('exportacion')" id="btn-tab-exportacion" class="w-full sm:w-auto px-5 py-2.5 font-bold text-sm rounded-lg transition flex items-center justify-center gap-2 cursor-pointer bg-gray-100 text-gray-600 hover:bg-gray-200">
                 <i class="fa-solid fa-plane-departure"></i> Exportación
             </button>
-
-
             @endif
-
-
         </div>
 
         <!-- CONTENIDO NACIONAL -->
         <div id="contenido-nacional" class="block space-y-6">
-
             <div class="bg-white shadow-sm rounded-xl border border-gray-200">
                 <div class="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50 rounded-xl">
                     <div>
@@ -225,9 +220,7 @@
         </div>
 
         <!-- CONTENIDO EXPORTACIÓN -->
-
         <div id="contenido-exportacion" class="hidden space-y-6">
-
             <div class="bg-white shadow-sm rounded-xl border border-gray-200">
                 <div class="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50 rounded-xl">
                     <div>
@@ -263,6 +256,11 @@
                         @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
                         <button onclick="abrirModalRestituidasPorFecha('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             <i class="fa-solid fa-boxes-packing"></i> Restituir Cajas
+                        </button>
+                        
+                        {{-- BOTÓN COMPAÑERO: CAJAS ENVIADAS --}}
+                        <button onclick="abrirModalEnviadasPorFecha('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer whitespace-nowrap">
+                            <i class="fa-solid fa-truck-ramp-box"></i> Cajas Enviadas
                         </button>
                         @endif
 
@@ -330,12 +328,19 @@
                 {{-- RESUMEN DE CONDENSACIÓN INDEPENDIENTE POR TABLA DIARIA --}}
                 @if(auth()->user()->rol === 'administrador')
                 @php
+                $sumaCajasExportadasDiarias = $grupoExportacion->sum('cajas_exportacion');
+
                 $sumaPesosNetosFijosDiarios = (float) $grupoExportacion->sum(function($item) {
                 return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
                 });
 
+                // Recuperamos el registro único de condensación de este día
                 $condensacionDelDia = \App\Models\ControlCondensacion::where('fecha', $fechaKey)->first();
                 $cantidadManualGuardada = $condensacionDelDia ? (float)$condensacionDelDia->agropark : 0.0;
+                
+                // 💡 AQUÍ LEEMOS EL NUEVO DATO DE LA BASE DE DATOS
+                $cajasEnviadasGuardadas = $condensacionDelDia ? (int)$condensacionDelDia->cajas_enviadas : 0;
+
                 $porcentajeCondensacionDiario = 0;
 
                 if ($sumaPesosNetosFijosDiarios > 0 && $cantidadManualGuardada > 0) {
@@ -345,11 +350,32 @@
                 }
                 @endphp
                 <div class="bg-gray-900 text-white font-bold p-4 shadow border border-gray-700 border-t-0 rounded-b-xl">
-                    <div class="flex flex-wrap items-center justify-between gap-4 text-sm">
-                        <div class="uppercase tracking-wider text-xs font-extrabold text-amber-400">
-                            <i class="fa-solid fa-chart-pie mr-1"></i> Resumen Condensación del Día
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm w-full">
+                        
+                        {{-- ZONA IZQUIERDA: TÍTULO, TOTAL EXPORTADAS Y TOTAL ENVIADAS --}}
+                        <div class="flex flex-wrap items-center">
+                            <div class="uppercase tracking-wider text-xs font-extrabold text-amber-400 shrink-0">
+                                <i class="fa-solid fa-chart-pie mr-1"></i> Resumen Condensación del Día
+                            </div>
+                            
+                            <div class="md:ml-75"> 
+                                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Exp.</span>
+                                <span class="text-base text-blue-400 font-extrabold">
+                                    <i class="fa-solid fa-box mr-1"></i> {{ number_format($sumaCajasExportadasDiarias) }} uds
+                                </span>
+                            </div>
+
+                            {{-- Métrica Solicitada: Cajas Enviadas del día --}}
+                            <div class="md:ml-8"> 
+                                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Env.</span>
+                                <span class="text-base text-cyan-400 font-extrabold">
+                                    <i class="fa-solid fa-truck mr-1"></i>{{ number_format($cajasEnviadasGuardadas) }} uds
+                                </span>
+                            </div>
                         </div>
-                        <div class="flex flex-wrap items-center gap-8">
+
+                        {{-- ZONA DERECHA: LOS DEMÁS TOTALES COMPLETAMENTE INTACTOS --}}
+                        <div class="flex flex-wrap items-center gap-8 justify-end">
                             <div>
                                 <span class="text-xs text-gray-400 block uppercase font-medium">Suma Pesos Netos Fijos</span>
                                 <span class="text-base text-red-400 font-extrabold">
@@ -369,6 +395,7 @@
                                 </span>
                             </div>
                         </div>
+
                     </div>
                 </div>
                 @endif
@@ -381,10 +408,9 @@
         </div>
     </main>
 
-    <!-- MODAL NACIONAL CORREGIDO (DIVS COMPLETAS Y MAPEO BLINDADO) -->
+    <!-- MODAL NACIONAL CORREGIDO -->
     <div id="modal-nacional" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl my-auto flex flex-col overflow-hidden max-h-[95vh]">
-
             <div class="bg-amber-600 text-white px-6 py-4 flex justify-between items-center shrink-0">
                 <h3 id="modal-nacional-titulo" class="text-lg font-bold flex items-center gap-2">
                     <i class="fa-solid fa-house-chimney"></i> Registrar Entrada Nacional
@@ -396,8 +422,6 @@
 
             <form action="{{ route('recepcion.storeNacional') }}" method="POST" id="form-modal-nacional" class="p-6 space-y-4 overflow-y-auto flex-grow max-h-[calc(95vh-120px)] scrollbar-thin scrollbar-thumb-gray-300">
                 @csrf
-
-                <!-- Único control de modo operativo -->
                 <input type="hidden" name="es_rechazo_operativo" id="es_rechazo_operativo" value="0">
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -415,15 +439,21 @@
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Productor / Dueño del Sector</label>
                     <select name="productor_id" id="productor_select" onchange="filtrarDatosPorOperador()" required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
                         <option value="" disabled selected>-- Selecciona un productor --</option>
+                        @if(auth()->user()->rol === 'administrador')
+                        <option value="{{ auth()->user()->id }}" data-sectores="{{ is_string(auth()->user()->sectores) ? auth()->user()->sectores : json_encode(auth()->user()->sectores) }}">
+                            {{ auth()->user()->name }} (Tú - Administrador)
+                        </option>
+                        @endif
                         @foreach($productores as $productor)
+                        @if($productor->id !== auth()->id())
                         <option value="{{ $productor->id }}" data-sectores="{{ is_string($productor->sectores) ? $productor->sectores : json_encode($productor->sectores) }}">
                             {{ $productor->name ?? $productor->nombre }}
                         </option>
+                        @endif
                         @endforeach
                     </select>
                 </div>
 
-                <!-- Tu bloque original de rastreo de exportación intacto -->
                 <div id="contenedor-embarque-origen" class="hidden mt-3 drop-shadow-sm">
                     <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Embarque de Exportación de Origen (Rastreo)</label>
                     <select name="recepcion_exportacion_id" id="recepcion_exportacion_select" class="w-full border border-blue-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-blue-50/40 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium">
@@ -444,7 +474,6 @@
 
                 <hr class="border-gray-200 my-2">
 
-                <!-- Bloques originales de captura comercial y rechazo intactos -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
                         <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
@@ -482,6 +511,7 @@
             </form>
         </div>
     </div>
+
     <!-- MODAL EXPORTACIÓN LIMPIO -->
     <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50">
         <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl mx-4 overflow-hidden">
@@ -510,11 +540,18 @@
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Productor / Dueño del Sector</label>
                     <select name="productor_id" id="productor_exportacion_select" onchange="cargarSectoresDelProductorExportacion()" required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
                         <option value="" disabled selected>-- Selecciona un productor --</option>
+                        @if(auth()->user()->rol === 'administrador')
+                        <option value="{{ auth()->user()->id }}" data-sectores="{{ is_string(auth()->user()->sectores) ? auth()->user()->sectores : json_encode(auth()->user()->sectores) }}">
+                            {{ auth()->user()->name }} (Tú - Administrador)
+                        </option>
+                        @endif
                         @if(isset($productores) && count($productores) > 0)
                         @foreach($productores as $productor)
+                        @if($productor->id !== auth()->id())
                         <option value="{{ $productor->id }}" data-sectores="{{ is_string($productor->sectores) ? $productor->sectores : json_encode($productor->sectores) }}">
                             {{ $productor->name ?? $productor->nombre ?? 'Usuario sin nombre' }}
                         </option>
+                        @endif
                         @endforeach
                         @else
                         <option value="" disabled>No se encontraron productores cargados</option>
@@ -541,7 +578,6 @@
                     </div>
                 </div>
 
-                <!-- Campo oculto para inicializar el saldo pendiente idéntico a las cajas exportadas -->
                 <input type="hidden" name="cajas_pendientes" id="cajas_pen_input" value="0">
 
                 <div class="flex justify-end gap-3 pt-2">
@@ -552,6 +588,7 @@
         </div>
     </div>
 
+    <!-- MODAL RESTITUIDAS -->
     <div id="modalRestituidas" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md overflow-hidden transform transition-all">
             <div class="bg-purple-700 p-4 text-white flex justify-between items-center">
@@ -574,7 +611,6 @@
                             {{ \Carbon\Carbon::parse($emb->fecha_exportacion)->format('d/m/Y') }} - {{ $emb->productor->name ?? 'N/A' }} ({{ $emb->sector_registro }}) - [Pendientes: {{ number_format($emb->pendientes) }} uds]
                         </option>
                         @endforeach
-
                     </select>
                 </div>
 
@@ -584,11 +620,44 @@
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="cerrarModalRestituidas()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">
+                    <button type="button" onclick="cerrarModalRestituidas()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">Cancelar</button>
+                    <button type="submit" class="bg-purple-700 hover:bg-purple-800 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow cursor-pointer">Guardar Devolución</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- NUEVO MODAL: CAPTURA DE CAJAS ENVIADAS EN CONDENSACIÓN --}}
+    <div id="modalEnviadas" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md overflow-hidden transform transition-all">
+            <div class="bg-cyan-700 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm sm:text-base uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-truck-ramp-box"></i> Registrar Cajas Enviadas del Día
+                </h3>
+                <button onclick="cerrarModalEnviadas()" class="text-white/80 hover:text-white cursor-pointer outline-none">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            {{-- Apuntamos a la ruta global de condensación --}}
+            <form action="{{ route('condensacion.guardar') }}" method="POST" class="p-6 space-y-4">
+                @csrf
+                
+                {{-- Campos ocultos para saber qué día y semana estamos afectando --}}
+                <input type="hidden" name="semana" value="{{ $semanaActual ?? ($recepcionesExportaciones->first()->semana_exportacion ?? 1) }}">
+                <input type="hidden" name="fecha" id="enviadas_fecha_input" required>
+
+                <div>
+                    <label for="cajas_enviadas" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Cantidad de Cajas Enviadas:</label>
+                    <input type="number" name="cajas_enviadas" id="cajas_enviadas_input" min="1" required placeholder="Ej. 120" class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-sm rounded-lg focus:ring-cyan-500 focus:border-cyan-500 p-2.5 outline-none font-medium">
+                </div>
+
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="cerrarModalEnviadas()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">
                         Cancelar
                     </button>
-                    <button type="submit" class="bg-purple-700 hover:bg-purple-800 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow cursor-pointer">
-                        Guardar Devolución
+                    <button type="submit" class="bg-cyan-700 hover:bg-cyan-800 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow cursor-pointer">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Cajas
                     </button>
                 </div>
             </form>
@@ -607,7 +676,6 @@
 
             <form action="{{ route('condensacion.guardar') }}" method="POST" class="p-6 space-y-4">
                 @csrf
-
                 <input type="hidden" name="semana" value="{{ $semanaActual ?? ($recepcionesExportaciones->first()->semana_exportacion ?? 1) }}">
                 <input type="hidden" name="fecha" id="condensacion_fecha_input" required>
 
@@ -622,9 +690,7 @@
                 </div>
 
                 <div class="pt-4 border-t border-gray-100 flex justify-end gap-2">
-                    <button type="button" onclick="cerrarModalCondensacion()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-bold transition cursor-pointer">
-                        Cancelar
-                    </button>
+                    <button type="button" onclick="cerrarModalCondensacion()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-xs font-bold transition cursor-pointer">Cancelar</button>
                     <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition shadow flex items-center gap-1 cursor-pointer">
                         <i class="fa-solid fa-floppy-disk"></i> Guardar Fijo
                     </button>
@@ -638,18 +704,14 @@
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
-
     <link class="hidden" id="flatpickr-css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
     <script>
-        // Variable global para controlar si el formulario nacional actúa como entrada estándar o captura de rechazo
         let modoCaptura = 'recepcion';
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Inicialización de Flatpickr para el formulario Nacional
             flatpickr("#fecha_nacional_input", {
                 locale: "es",
                 dateFormat: "Y-m-d",
@@ -660,7 +722,6 @@
                 }
             });
 
-            // Inicialización de Flatpickr para el formulario de Exportación
             flatpickr("#fecha_exportacion_input", {
                 locale: "es",
                 dateFormat: "Y-m-d",
@@ -671,34 +732,26 @@
                 }
             });
 
-            // NUEVO: Calendario de apoyo para el filtro por semanas (Sin Plugins Inestables)
             flatpickr("#semana_picker", {
                 locale: "es",
                 disableMobile: "true",
                 dateFormat: "Y-m-d",
-
-                // Al cargar la página, calculamos un día de esa semana para mostrarla en el input visual
                 onReady: function(selectedDates, dateStr, instance) {
-                    const valActual = document.getElementById('semana_final_input').value; // Ej: "2026-W27"
+                    const valActual = document.getElementById('semana_final_input').value;
                     if (valActual) {
                         const partes = valActual.split('-W');
                         if (partes.length === 2) {
                             const año = parseInt(partes[0]);
                             const sem = parseInt(partes[1]);
-                            // Obtiene el jueves de esa semana (punto medio ISO estándar)
                             const d = new Date(año, 0, 4);
                             d.setDate(d.getDate() + (sem - 1) * 7 - (d.getDay() + 6) % 7 + 3);
-
                             instance.setDate(d, false);
                             document.getElementById('semana_picker').value = `Semana ${sem} / ${año}`;
                         }
                     }
                 },
-
-                // Al seleccionar un día, calculamos su semana de forma automática
                 onChange: function(selectedDates, dateStr, instance) {
                     if (selectedDates.length === 0) return;
-
                     const fecha = selectedDates[0];
                     const target = new Date(fecha.valueOf());
                     const dayNr = (fecha.getDay() + 6) % 7;
@@ -708,13 +761,9 @@
                     if (target.getDay() !== 4) {
                         target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
                     }
-
                     const numeroSemana = 1 + Math.ceil((firstThursday - target) / 604800000);
                     const añoSemana = new Date(firstThursday).getFullYear();
-
-                    // Armamos el string exacto para tu backend (Ej: 2026-W27)
                     const formattedWeek = añoSemana + "-W" + String(numeroSemana).padStart(2, '0');
-
                     document.getElementById('semana_final_input').value = formattedWeek;
                     document.getElementById('formSemana').submit();
                 }
@@ -759,7 +808,6 @@
                 if (titulo) titulo.innerHTML = '<i class="fa-solid fa-ban text-red-500"></i> Capturar Kg de Rechazo de Exportación';
                 if (esRechazoInput) esRechazoInput.value = "1";
                 if (selectEmbarque) selectEmbarque.required = true;
-                // Muestra tu contenedor original removiendo el hidden
                 if (contenedorEmbarque) contenedorEmbarque.classList.remove('hidden');
             } else {
                 if (titulo) titulo.innerHTML = '<i class="fa-solid fa-house-chimney text-emerald-500"></i> Registrar Entrada Nacional';
@@ -817,9 +865,7 @@
         function calcularSaldosExportacion() {
             const inputCajasExp = document.getElementById('cajas_exp');
             const inputCajasPen = document.getElementById('cajas_pen_input');
-
             const cajasExp = inputCajasExp ? (parseInt(inputCajasExp.value) || 0) : 0;
-
             if (inputCajasPen) {
                 inputCajasPen.value = cajasExp >= 0 ? cajasExp : 0;
             }
@@ -828,7 +874,6 @@
         function calcularSemanaDesdeFecha(tipo) {
             const fechaInput = document.getElementById(`fecha_${tipo}_input`);
             const semanaInput = document.getElementById(`semana_${tipo}_input`);
-
             if (!fechaInput || !fechaInput.value || !semanaInput) return;
 
             const fechaSeleccionada = new Date(fechaInput.value + 'T00:00:00');
@@ -840,14 +885,12 @@
             if (target.getDay() !== 4) {
                 target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
             }
-
             const numeroSemana = 1 + Math.ceil((firstThursday - target) / 604800000);
             semanaInput.value = numeroSemana;
         }
 
         function filtrarDatosPorOperador() {
             const selectProductor = document.getElementById('productor_select');
-            const contenedorEmbarque = document.getElementById('contenedor-sector-exportacion');
             const opcionesEmbarque = document.querySelectorAll('.opcion-embarque');
             const selectEmbarque = document.getElementById('recepcion_exportacion_select');
 
@@ -859,7 +902,6 @@
             const divEmbarque = document.getElementById('contenedor-embarque-origen');
             if (modoCaptura === 'rechazo' && idOperador) {
                 if (selectEmbarque) selectEmbarque.value = "";
-
                 opcionesEmbarque.forEach(opcion => {
                     if (opcion.getAttribute('data-operador') == idOperador) {
                         opcion.classList.remove('hidden');
@@ -867,7 +909,6 @@
                         opcion.classList.add('hidden');
                     }
                 });
-
                 if (divEmbarque) divEmbarque.classList.remove('hidden');
             } else {
                 if (divEmbarque) divEmbarque.classList.add('hidden');
@@ -974,6 +1015,45 @@
             document.getElementById('modalRestituidas').classList.add('hidden');
         }
 
+       function abrirModalEnviadasPorFecha(fecha) {
+            const modal = document.getElementById('modalEnviadas');
+            const inputFecha = document.getElementById('enviadas_fecha_input');
+            const inputCajas = document.getElementById('cajas_enviadas_input');
+
+            if (!modal) return;
+
+            if (inputFecha && fecha) {
+                inputFecha.value = fecha;
+            }
+
+            // Buscamos la tabla del día para ver si ya hay una cantidad renderizada y precargarla
+            const botonDisparador = document.querySelector(`button[onclick="abrirModalEnviadasPorFecha('${fecha}')"]`);
+            if (botonDisparador) {
+                const contenedorTabla = botonDisparador.closest('.bg-white');
+                if (contenedorTabla && inputCajas) {
+                    const celdaCajasTexto = contenedorTabla.querySelector('.text-cyan-400') ? contenedorTabla.querySelector('.text-cyan-400').innerText : '';
+                    let valorActual = parseInt(celdaCajasTexto.replace(/[^0-9.-]+/g, ""));
+                    inputCajas.value = (!isNaN(valorActual) && valorActual > 0) ? valorActual : '';
+                }
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function cerrarModalEnviadas() {
+            const modal = document.getElementById('modalEnviadas');
+            const inputFecha = document.getElementById('enviadas_fecha_input');
+            if (modal) {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+            }
+            if (inputFecha) {
+                inputFecha.value = "";
+            }
+        }
+
+
         function abrirModalCondensacion(fecha) {
             const modal = document.getElementById('modalCondensacion');
             const inputFecha = document.getElementById('condensacion_fecha_input');
@@ -981,39 +1061,29 @@
 
             if (!modal) return;
 
-            // 1. Inyectamos la fecha del día al input oculto del formulario
             if (inputFecha && fecha) {
                 inputFecha.value = fecha;
             }
 
-            // 2. Buscamos el contenedor .bg-white de la tabla del día correspondiente
-            // Esto se logra buscando el botón exacto que disparó esta fecha y subiendo a su contenedor global
             const botonDisparador = document.querySelector(`button[onclick="abrirModalCondensacion('${fecha}')"]`);
             if (!botonDisparador) return;
 
             const contenedorTabla = botonDisparador.closest('.bg-white');
             if (!contenedorTabla) return;
 
-            // 3. Si la tabla de este día ya tiene un valor de Agropark renderizado en su resumen gris, lo precargamos
             if (inputAgropark) {
                 const celdaAgroparkTexto = contenedorTabla.querySelector('.text-blue-400') ? contenedorTabla.querySelector('.text-blue-400').innerText : '';
                 let valorActual = parseFloat(celdaAgroparkTexto.replace(/[^0-9.-]+/g, ""));
-
-                // Si hay un valor numérico real, lo precargamos; si no, dejamos el input limpio para nueva captura
                 inputAgropark.value = (!isNaN(valorActual) && valorActual > 0) ? valorActual : '';
             }
 
-            // 4. Mostramos el modal de condensación
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
-            // 5. Lógica de cálculo dinámico visual acoplada estrictamente a la tabla de este día
             if (inputAgropark) {
-                // Obtenemos el peso neto fijo específico del día actual
                 const textoSuma = contenedorTabla.querySelector('.text-red-400') ? contenedorTabla.querySelector('.text-red-400').innerText : '0';
                 let sumaPesosFijos = parseFloat(textoSuma.replace(/[^0-9.-]+/g, ""));
 
-                // Clonamos el input para destruir listeners viejos de otras fechas y evitar acumulaciones en memoria
                 const nuevoInput = inputAgropark.cloneNode(true);
                 inputAgropark.parentNode.replaceChild(nuevoInput, inputAgropark);
 
@@ -1023,11 +1093,9 @@
                     let celdaAgropark = contenedorTabla.querySelector('.text-blue-400');
 
                     if (!isNaN(cantidadManual) && cantidadManual > 0 && sumaPesosFijos > 0) {
-                        // Nueva Fórmula: (1 - (Manual / Suma)) * 100
                         let division = cantidadManual / sumaPesosFijos;
                         let porcentaje = (1 - division) * 100;
 
-                        // Actualizar vistas del bloque gris diario en tiempo real
                         if (celdaPorcentaje) celdaPorcentaje.innerText = porcentaje.toFixed(2) + ' %';
                         if (celdaAgropark) {
                             let formateado = cantidadManual.toLocaleString('en-US', {
@@ -1044,13 +1112,10 @@
         function cerrarModalCondensacion() {
             const modal = document.getElementById('modalCondensacion');
             const inputFecha = document.getElementById('condensacion_fecha_input');
-
             if (modal) {
                 modal.classList.remove('flex');
                 modal.classList.add('hidden');
             }
-
-            // Al cerrar limpiamos el input oculto de fecha para evitar conflictos en la siguiente apertura
             if (inputFecha) {
                 inputFecha.value = "";
             }
@@ -1063,39 +1128,30 @@
         }
 
         function abrirModalRestituidasPorFecha(fechaSeleccionada) {
-    const modal = document.getElementById('modalRestituidas');
-    const selectEmbarques = document.getElementById('recepcion_exportacion_id');
-    
-    if (!modal || !selectEmbarques) return;
+            const modal = document.getElementById('modalRestituidas');
+            const selectEmbarques = document.getElementById('recepcion_exportacion_id');
 
-    // Resetear el select a la opción por defecto
-    selectEmbarques.value = "";
+            if (!modal || !selectEmbarques) return;
 
-    // Obtener todas las opciones del select
-    const opciones = selectEmbarques.querySelectorAll('option');
+            selectEmbarques.value = "";
+            const opciones = selectEmbarques.querySelectorAll('option');
 
-    opciones.forEach(opcion => {
-        // La opción por defecto (vacía) siempre se queda visible
-        if (opcion.value === "") {
-            opcion.classList.remove('hidden');
-            return;
+            opciones.forEach(opcion => {
+                if (opcion.value === "") {
+                    opcion.classList.remove('hidden');
+                    return;
+                }
+                const fechaOpcion = opcion.getAttribute('data-fecha');
+                if (fechaOpcion === fechaSeleccionada) {
+                    opcion.classList.remove('hidden');
+                } else {
+                    opcion.classList.add('hidden');
+                }
+            });
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
         }
-
-        // Leemos la fecha de la opción
-        const fechaOpcion = opcion.getAttribute('data-fecha');
-
-        // Si coincide con la fecha de la tabla actual, la mostramos; si no, la ocultamos
-        if (fechaOpcion === fechaSeleccionada) {
-            opcion.classList.remove('hidden');
-        } else {
-            opcion.classList.add('hidden');
-        }
-    });
-
-    // Abrimos el modal con flex
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-}
     </script>
 </body>
 
