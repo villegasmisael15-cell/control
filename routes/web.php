@@ -55,7 +55,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
   
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
     Route::put('/reportes/{id}/actualizar', [ReporteController::class, 'update'])->name('reportes.update');
-    Route::put('/reportes/{recepcion_id}', [ReporteController::class, 'update'])->name('reportes.update');
+Route::put('/reportes/{recepcion_id}', [ReporteController::class, 'update'])->name('reportes.update_recepcion');
+
 
     Route::get('/sanidad-nutricion', [SanidadNutricionBitacoraController::class, 'index'])->name('sanidad.index');
     Route::get('/sanidad-nutricion/nuevo', [SanidadNutricionBitacoraController::class, 'create'])->name('sanidad.create');
