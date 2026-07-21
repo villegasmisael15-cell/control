@@ -120,7 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('can:es-administrador')->group(function () {
         Route::get('/monitoreo/{id}/editar', [MonitoreoClimaRiegoController::class, 'edit'])->name('monitoreo.edit');
         Route::put('/monitoreo/{id}/actualizar', [MonitoreoClimaRiegoController::class, 'update'])->name('monitoreo.update');
-        Route::delete('/monitoreo/{id}/eliminar', [MonitoreoClithmaRiegoController::class, 'destroy'])->name('monitoreo.destroy');
+        Route::delete('/monitoreo/{id}/eliminar', [MonitoreoClimaRiegoController::class, 'destroy'])->name('monitoreo.destroy');
         Route::get('/monitoreo/{id}/exportar-excel', [MonitoreoClimaRiegoController::class, 'exportarExcel'])->name('monitoreo.excel');
         Route::patch('/usuarios/{id}/cambiar-rol', [UsuarioController::class, 'cambiarRol'])->name('usuarios.cambiarRol');
         Route::resource('usuarios', UsuarioController::class);
@@ -177,7 +177,7 @@ Route::post('/sectores/configurar-inicial', function (Request $request) {
 
     return redirect('/dashboard')->with('status', 'Sector configurado correctamente.');
 })->name('sectores.guardar_inicial');
-});
+
 
 // Las rutas de autenticación de Breeze (Login, Registro, etc.) se cargan aquí:
 require __DIR__ . '/auth.php';
