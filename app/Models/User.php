@@ -39,24 +39,25 @@ class User extends Authenticatable
 
     /**
      * ACCESOR PARA EL ROL:
-     * Engaña a los @if(auth()->user()->rol === 'administrador') de las vistas y controladores.
-     * A ojos del sistema, el 'admin_general' se comportará exactamente como un 'administrador'.
+     * Engaña al sistema únicamente en las lecturas de vistas y controladores.
+     * Lee directamente el valor interno guardado en los atributos para no interferir con las actualizaciones.
      */
-    public function getRolAttribute($value)
+    public function getRolAttribute()
     {
-        if ($value === 'admin_general') {
+        $realRol = $this->attributes['rol'] ?? null;
+        
+        if ($realRol === 'admin_general') {
             return 'administrador';
         }
-        return $value;
+        return $realRol;
     }
 
     /**
      * ACCESOR PARA LOS SECTORES:
-     * Al ser un administrador, le entrega todos los sectores registrados para que vea todo.
+     * Al ser admin_general en la base de datos, le entrega todos los sectores registrados.
      */
     public function getSectoresAttribute($value)
     {
-        // Nota: Usamos $this->attributes['rol'] para leer el valor real de la base de datos
         if (isset($this->attributes['rol']) && $this->attributes['rol'] === 'admin_general') {
             return implode(',', \App\Models\SectorCaracteristica::pluck('sector')->toArray());
         }

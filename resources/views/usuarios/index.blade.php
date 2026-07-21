@@ -69,17 +69,28 @@
                             <td class="py-4 px-6 text-gray-600">{{ $user->email }}</td>
                             <td class="py-4 px-6 text-gray-500">{{ $user->created_at->format('d/m/Y H:i') }}</td>
                             <td class="py-4 px-6 text-center">
-                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $user->rol === 'administrador' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800' }}">
-                                    {{ strtoupper($user->rol) }}
+                                {{-- Colores dinámicos en base a cada uno de tus 5 roles actuales --}}
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    @if($user->rol === 'administrador') bg-purple-100 text-purple-800
+                                    @elseif($user->rol === 'admin_general') bg-indigo-100 text-indigo-800
+                                    @elseif($user->rol === 'operador') bg-blue-100 text-blue-800
+                                    @elseif($user->rol === 'usuario_comercial') bg-amber-100 text-amber-800
+                                    @elseif($user->rol === 'usuario_rechazo') bg-rose-100 text-rose-800
+                                    @else bg-gray-100 text-gray-800 @endif">
+                                    {{ strtoupper(str_replace('_', ' ', $user->rol)) }}
                                 </span>
                             </td>
                             <td class="py-4 px-6 text-center">
                                 @if(auth()->id() !== $user->id)
                                 <form action="{{ route('usuarios.cambiarRol', $user->id) }}" method="POST" class="inline-flex gap-2">
                                     @csrf
-                                    @method('PATCH') <select name="rol" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-1.5 cursor-pointer">
-                                        <option value="operador" {{ $user->rol === 'operador' ? 'selected' : '' }}>Operador (Solo Lectura)</option>
-                                        <option value="administrador" {{ $user->rol === 'administrador' ? 'selected' : '' }}>Administrador (Escritura)</option>
+                                    @method('PATCH')
+                                    <select name="rol" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-1.5 cursor-pointer">
+                                        <option value="operador" {{ $user->rol === 'operador' ? 'selected' : '' }}>Operador</option>
+                                        <option value="administrador" {{ $user->rol === 'administrador' ? 'selected' : '' }}>Administrador (Participativo)</option>
+                                        <option value="admin_general" {{ $user->rol === 'admin_general' ? 'selected' : '' }}>Admin General (Supervisor)</option>
+                                        <option value="usuario_comercial" {{ $user->rol === 'usuario_comercial' ? 'selected' : '' }}>Usuario Comercial</option>
+                                        <option value="usuario_rechazo" {{ $user->rol === 'usuario_rechazo' ? 'selected' : '' }}>Usuario Rechazo</option>
                                     </select>
                                 </form>
                                 @else
