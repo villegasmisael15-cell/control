@@ -21,9 +21,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Regla global: devuelve verdadero si el usuario es administrador
+        // Regla global: devuelve verdadero si el usuario es administrador u admin_general
         Gate::define('es-administrador', function (User $user) {
-            return $user->rol === 'administrador';
+            return $user->rol === 'administrador' || $user->rol === 'admin_general';
         });
     }
 }

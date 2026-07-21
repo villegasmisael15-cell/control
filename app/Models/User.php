@@ -50,7 +50,21 @@ class User extends Authenticatable
     }
 
     public function monitoreos()
-{
-    return $this->hasMany(MonitoreoClimaRiego::class);
-}
+    {
+        return $this->hasMany(MonitoreoClimaRiego::class);
+    }
+
+    /**
+     * Accesor para simular todos los sectores si el usuario es admin_general.
+     * Evita tener que modificar filtros sector por sector en los controladores.
+     */
+    public function getSectoresAttribute($value)
+    {
+        if ($this->rol === 'admin_general') {
+            // Obtenemos todos los sectores únicos registrados en el sistema y los unimos por comas
+            return implode(',', \App\Models\SectorCaracteristica::pluck('sector')->toArray());
+        }
+
+        return $value;
+    }
 }
