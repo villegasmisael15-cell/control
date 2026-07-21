@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,14 +9,8 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'name',
         'email',
@@ -26,21 +19,11 @@ class User extends Authenticatable
         'sectores',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -55,13 +38,26 @@ class User extends Authenticatable
     }
 
     /**
-     * Accesor para simular todos los sectores si el usuario es admin_general.
-     * Evita tener que modificar filtros sector por sector en los controladores.
+     * ACCESOR PARA EL ROL:
+     * Engaña a los @if(auth()->user()->rol === 'administrador') de las vistas y controladores.
+     * A ojos del sistema, el 'admin_general' se comportará exactamente como un 'administrador'.
+     */
+    public function getRolAttribute($value)
+    {
+        if ($value === 'admin_general') {
+            return 'administrador';
+        }
+        return $value;
+    }
+
+    /**
+     * ACCESOR PARA LOS SECTORES:
+     * Al ser un administrador, le entrega todos los sectores registrados para que vea todo.
      */
     public function getSectoresAttribute($value)
     {
-        if ($this->rol === 'admin_general') {
-            // Obtenemos todos los sectores únicos registrados en el sistema y los unimos por comas
+        // Nota: Usamos $this->attributes['rol'] para leer el valor real de la base de datos
+        if (isset($this->attributes['rol']) && $this->attributes['rol'] === 'admin_general') {
             return implode(',', \App\Models\SectorCaracteristica::pluck('sector')->toArray());
         }
 
