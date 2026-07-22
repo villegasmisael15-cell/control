@@ -1060,60 +1060,59 @@
         }
 
 
-        function abrirModalCondensacion(fecha) {
-            const modal = document.getElementById('modalCondensacion');
-            const inputFecha = document.getElementById('condensacion_fecha_input');
-            const inputAgropark = document.getElementById('condensacion_agropark_input');
+       function abrirModalCondensacion(fecha) {
+    const modal = document.getElementById('modalCondensacion');
+    const inputFecha = document.getElementById('condensacion_fecha_input');
+    const inputAgropark = document.getElementById('condensacion_agropark_input');
 
-            if (!modal) return;
+    if (!modal) return;
 
-            if (inputFecha && fecha) {
-                inputFecha.value = fecha;
+    if (inputFecha && fecha) {
+        inputFecha.value = fecha;
+    }
+
+    const botonDisparador = document.querySelector(`button[onclick="abrirModalCondensacion('${fecha}')"]`);
+    if (!botonDisparador) return;
+
+    const contenedorTabla = botonDisparador.closest('.bg-white');
+    if (!contenedorTabla) return;
+
+    // 💡 SOLUCIÓN: Forzamos a que siempre se limpie el campo al abrir el modal
+    if (inputAgropark) {
+        inputAgropark.value = ''; // <--- Cambia esto para que inicie vacío siempre
+    }
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    if (inputAgropark) {
+        const textoSuma = contenedorTabla.querySelector('.text-red-400') ? contenedorTabla.querySelector('.text-red-400').innerText : '0';
+        let sumaPesosFijos = parseFloat(textoSuma.replace(/[^0-9.-]+/g, ""));
+
+        const nuevoInput = inputAgropark.cloneNode(true);
+        inputAgropark.parentNode.replaceChild(nuevoInput, inputAgropark);
+
+        nuevoInput.addEventListener('input', function() {
+            let cantidadManual = parseFloat(this.value);
+            let celdaPorcentaje = contenedorTabla.querySelector('.text-emerald-400');
+            let celdaAgropark = contenedorTabla.querySelector('.text-blue-400');
+
+            if (!isNaN(cantidadManual) && cantidadManual > 0 && sumaPesosFijos > 0) {
+                let division = cantidadManual / sumaPesosFijos;
+                let porcentaje = (1 - division) * 100;
+
+                if (celdaPorcentaje) celdaPorcentaje.innerText = porcentaje.toFixed(2) + ' %';
+                if (celdaAgropark) {
+                    let formateado = cantidadManual.toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    }) + ' kg';
+                    celdaAgropark.innerHTML = `<i class="fa-solid fa-pen-to-square text-xs mr-1"></i> ${formateado}`;
+                }
             }
-
-            const botonDisparador = document.querySelector(`button[onclick="abrirModalCondensacion('${fecha}')"]`);
-            if (!botonDisparador) return;
-
-            const contenedorTabla = botonDisparador.closest('.bg-white');
-            if (!contenedorTabla) return;
-
-            if (inputAgropark) {
-                const celdaAgroparkTexto = contenedorTabla.querySelector('.text-blue-400') ? contenedorTabla.querySelector('.text-blue-400').innerText : '';
-                let valorActual = parseFloat(celdaAgroparkTexto.replace(/[^0-9.-]+/g, ""));
-                inputAgropark.value = (!isNaN(valorActual) && valorActual > 0) ? valorActual : '';
-            }
-
-            modal.classList.remove('hidden');
-            modal.classList.add('flex');
-
-            if (inputAgropark) {
-                const textoSuma = contenedorTabla.querySelector('.text-red-400') ? contenedorTabla.querySelector('.text-red-400').innerText : '0';
-                let sumaPesosFijos = parseFloat(textoSuma.replace(/[^0-9.-]+/g, ""));
-
-                const nuevoInput = inputAgropark.cloneNode(true);
-                inputAgropark.parentNode.replaceChild(nuevoInput, inputAgropark);
-
-                nuevoInput.addEventListener('input', function() {
-                    let cantidadManual = parseFloat(this.value);
-                    let celdaPorcentaje = contenedorTabla.querySelector('.text-emerald-400');
-                    let celdaAgropark = contenedorTabla.querySelector('.text-blue-400');
-
-                    if (!isNaN(cantidadManual) && cantidadManual > 0 && sumaPesosFijos > 0) {
-                        let division = cantidadManual / sumaPesosFijos;
-                        let porcentaje = (1 - division) * 100;
-
-                        if (celdaPorcentaje) celdaPorcentaje.innerText = porcentaje.toFixed(2) + ' %';
-                        if (celdaAgropark) {
-                            let formateado = cantidadManual.toLocaleString('en-US', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2
-                            }) + ' kg';
-                            celdaAgropark.innerHTML = `<i class="fa-solid fa-pen-to-square text-xs mr-1"></i> ${formateado}`;
-                        }
-                    }
-                });
-            }
-        }
+        });
+    }
+}
 
         function cerrarModalCondensacion() {
             const modal = document.getElementById('modalCondensacion');
