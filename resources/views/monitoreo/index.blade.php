@@ -7,6 +7,10 @@
     <title>Monitoreo Clima y Riego - Sistema Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 🔌 CDNs Obligatorias para Flatpickr (Estilos y Plugin de Semanas) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.css">
 </head>
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
@@ -53,20 +57,32 @@
         @endif
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <form method="GET" action="{{ route('monitoreo.index') }}" class="grid grid-cols-1 md:grid-cols-12 items-end gap-4">
+            <form method="GET" action="{{ route('monitoreo.index') }}" id="formFiltros" class="grid grid-cols-1 md:grid-cols-12 items-end gap-4">
                 
-                <div class="col-span-1 md:col-span-3">
-                    <label for="semana" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Semana:</label>
-                    <input type="week" name="semana" id="semana" value="{{ request('semana') }}" onchange="this.form.submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2 cursor-pointer">
+                {{-- 📅 EL ÚNICO FILTRADO POR SEMANA (CON FLATPICKR) --}}
+                <div class="col-span-1 md:col-span-4">
+                    <label for="semana_picker" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Semana:</label>
+                    <div class="flex items-center gap-2">
+                        <!-- Input oculto real que se envía a Laravel -->
+                        <input type="hidden" name="semana" id="semana_final_input" value="{{ request('semana') }}">
+
+                        <!-- Input estético controlado por Flatpickr -->
+                        <div class="relative w-full">
+                            <input type="text"
+                                id="semana_picker"
+                                placeholder="Seleccione un día..."
+                                readonly
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2 pl-9 cursor-pointer shadow-sm outline-none">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-xs">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-span-1 md:col-span-3">
-                    <label for="mes" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Mes:</label>
-                    <input type="month" name="mes" id="mes" value="{{ request('mes') }}" onchange="this.form.submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2 cursor-pointer">
-                </div>
-
+                {{-- 🔍 BUSCADOR POR SECTOR O TRABAJADOR --}}
                 @can('es-administrador')
-                <div class="col-span-1 md:col-span-5 flex gap-2 items-end">
+                <div class="col-span-1 md:col-span-7 flex gap-2 items-end">
                     <div class="w-full">
                         <label for="buscar_termino" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Buscar por Sector u Operador:</label>
                         <div class="relative">
@@ -84,9 +100,10 @@
                 </div>
                 @endcan
 
-                @if(request('semana') || request('mes') || request('buscar_termino'))
+                {{-- 🧹 BOTÓN PARA LIMPIAR FILTROS --}}
+                @if(request('semana') || request('buscar_termino'))
                 <div class="col-span-1 md:col-span-1 pb-2">
-                    <a href="{{ route('monitoreo.index') }}" class="text-xs text-red-600 hover:text-red-700 font-bold flex items-center justify-center gap-1 transition">
+                    <a href="{{ route('monitoreo.index') }}" class="text-xs text-red-600 hover:text-red-700 font-bold flex items-center justify-center gap-1 transition h-9 border border-red-200 rounded-lg bg-red-5/40 hover:bg-red-5">
                         <i class="fa-solid fa-filter-circle-xmark"></i> Limpiar
                     </a>
                 </div>
@@ -97,7 +114,7 @@
         <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
             <div class="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                 <span class="font-semibold text-gray-700 text-sm">Resumen de Resultados Evaluados</span>
-                <span class="text-xs text-gray-500">Haga clic en la fecha o en el icono de auditoría para ver la inspection completa</span>
+                <span class="text-xs text-gray-500">Haga clic en la fecha o en el icono de auditoría para ver la inspección completa</span>
             </div>
 
             <div class="overflow-x-auto">
@@ -108,7 +125,7 @@
                             <th class="py-3 px-4">Sector</th>
                             <th class="py-3 px-4">Operador</th>
                             <th class="py-3 px-4">DPV</th>
-                            <th class="py-3 px-4 bg-blue-50/50">% Drenaje (Maceta)</th>
+                            <th class="py-3 px-4 bg-blue-50/50">% Drenaje</th>
                             <th class="py-3 px-4 bg-amber-50/50">Dif. CE</th>
                             <th class="py-3 px-4 bg-purple-50/50">Dif. pH</th>
                             <th class="py-3 px-4 bg-stone-50">% Caída Noct.</th>
@@ -192,6 +209,42 @@
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
+    <!-- 🔌 SCRIPTS DE CONTEXTO Y FUNCIONAMIENTO FLATPICKR -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Inicializar Flatpickr con el plugin de selección de semanas
+            flatpickr("#semana_picker", {
+                locale: "es",
+                firstDayOfWeek: 1, // Iniciar en Lunes
+                defaultDate: "{{ request('semana') }}" ? null : null, 
+                plugins: [new weekSelect({})],
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length > 0) {
+                        // Extraer el año y el número de semana calculado por Flatpickr
+                        const numeroSemana = instance.config.getWeek(selectedDates[0]);
+                        const anio = selectedDates[0].getFullYear();
+                        
+                        // Formatear al estándar WXX (Ejemplo: 2026-W30)
+                        const stringSemanaFinal = anio + "-W" + String(numeroSemana).padStart(2, '0');
+                        
+                        // Inyectar el valor estructurado en el input oculto y enviar el formulario automáticamente
+                        document.getElementById("semana_final_input").value = stringSemanaFinal;
+                        document.getElementById("formFiltros").submit();
+                    }
+                }
+            });
+
+            // Mostrar visualmente la semana cargada actualmente si existe en la URL
+            const semanaActual = "{{ request('semana') }}";
+            if (semanaActual) {
+                document.getElementById("semana_picker").value = "Semana " + semanaActual.split("-W")[1] + ", " + semanaActual.split("-W")[0];
+            }
+        });
+    </script>
 </body>
 
 </html>

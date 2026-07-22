@@ -257,7 +257,7 @@
                         <button onclick="abrirModalRestituidasPorFecha('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             <i class="fa-solid fa-boxes-packing"></i> Restituir Cajas
                         </button>
-                        
+
                         {{-- BOTÓN COMPAÑERO: CAJAS ENVIADAS --}}
                         <button onclick="abrirModalEnviadasPorFecha('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             <i class="fa-solid fa-truck-ramp-box"></i> Cajas Enviadas
@@ -325,86 +325,86 @@
                     </table>
                 </div>
 
-              {{-- RESUMEN DE CONDENSACIÓN INDEPENDIENTE POR TABLA DIARIA --}}
-@if(auth()->user()->rol === 'administrador')
-@php
-$sumaCajasExportadasDiarias = $grupoExportacion->sum('cajas_exportacion');
+                {{-- RESUMEN DE CONDENSACIÓN INDEPENDIENTE POR TABLA DIARIA --}}
+                @if(auth()->user()->rol === 'administrador')
+                @php
+                $sumaCajasExportadasDiarias = $grupoExportacion->sum('cajas_exportacion');
 
-$sumaPesosNetosFijosDiarios = (float) $grupoExportacion->sum(function($item) {
-return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
-});
+                $sumaPesosNetosFijosDiarios = (float) $grupoExportacion->sum(function($item) {
+                return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
+                });
 
-// Recuperamos el registro único de condensación de este día
-$condensacionDelDia = \App\Models\ControlCondensacion::where('fecha', $fechaKey)->first();
-$cantidadManualGuardada = $condensacionDelDia ? (float)$condensacionDelDia->agropark : 0.0;
+                // Recuperamos el registro único de condensación de este día
+                $condensacionDelDia = \App\Models\ControlCondensacion::where('fecha', $fechaKey)->first();
+                $cantidadManualGuardada = $condensacionDelDia ? (float)$condensacionDelDia->agropark : 0.0;
 
-// 💡 AQUÍ LEEMOS EL NUEVO DATO DE LA BASE DE DATOS
-$cajasEnviadasGuardadas = $condensacionDelDia ? (int)$condensacionDelDia->cajas_enviadas : 0;
+                // 💡 AQUÍ LEEMOS EL NUEVO DATO DE LA BASE DE DATOS
+                $cajasEnviadasGuardadas = $condensacionDelDia ? (int)$condensacionDelDia->cajas_enviadas : 0;
 
-$porcentajeCondensacionDiario = 0;
+                $porcentajeCondensacionDiario = 0;
 
-if ($sumaPesosNetosFijosDiarios > 0 && $cantidadManualGuardada > 0) {
-$resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
-$porcentajeExacto = (1 - $resultadoDivision) * 100;
-$porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
-}
-@endphp
-<div class="bg-gray-900 text-white font-bold p-4 shadow border border-gray-700 border-t-0 rounded-b-xl">
-    {{-- Contenedor Principal: En móvil se vuelve columna con separación controlada --}}
-    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 text-sm w-full">
-        
-        {{-- TÍTULO: Siempre arriba en móvil y ocupando su espacio --}}
-        <div class="uppercase tracking-wider text-xs font-extrabold text-amber-400 flex items-center gap-1 pb-2 border-b border-gray-800 xl:border-b-0 xl:pb-0">
-            <i class="fa-solid fa-chart-pie"></i> Resumen Condensación del Día
-        </div>
-        
-        {{-- CONTENEDOR DE MÉTRICAS: Grid de 2 columnas en móvil, fila única en pantallas grandes --}}
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap md:items-center gap-4 md:gap-8 justify-between md:justify-end w-full xl:w-auto">
-            
-            {{-- Total Cajas Exp. --}}
-            <div class="flex flex-col justify-center"> 
-                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Exp.</span>
-                <span class="text-base text-blue-400 font-extrabold whitespace-nowrap">
-                    <i class="fa-solid fa-box mr-1"></i> {{ number_format($sumaCajasExportadasDiarias) }} uds
-                </span>
-            </div>
+                if ($sumaPesosNetosFijosDiarios > 0 && $cantidadManualGuardada > 0) {
+                $resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
+                $porcentajeExacto = (1 - $resultadoDivision) * 100;
+                $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
+                }
+                @endphp
+                <div class="bg-gray-900 text-white font-bold p-4 shadow border border-gray-700 border-t-0 rounded-b-xl">
+                    {{-- Contenedor Principal: En móvil se vuelve columna con separación controlada --}}
+                    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 text-sm w-full">
 
-            {{-- Total Cajas Env. --}}
-            <div class="flex flex-col justify-center"> 
-                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Env.</span>
-                <span class="text-base text-cyan-400 font-extrabold whitespace-nowrap">
-                    <i class="fa-solid fa-truck mr-1"></i> {{ number_format($cajasEnviadasGuardadas) }} uds
-                </span>
-            </div>
+                        {{-- TÍTULO: Siempre arriba en móvil y ocupando su espacio --}}
+                        <div class="uppercase tracking-wider text-xs font-extrabold text-amber-400 flex items-center gap-1 pb-2 border-b border-gray-800 xl:border-b-0 xl:pb-0">
+                            <i class="fa-solid fa-chart-pie"></i> Resumen Condensación del Día
+                        </div>
 
-            {{-- Suma Pesos Netos Fijos --}}
-            <div class="flex flex-col justify-center">
-                <span class="text-xs text-gray-400 block uppercase font-medium">Pesos Netos Fijos</span>
-                <span class="text-base text-red-400 font-extrabold whitespace-nowrap">
-                    <i class="fa-solid fa-calculator mr-1"></i> {{ number_format($sumaPesosNetosFijosDiarios, 2) }} kg
-                </span>
-            </div>
-            
-            {{-- Agropark --}}
-            <div class="flex flex-col justify-center">
-                <span class="text-xs text-gray-400 block uppercase font-medium">Agropark</span>
-                <span class="text-base text-blue-400 font-extrabold whitespace-nowrap">
-                    <i class="fa-solid fa-weight-hanging mr-1"></i> {{ $cantidadManualGuardada > 0 ? number_format($cantidadManualGuardada, 2) . ' kg' : 'Sin capturar' }}
-                </span>
-            </div>
-            
-            {{-- Porcentaje de Condensación: Ocupa las 2 columnas en móviles muy chicos para resaltar --}}
-            <div class="col-span-2 sm:col-span-1 flex flex-col justify-center pt-2 sm:pt-0 border-t border-gray-800 sm:border-t-0">
-                <span class="text-xs text-amber-400 block uppercase font-medium">% Condensación</span>
-                <span class="text-lg text-emerald-400 font-black whitespace-nowrap">
-                    <i class="fa-solid fa-percent mr-1"></i> {{ number_format($porcentajeCondensacionDiario, 2) }} %
-                </span>
-            </div>
+                        {{-- CONTENEDOR DE MÉTRICAS: Grid de 2 columnas en móvil, fila única en pantallas grandes --}}
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap md:items-center gap-4 md:gap-8 justify-between md:justify-end w-full xl:w-auto">
 
-        </div>
-    </div>
-</div>
- @endif
+                            {{-- Total Cajas Exp. --}}
+                            <div class="flex flex-col justify-center">
+                                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Exp.</span>
+                                <span class="text-base text-blue-400 font-extrabold whitespace-nowrap">
+                                    <i class="fa-solid fa-box mr-1"></i> {{ number_format($sumaCajasExportadasDiarias) }} uds
+                                </span>
+                            </div>
+
+                            {{-- Total Cajas Env. --}}
+                            <div class="flex flex-col justify-center">
+                                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Env.</span>
+                                <span class="text-base text-cyan-400 font-extrabold whitespace-nowrap">
+                                    <i class="fa-solid fa-truck mr-1"></i> {{ number_format($cajasEnviadasGuardadas) }} uds
+                                </span>
+                            </div>
+
+                            {{-- Suma Pesos Netos Fijos --}}
+                            <div class="flex flex-col justify-center">
+                                <span class="text-xs text-gray-400 block uppercase font-medium">Pesos Netos Fijos</span>
+                                <span class="text-base text-red-400 font-extrabold whitespace-nowrap">
+                                    <i class="fa-solid fa-calculator mr-1"></i> {{ number_format($sumaPesosNetosFijosDiarios, 2) }} kg
+                                </span>
+                            </div>
+
+                            {{-- Agropark --}}
+                            <div class="flex flex-col justify-center">
+                                <span class="text-xs text-gray-400 block uppercase font-medium">Agropark</span>
+                                <span class="text-base text-blue-400 font-extrabold whitespace-nowrap">
+                                    <i class="fa-solid fa-weight-hanging mr-1"></i> {{ $cantidadManualGuardada > 0 ? number_format($cantidadManualGuardada, 2) . ' kg' : 'Sin capturar' }}
+                                </span>
+                            </div>
+
+                            {{-- Porcentaje de Condensación: Ocupa las 2 columnas en móviles muy chicos para resaltar --}}
+                            <div class="col-span-2 sm:col-span-1 flex flex-col justify-center pt-2 sm:pt-0 border-t border-gray-800 sm:border-t-0">
+                                <span class="text-xs text-amber-400 block uppercase font-medium">% Condensación</span>
+                                <span class="text-lg text-emerald-400 font-black whitespace-nowrap">
+                                    <i class="fa-solid fa-percent mr-1"></i> {{ number_format($porcentajeCondensacionDiario, 2) }} %
+                                </span>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+                @endif
             </div>
             @empty
             <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 text-center text-sm text-gray-400 font-medium">
@@ -648,7 +648,7 @@ $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
             {{-- Apuntamos a la ruta global de condensación --}}
             <form action="{{ route('condensacion.guardar') }}" method="POST" class="p-6 space-y-4">
                 @csrf
-                
+
                 {{-- Campos ocultos para saber qué día y semana estamos afectando --}}
                 <input type="hidden" name="semana" value="{{ $semanaActual ?? ($recepcionesExportaciones->first()->semana_exportacion ?? 1) }}">
                 <input type="hidden" name="fecha" id="enviadas_fecha_input" required>
@@ -1021,7 +1021,7 @@ $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
             document.getElementById('modalRestituidas').classList.add('hidden');
         }
 
-       function abrirModalEnviadasPorFecha(fecha) {
+        function abrirModalEnviadasPorFecha(fecha) {
             const modal = document.getElementById('modalEnviadas');
             const inputFecha = document.getElementById('enviadas_fecha_input');
             const inputCajas = document.getElementById('cajas_enviadas_input');

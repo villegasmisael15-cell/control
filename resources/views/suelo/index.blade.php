@@ -7,6 +7,10 @@
     <title>Monitoreo Suelo - Sistema Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- 🔌 CDNs Obligatorias para Flatpickr (Estilos y Plugin de Semanas) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.css">
 </head>
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
@@ -52,20 +56,34 @@
         </div>
         @endif
 
+        <!-- BLOQUE DE FILTROS OPTIMIZADO -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
-            <form method="GET" action="{{ route('suelo.index') }}" class="grid grid-cols-1 md:grid-cols-12 items-end gap-4">
-                <div class="col-span-1 md:col-span-3">
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Semana:</label>
-                    <input type="week" name="semana" id="semana" value="{{ request('semana') }}" onchange="this.form.submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg p-2 cursor-pointer">
+            <form method="GET" action="{{ route('suelo.index') }}" id="formFiltros" class="grid grid-cols-1 md:grid-cols-12 items-end gap-4">
+                
+                {{-- 📅 EL ÚNICO FILTRADO POR SEMANA (CON FLATPICKR) --}}
+                <div class="col-span-1 md:col-span-4">
+                    <label for="semana_picker" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Semana:</label>
+                    <div class="flex items-center gap-2">
+                        <!-- Input oculto real que se envía a Laravel -->
+                        <input type="hidden" name="semana" id="semana_final_input" value="{{ request('semana') }}">
+
+                        <!-- Input estético controlado por Flatpickr -->
+                        <div class="relative w-full">
+                            <input type="text"
+                                id="semana_picker"
+                                placeholder="Seleccione un día..."
+                                readonly
+                                class="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:outline-emerald-500 p-2 pl-9 cursor-pointer shadow-sm">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 text-xs">
+                                <i class="fa-solid fa-calendar-days"></i>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="col-span-1 md:col-span-3">
-                    <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Mes:</label>
-                    <input type="month" name="mes" id="mes" value="{{ request('mes') }}" onchange="this.form.submit()" class="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg p-2 cursor-pointer">
-                </div>
-
+                {{-- 🔍 BUSCADOR POR SECTOR O TRABAJADOR --}}
                 @can('es-administrador')
-                <div class="col-span-1 md:col-span-5 flex gap-2 items-end">
+                <div class="col-span-1 md:col-span-7 flex gap-2 items-end">
                     <div class="w-full">
                         <label class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Buscar por Sector u Operador:</label>
                         <div class="relative">
@@ -83,9 +101,10 @@
                 </div>
                 @endcan
 
-                @if(request('semana') || request('mes') || request('buscar_termino'))
+                {{-- 🧹 BOTÓN PARA LIMPIAR FILTROS --}}
+                @if(request('semana') || request('buscar_termino'))
                 <div class="col-span-1 md:col-span-1 pb-2">
-                    <a href="{{ route('suelo.index') }}" class="text-xs text-red-600 hover:text-red-700 font-bold flex items-center justify-center gap-1 transition">
+                    <a href="{{ route('suelo.index') }}" class="text-xs text-red-600 hover:text-red-700 font-bold flex items-center justify-center gap-1 transition h-9 border border-red-200 rounded-lg bg-red-5/40 hover:bg-red-5">
                         <i class="fa-solid fa-filter-circle-xmark"></i> Limpiar
                     </a>
                 </div>
@@ -292,7 +311,37 @@
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
+    <!-- 🔌 SCRIPTS DE CONTEXTO Y FUNCIONAMIENTO FLATPICKR -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
     <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Inicializar Flatpickr con el plugin de selección de semanas
+            flatpickr("#semana_picker", {
+                locale: "es",
+                firstDayOfWeek: 1, // Iniciar en Lunes
+                defaultDate: "{{ request('semana') }}" ? null : null, 
+                plugins: [new weekSelect({})],
+                onChange: function(selectedDates, dateStr, instance) {
+                    if (selectedDates.length > 0) {
+                        const numeroSemana = instance.config.getWeek(selectedDates[0]);
+                        const anio = selectedDates[0].getFullYear();
+                        const stringSemanaFinal = anio + "-W" + String(numeroSemana).padStart(2, '0');
+                        
+                        document.getElementById("semana_final_input").value = stringSemanaFinal;
+                        document.getElementById("formFiltros").submit();
+                    }
+                }
+            });
+
+            const semanaActual = "{{ request('semana') }}";
+            if (semanaActual) {
+                document.getElementById("semana_picker").value = "Semana " + semanaActual.split("-W")[1] + ", " + semanaActual.split("-W")[0];
+            }
+        });
+
         function mostrarDetalleSuelo(boton) {
             document.getElementById('md_fecha').innerText = boton.getAttribute('data-fecha');
             document.getElementById('md_sector').innerText = boton.getAttribute('data-sector');
