@@ -30,6 +30,12 @@
             <x-text-input id="variedad" class="block mt-1 w-full" type="text" name="variedad" required placeholder="Ej: Tomate Saladette" />
             <x-input-error :messages="$errors->get('variedad')" class="mt-2" />
         </div>
+        
+        <div>
+            <x-input-label for="numero_plantas" value="Número Total de Plantas" />
+            <x-text-input id="numero_plantas" class="block mt-1 w-full" type="number" name="numero_plantas" min="1" step="1" required placeholder="Ej: 5000" />
+            <x-input-error :messages="$errors->get('numero_plantas')" class="mt-2" />
+        </div>
 
         <div>
             <x-input-label for="macetas_por_gotero" value="Número de Macetas por Gotero" />

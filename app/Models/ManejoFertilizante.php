@@ -14,6 +14,7 @@ class ManejoFertilizante extends Model
     protected $fillable = [
         'bitacora_id',
         'tanque',
+        'accion',
         'cantidad',
         'unidad_cantidad',
         'labores_culturales',

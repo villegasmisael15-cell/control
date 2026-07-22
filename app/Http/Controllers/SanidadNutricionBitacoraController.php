@@ -76,6 +76,10 @@ class SanidadNutricionBitacoraController extends Controller
 
     public function create()
     {
+        if (auth()->user()->rol !== 'administrador') {
+            return redirect()->route('sanidad.index')
+                ->withErrors(['error' => 'Acceso denegado. Solo el administrador puede asignar bitácoras.']);
+        }
         $user = auth()->user();
 
         // 1. Obtener todos los operadores para el mapeo en el selector inicial
@@ -103,17 +107,17 @@ class SanidadNutricionBitacoraController extends Controller
             $listaSectores = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
         }
 
-        // 3. 💡 RECTIFICADO: Estructura bidimensional para amarrar variedad y fecha de trasplante juntas
+        // 3. ESTRUCTURA COMPLETA: Mapea variedad, fecha de trasplante y número de plantas por sector
         $sectoresConVariedad = [];
         foreach ($listaSectores as $sectorName) {
             $caracteristica = DB::table('sector_caracteristicas')
                 ->where('sector', $sectorName)
                 ->first();
 
-            // Guardamos ambos campos mapeados estructurados por llave de sector
             $sectoresConVariedad[$sectorName] = [
                 'variedad'         => $caracteristica ? $caracteristica->variedad : '',
-                'fecha_trasplante' => $caracteristica ? $caracteristica->fecha_trasplante : ''
+                'fecha_trasplante' => $caracteristica ? $caracteristica->fecha_trasplante : '',
+                'numero_plantas'   => $caracteristica ? $caracteristica->numero_plantas : ''
             ];
         }
 
@@ -126,6 +130,10 @@ class SanidadNutricionBitacoraController extends Controller
 
     public function store(Request $request)
     {
+       if (auth()->user()->rol !== 'administrador') {
+            return redirect()->route('sanidad.index')
+                ->withErrors(['error' => 'Acceso denegado. No tiene permisos para guardar registros.']);
+        }
         // Validación general de los datos entrantes (Maestro + Subformularios)
         $request->validate([
             // Datos Maestro
@@ -145,23 +153,20 @@ class SanidadNutricionBitacoraController extends Controller
             'unidad_dosis' => 'required|array',
             'unidad_dosis.*' => 'required|string',
             'is_intervalo_seguridad' => 'nullable|array',
-            'variedad' => 'nullable|array',
-            'numero_plantas' => 'nullable|array',
             
-            // 💡 CAMBIO DE VALIDACIÓN: Se valida el selector dual
+            // 💡 RECTIFICADO: Validación adaptada a los nuevos inputs ocultos del sector
+            'variedad_sector' => 'nullable|string|max:255',
+            'numero_plantas_sector' => 'nullable|integer',
+            'fecha_trasplante_sector' => 'nullable|date',
+            
+            // Selector dual para solución
             'tipo_solucion' => 'required|array',
             'tipo_solucion.*' => 'required|string|in:SOLUCION MADRE,SOLUCION DIARIA',
 
-            'fecha_trasplante' => 'nullable|array',
             'agroquimicos_observaciones' => 'nullable|array',
 
-            // Arreglos de Manejo de Fertilizantes
-            'tanque' => 'required|array',
-            'tanque.*' => 'required|string|max:100',
-            'cantidad' => 'required|array',
-            'cantidad.*' => 'required|numeric|min:0',
-            'unidad_cantidad' => 'required|array',
-            'unidad_cantidad.*' => 'required|string',
+            // VALIDACIÓN DEL SUBDETALLE: Control de índices de los bloques de tanques
+            'tanques_indices' => 'required|array',
             'labores_culturales' => 'nullable|string|max:255',
             'fertilizantes_observaciones' => 'nullable|string|max:255',
         ]);
@@ -180,12 +185,9 @@ class SanidadNutricionBitacoraController extends Controller
             // 2. Procesar e insertar bloque: Manejo de Agroquímicos
             foreach ($request->aplicacion as $index => $val) {
                 
-                // 💡 DETERMINAR QUÉ COLUMNA RELLENAR EN LA BD SEGÚN LA OPCIÓN ELEGIDA
                 $opcionSolucion = $request->tipo_solucion[$index];
                 $valSolucionMadre = ($opcionSolucion === 'SOLUCION MADRE') ? 'SÍ' : null; 
                 $valSolucionDiaria = ($opcionSolucion === 'SOLUCION DIARIA') ? 'SÍ' : null;
-                // Nota: Si en tu base de datos guardas el texto literal (ej. "Solución Madre" en lugar de un indicador SÍ/NO), 
-                // puedes asignar directamente la variable $opcionSolucion a la columna que prefieras.
 
                 ManejoAgroquimico::create([
                     'bitacora_id'            => $bitacora->id,
@@ -196,28 +198,40 @@ class SanidadNutricionBitacoraController extends Controller
                     'dosis'                  => $request->dosis[$index],
                     'unidad_dosis'           => $request->unidad_dosis[$index],
                     'is_intervalo_seguridad' => $request->is_intervalo_seguridad[$index] ?? null,
-                    'variedad'               => $request->variedad[$index] ?? null,
-                    'numero_plantas'         => $request->numero_plantas[$index] ?? null,
                     
-                    // 💡 ASIGNACIÓN DINÁMICA: Guarda el valor según el tipo seleccionado
+                    // 💡 CAMBIO CLAVE: Asignación global directa desde los campos ocultos del sector
+                    'variedad'               => $request->variedad_sector,
+                    'numero_plantas'         => $request->numero_plantas_sector,
+                    'fecha_trasplante'       => $request->fecha_trasplante_sector,
+                    
                     'solucion_madre'         => $valSolucionMadre,
                     'solucion_diaria'        => $valSolucionDiaria,
-
-                    'fecha_trasplante'       => $request->fecha_trasplante[$index] ?? null,
                     'observaciones'          => $request->agroquimicos_observaciones[$index] ?? null,
                 ]);
             }
 
-            // 3. Procesar e insertar bloque: Manejo de Fertilizantes
-            foreach ($request->tanque as $index => $val) {
-                ManejoFertilizante::create([
-                    'bitacora_id'    => $bitacora->id,
-                    'tanque'         => $request->tanque[$index],
-                    'cantidad'       => $request->cantidad[$index],
-                    'unidad_cantidad'=> $request->unidad_cantidad[$index],
-                    'labores_culturales' => $request->labores_culturales[$index] ?? null,
-                    'observaciones'  => $request->fertilizantes_observaciones[$index] ?? null,
-                ]);
+            // 3. PROCESAR SUBDETALLE ANIDADO: Tanque -> Múltiples Acciones con Dosis individuales
+            foreach ($request->tanques_indices as $tIdx) {
+                // Obtenemos el nombre específico asignado a este bloque de tanque
+                $nombreTanque = $request->input("tanque_{$tIdx}");
+                
+                // Extraemos las listas de acciones y dosis vinculadas a este ID de tanque
+                $acciones   = $request->input("accion_texto_{$tIdx}", []);
+                $cantidades = $request->input("cantidad_{$tIdx}", []);
+                $unidades   = $request->input("unidad_cantidad_{$tIdx}", []);
+
+                // Iteramos sobre cada una de las acciones agregadas en el Tanque actual
+                foreach ($acciones as $aIdx => $accionTexto) {
+                    ManejoFertilizante::create([
+                        'bitacora_id'        => $bitacora->id,
+                        'tanque'             => $nombreTanque,
+                        'accion'             => $accionTexto,
+                        'cantidad'           => $cantidades[$aIdx] ?? 0,
+                        'unidad_cantidad'    => $unidades[$aIdx] ?? 'g',
+                        'labores_culturales' => $request->labores_culturales ?? null,
+                        'observaciones'      => $request->fertilizantes_observaciones ?? null,
+                    ]);
+                }
             }
 
             DB::commit();

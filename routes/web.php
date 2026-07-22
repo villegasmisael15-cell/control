@@ -80,25 +80,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('sectores.configurar_inicial', compact('sector'));
     })->name('sectores.configurar');
 
-    Route::post('/sectores/configurar-inicial', function (Request $request) {
-        $request->validate([
-            'sector'             => 'required|string',
-            'superficie_m2'      => 'required|integer|min:1',
-            'variedad'           => 'required|string|max:255',
-            'macetas_por_gotero' => 'required|integer|min:1', 
-            'fecha_trasplante'   => 'required|date',
-        ]);
+   Route::post('/sectores/configurar-inicial', function (Request $request) {
+    $request->validate([
+        'sector'             => 'required|string',
+        'superficie_m2'      => 'required|integer|min:1',
+        'variedad'           => 'required|string|max:255',
+        'numero_plantas'     => 'required|integer|min:1', // 💡 NUEVO CAMPO VALIDADO
+        'macetas_por_gotero' => 'required|integer|min:1', 
+        'fecha_trasplante'   => 'required|date',
+    ]);
 
-        \App\Models\SectorCaracteristica::updateOrCreate(
-            ['sector' => $request->sector],
-            [
-                'superficie_m2'      => $request->superficie_m2,
-                'variedad'           => $request->variedad,
-                'macetas_por_gotero' => $request->macetas_por_gotero, 
-                'fecha_trasplante'   => $request->fecha_trasplante
-            ]
-        );
-
+    \App\Models\SectorCaracteristica::updateOrCreate(
+        ['sector' => $request->sector],
+        [
+            'superficie_m2'      => $request->superficie_m2,
+            'variedad'           => $request->variedad,
+            'numero_plantas'     => $request->numero_plantas, // 💡 NUEVO CAMPO GUARDADO
+            'macetas_por_gotero' => $request->macetas_por_gotero, 
+            'fecha_trasplante'   => $request->fecha_trasplante
+        ]
+    );
         return redirect('/dashboard')->with('status', 'Sector configurado correctamente.');
     })->name('sectores.guardar_inicial');
 
