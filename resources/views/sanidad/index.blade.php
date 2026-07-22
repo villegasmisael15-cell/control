@@ -221,7 +221,7 @@
                         @endif
                     </div>
 
-                    <!-- 2. MANEJO DE FERTILIZANTES -->
+                    <!-- 2. MANEJO DE FERTILIZANTES (💡 CORREGIDO) -->
                     <div class="space-y-4 pt-6">
                         <h4 class="text-sm font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
                             <i class="fa-solid fa-flask-vial text-lg"></i>
@@ -244,7 +244,7 @@
                                                 <th class="p-2 w-3/5">Acción / Instrucción Texto</th>
                                                 <th class="p-2 w-2/5 text-right">Dosificación</th>
                                             </tr>
-                                        </table>
+                                        </thead>
                                         <tbody class="divide-y divide-stone-100">
                                             @foreach($accionesTanque as $acc)
                                             <tr class="hover:bg-stone-50/50">
