@@ -325,80 +325,86 @@
                     </table>
                 </div>
 
-                {{-- RESUMEN DE CONDENSACIÓN INDEPENDIENTE POR TABLA DIARIA --}}
-                @if(auth()->user()->rol === 'administrador')
-                @php
-                $sumaCajasExportadasDiarias = $grupoExportacion->sum('cajas_exportacion');
+              {{-- RESUMEN DE CONDENSACIÓN INDEPENDIENTE POR TABLA DIARIA --}}
+@if(auth()->user()->rol === 'administrador')
+@php
+$sumaCajasExportadasDiarias = $grupoExportacion->sum('cajas_exportacion');
 
-                $sumaPesosNetosFijosDiarios = (float) $grupoExportacion->sum(function($item) {
-                return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
-                });
+$sumaPesosNetosFijosDiarios = (float) $grupoExportacion->sum(function($item) {
+return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
+});
 
-                // Recuperamos el registro único de condensación de este día
-                $condensacionDelDia = \App\Models\ControlCondensacion::where('fecha', $fechaKey)->first();
-                $cantidadManualGuardada = $condensacionDelDia ? (float)$condensacionDelDia->agropark : 0.0;
-                
-                // 💡 AQUÍ LEEMOS EL NUEVO DATO DE LA BASE DE DATOS
-                $cajasEnviadasGuardadas = $condensacionDelDia ? (int)$condensacionDelDia->cajas_enviadas : 0;
+// Recuperamos el registro único de condensación de este día
+$condensacionDelDia = \App\Models\ControlCondensacion::where('fecha', $fechaKey)->first();
+$cantidadManualGuardada = $condensacionDelDia ? (float)$condensacionDelDia->agropark : 0.0;
 
-                $porcentajeCondensacionDiario = 0;
+// 💡 AQUÍ LEEMOS EL NUEVO DATO DE LA BASE DE DATOS
+$cajasEnviadasGuardadas = $condensacionDelDia ? (int)$condensacionDelDia->cajas_enviadas : 0;
 
-                if ($sumaPesosNetosFijosDiarios > 0 && $cantidadManualGuardada > 0) {
-                $resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
-                $porcentajeExacto = (1 - $resultadoDivision) * 100;
-                $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
-                }
-                @endphp
-                <div class="bg-gray-900 text-white font-bold p-4 shadow border border-gray-700 border-t-0 rounded-b-xl">
-                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 text-sm w-full">
-                        
-                        {{-- ZONA IZQUIERDA: TÍTULO, TOTAL EXPORTADAS Y TOTAL ENVIADAS --}}
-                        <div class="flex flex-wrap items-center">
-                            <div class="uppercase tracking-wider text-xs font-extrabold text-amber-400 shrink-0">
-                                <i class="fa-solid fa-chart-pie mr-1"></i> Resumen Condensación del Día
-                            </div>
-                            
-                            <div class="md:ml-75"> 
-                                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Exp.</span>
-                                <span class="text-base text-blue-400 font-extrabold">
-                                    <i class="fa-solid fa-box mr-1"></i> {{ number_format($sumaCajasExportadasDiarias) }} uds
-                                </span>
-                            </div>
+$porcentajeCondensacionDiario = 0;
 
-                            {{-- Métrica Solicitada: Cajas Enviadas del día --}}
-                            <div class="md:ml-8"> 
-                                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Env.</span>
-                                <span class="text-base text-cyan-400 font-extrabold">
-                                    <i class="fa-solid fa-truck mr-1"></i>{{ number_format($cajasEnviadasGuardadas) }} uds
-                                </span>
-                            </div>
-                        </div>
+if ($sumaPesosNetosFijosDiarios > 0 && $cantidadManualGuardada > 0) {
+$resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
+$porcentajeExacto = (1 - $resultadoDivision) * 100;
+$porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
+}
+@endphp
+<div class="bg-gray-900 text-white font-bold p-4 shadow border border-gray-700 border-t-0 rounded-b-xl">
+    {{-- Contenedor Principal: En móvil se vuelve columna con separación controlada --}}
+    <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 text-sm w-full">
+        
+        {{-- TÍTULO: Siempre arriba en móvil y ocupando su espacio --}}
+        <div class="uppercase tracking-wider text-xs font-extrabold text-amber-400 flex items-center gap-1 pb-2 border-b border-gray-800 xl:border-b-0 xl:pb-0">
+            <i class="fa-solid fa-chart-pie"></i> Resumen Condensación del Día
+        </div>
+        
+        {{-- CONTENEDOR DE MÉTRICAS: Grid de 2 columnas en móvil, fila única en pantallas grandes --}}
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap md:items-center gap-4 md:gap-8 justify-between md:justify-end w-full xl:w-auto">
+            
+            {{-- Total Cajas Exp. --}}
+            <div class="flex flex-col justify-center"> 
+                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Exp.</span>
+                <span class="text-base text-blue-400 font-extrabold whitespace-nowrap">
+                    <i class="fa-solid fa-box mr-1"></i> {{ number_format($sumaCajasExportadasDiarias) }} uds
+                </span>
+            </div>
 
-                        {{-- ZONA DERECHA: LOS DEMÁS TOTALES COMPLETAMENTE INTACTOS --}}
-                        <div class="flex flex-wrap items-center gap-8 justify-end">
-                            <div>
-                                <span class="text-xs text-gray-400 block uppercase font-medium">Suma Pesos Netos Fijos</span>
-                                <span class="text-base text-red-400 font-extrabold">
-                                    <i class="fa-solid fa-calculator mr-1"></i> {{ number_format($sumaPesosNetosFijosDiarios, 3) }} kg
-                                </span>
-                            </div>
-                            <div>
-                                <span class="text-xs text-gray-400 block uppercase font-medium">Agropark</span>
-                                <span class="text-base text-blue-400 font-extrabold">
-                                    {{ $cantidadManualGuardada > 0 ? number_format($cantidadManualGuardada, 3) . ' kg' : 'Sin capturar' }}
-                                </span>
-                            </div>
-                            <div>
-                                <span class="text-xs text-amber-400 block uppercase font-medium">Porcentaje de Condensación</span>
-                                <span class="text-lg text-emerald-400 font-black">
-                                    {{ number_format($porcentajeCondensacionDiario, 2) }} %
-                                </span>
-                            </div>
-                        </div>
+            {{-- Total Cajas Env. --}}
+            <div class="flex flex-col justify-center"> 
+                <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Env.</span>
+                <span class="text-base text-cyan-400 font-extrabold whitespace-nowrap">
+                    <i class="fa-solid fa-truck mr-1"></i> {{ number_format($cajasEnviadasGuardadas) }} uds
+                </span>
+            </div>
 
-                    </div>
-                </div>
-                @endif
+            {{-- Suma Pesos Netos Fijos --}}
+            <div class="flex flex-col justify-center">
+                <span class="text-xs text-gray-400 block uppercase font-medium">Pesos Netos Fijos</span>
+                <span class="text-base text-red-400 font-extrabold whitespace-nowrap">
+                    <i class="fa-solid fa-calculator mr-1"></i> {{ number_format($sumaPesosNetosFijosDiarios, 2) }} kg
+                </span>
+            </div>
+            
+            {{-- Agropark --}}
+            <div class="flex flex-col justify-center">
+                <span class="text-xs text-gray-400 block uppercase font-medium">Agropark</span>
+                <span class="text-base text-blue-400 font-extrabold whitespace-nowrap">
+                    <i class="fa-solid fa-weight-hanging mr-1"></i> {{ $cantidadManualGuardada > 0 ? number_format($cantidadManualGuardada, 2) . ' kg' : 'Sin capturar' }}
+                </span>
+            </div>
+            
+            {{-- Porcentaje de Condensación: Ocupa las 2 columnas en móviles muy chicos para resaltar --}}
+            <div class="col-span-2 sm:col-span-1 flex flex-col justify-center pt-2 sm:pt-0 border-t border-gray-800 sm:border-t-0">
+                <span class="text-xs text-amber-400 block uppercase font-medium">% Condensación</span>
+                <span class="text-lg text-emerald-400 font-black whitespace-nowrap">
+                    <i class="fa-solid fa-percent mr-1"></i> {{ number_format($porcentajeCondensacionDiario, 2) }} %
+                </span>
+            </div>
+
+        </div>
+    </div>
+</div>
+ @endif
             </div>
             @empty
             <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 text-center text-sm text-gray-400 font-medium">
