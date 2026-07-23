@@ -29,12 +29,10 @@
 
     <div class="header">
         <div>
-            <span class="title">Sistema Control - Bitácora Fitosanitaria</span><br>
+            <span class="title">Sistema Control - Bitácora </span><br>
             <span class="subtitle">Reporte Oficial de Aplicaciones y Nutrición</span>
         </div>
-        <div style="text-align: right;">
-            <strong>Fecha de Impresión:</strong> {{ date('d/m/Y H:i') }}
-        </div>
+        
     </div>
 
     <!-- DATOS GENERALES -->
