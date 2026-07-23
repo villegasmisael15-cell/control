@@ -110,34 +110,42 @@ class MonitoreoClimaRiegoController extends Controller
    public function store(Request $request)
     {
         // Se inyecta automáticamente la hora actual del servidor antes de validar
+       $operadorSector = \App\Models\User::where('sectores', 'LIKE', '%' . $request->sector . '%')
+                            ->where('rol', '!=', 'administrador')
+                            ->first();
+
+        // Se inyecta la hora y el ID del dueño real del sector (si no tiene operador asignado, cae en el usuario actual)
         $request->merge([
             'radiacion_hora' => now()->format('H:i:s'),
-            'user_id' => auth()->id()
+            'user_id' => $operadorSector ? $operadorSector->id : auth()->id()
         ]);
 
         // Se validan los datos (campos técnicos opcionales 'nullable')
-        $request->validate([
-            'fecha' => 'required|date',
-            'sector' => 'required|string|max:255',
-            'temperatura' => 'nullable|numeric',
-            'humedad' => 'nullable|numeric',
-            'vol_riego_entrada' => 'nullable|integer',
-            'vol_drenaje_salida' => 'nullable|integer',
-            'ce_entrada' => 'nullable|numeric',
-            'ce_salida' => 'nullable|numeric',
-            'ph_entrada' => 'nullable|numeric',
-            'ph_salida' => 'nullable|numeric',
-            'peso_tarde_anterior' => 'nullable|numeric',
-            'peso_manana' => 'nullable|numeric',
-            
-            // Campos de Radiación Solar (Obligatorios)
-            'radiacion_hora' => 'required',
-            'radiacion_lectura' => 'required|integer|min:0',
-            'radiacion_semaforo' => 'required|string|max:255',
-            'radiacion_accion_tomada' => 'nullable|string',
+       $request->validate([
+        'fecha' => 'required|date',
+        'sector' => 'required|string|max:255',
+        
+        // 🔒 LIMITAR RANGOS PARA EVITAR CÁLCULOS DE DPV FUERA DE RANGO
+        'temperatura' => 'nullable|numeric|min:-10|max:60',
+        'humedad' => 'nullable|numeric|min:0|max:100',
+        
+        'vol_riego_entrada' => 'nullable|integer',
+        'vol_drenaje_salida' => 'nullable|integer',
+        'ce_entrada' => 'nullable|numeric',
+        'ce_salida' => 'nullable|numeric',
+        'ph_entrada' => 'nullable|numeric',
+        'ph_salida' => 'nullable|numeric',
+        'peso_tarde_anterior' => 'nullable|numeric',
+        'peso_manana' => 'nullable|numeric',
+        
+        // Campos de Radiación Solar (Obligatorios)
+        'radiacion_hora' => 'required',
+        'radiacion_lectura' => 'required|integer|min:0',
+        'radiacion_semaforo' => 'required|string|max:255',
+        'radiacion_accion_tomada' => 'nullable|string',
 
-            'user_id' => 'required|exists:users,id',
-        ]);
+        'user_id' => 'required|exists:users,id',
+    ]);
 
         // --- NUEVA LÓGICA: DIVIDIR EL RIEGO ENTRE EL NÚMERO DE MACETAS ---
         if ($request->filled('vol_riego_entrada')) {

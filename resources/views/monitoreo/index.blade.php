@@ -16,27 +16,27 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="bg-emerald-600 text-white shadow-md">
-    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-        <!-- Logotipo compacto -->
-        <div class="flex items-center min-w-0">
-            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
-            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
-        </div>
+        <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+            <!-- Logotipo compacto -->
+            <div class="flex items-center min-w-0">
+                <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+                <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+            </div>
 
-        <!-- Acciones adaptadas con truncamiento de texto -->
-        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
-            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
-                <i class="fa-solid fa-user text-[10px]"></i> 
-                <span class="truncate">{{ auth()->user()->name }}</span>
-            </span>
-            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
-                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
-                <span class="hidden xs:inline">Volver al Panel</span>
-                <span class="inline xs:hidden">Panel</span>
-            </a>
+            <!-- Acciones adaptadas con truncamiento de texto -->
+            <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                    <i class="fa-solid fa-user text-[10px]"></i>
+                    <span class="truncate">{{ auth()->user()->name }}</span>
+                </span>
+                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                    <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
+                    <span class="hidden xs:inline">Volver al Panel</span>
+                    <span class="inline xs:hidden">Panel</span>
+                </a>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
 
@@ -151,8 +151,8 @@
                             <td class="py-3.5 px-4"><span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded font-semibold">{{ $row->sector }}</span></td>
                             <td class="py-3.5 px-4">
                                 <span class="text-xs text-gray-600 font-medium flex items-center gap-1">
-                                    <i class="fa-solid fa-user text-gray-400 text-[10px]"></i>
-                                    {{ $row->user ? $row->user->name : 'Sistema / Automatizado' }}
+                                    <i class="fa-solid fa-user-tie text-emerald-600 text-[10px]"></i>
+                                    {{ $row->user ? $row->user->name : 'Sin operador asignado' }}
                                 </span>
                             </td>
                             <td class="py-3.5 px-4 font-mono text-xs font-semibold">{{ $row->dpv }}</td>
