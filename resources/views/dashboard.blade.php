@@ -12,28 +12,29 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-4 shadow-sm">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <i class="fa-solid fa-leaf text-2xl mr-2"></i>
-                    <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
-                </div>
-
-                <div class="flex items-center gap-4 text-sm font-medium">
-                    <span class="bg-emerald-700 px-3 py-1 rounded text-xs flex items-center gap-1">
-                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
-                    </span>
-
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
-                        @csrf
-                        <button type="submit"class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
-                            <i class="fa-solid fa-right-from-bracket"></i> Salir
-                        </button>
-                    </form>
-                </div>
-            </div>
+    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <!-- Logotipo compacto -->
+        <div class="flex items-center min-w-0">
+            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
         </div>
-    </nav>
+
+        <!-- Acciones: Nombre del usuario y botón de Salir -->
+        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[110px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                <i class="fa-solid fa-user text-[10px]"></i> 
+                <span class="truncate">{{ auth()->user()->name }}</span>
+            </span>
+
+            <form method="POST" action="{{ route('logout') }}" class="inline">
+                @csrf
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 sm:px-3 py-1.5 rounded-md transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap">
+                    <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Salir
+                </button>
+            </form>
+        </div>
+    </div>
+</nav>
 
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
         <div class="mb-8">
