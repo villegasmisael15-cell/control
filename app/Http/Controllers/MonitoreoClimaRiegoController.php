@@ -133,13 +133,21 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSCAR AL DUEÑO REAL DEL SECTOR (EXACTAMENTE IGUAL QUE EN EXCEL)
-        $operadorSector = User::where('sectores', 'LIKE', '%' . $request->sector . '%')
-                            ->where('rol', '!=', 'administrador')
-                            ->first();
+        // 2. BUSCAR AL DUEÑO REAL DEL SECTOR (MÉTODO SEGURO EXPLODE)
+        $userIdReal = auth()->id(); // Por defecto el admin si no encuentra a nadie
+        $sectorSeleccionado = trim($request->sector);
 
-        // Determinamos el ID del usuario: si se encuentra al dueño del sector se usa su ID, si no, se queda el del admin actual
-        $userIdReal = $operadorSector ? $operadorSector->id : auth()->id();
+        // Obtenemos todos los usuarios que no sean administradores y tengan sectores
+        $operadores = User::where('rol', '!=', 'administrador')->whereNotNull('sectores')->get();
+
+        foreach ($operadores as $op) {
+            $arraySectores = array_map('trim', explode(',', $op->sectores));
+            // Verificamos si el sector seleccionado está dentro de la lista del operador
+            if (in_array($sectorSeleccionado, $arraySectores)) {
+                $userIdReal = $op->id;
+                break; // Encontramos al dueño, salimos del ciclo
+            }
+        }
 
         // 3. INYECTAR LOS DATOS FINALES AL REQUEST ANTES DE CREAR
         $request->merge([
@@ -190,7 +198,7 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
-        // 4. SE CREA EL REGISTRO CON TODOS LOS DATOS INCLUYENDO EL USER_ID CORRECTO
+        // 4. SE CREA EL REGISTRO CON EL USER_ID CORRECTO
         MonitoreoClimaRiego::create(array_merge($request->all(), [
             'dpv' => $dpv,
             'porcentaje_drenaje' => $porcentaje_drenaje,
@@ -198,7 +206,7 @@ class MonitoreoClimaRiegoController extends Controller
             'diferencia_ph' => $diferencia_ph,
             'porcentaje_caida_nocturna' => $porcentaje_caida_nocturna,
             'estatus_general' => $estatus_general,
-            'user_id' => $userIdReal, // Nos aseguramos de pasarlo explícitamente aquí también
+            'user_id' => $userIdReal,
         ]));
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro guardado con éxito!');
