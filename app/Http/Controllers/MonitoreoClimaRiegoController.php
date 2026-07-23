@@ -109,7 +109,21 @@ class MonitoreoClimaRiegoController extends Controller
 
  public function store(Request $request)
     {
-        // 1. Validar los datos
+        // 1. Identificamos al verdadero dueño del sector antes de validar
+        $sectorBuscado = trim($request->input('sector'));
+        
+        $duenoSector = User::where('sectores', 'LIKE', '%' . $sectorBuscado . '%')->first();
+        
+        // Si no encuentra al operador, usa el usuario logueado como respaldo
+        $idDuenoReal = $duenoSector ? $duenoSector->id : auth()->id();
+
+        // 2. Inyectamos la hora y el user_id real al request antes de validar
+        $request->merge([
+            'radiacion_hora' => now()->format('H:i:s'),
+            'user_id'        => $idDuenoReal
+        ]);
+
+        // 3. Validar los datos (incluyendo user_id igual que en suelo)
         $request->validate([
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
@@ -123,30 +137,14 @@ class MonitoreoClimaRiegoController extends Controller
             'ph_salida' => 'nullable|numeric',
             'peso_tarde_anterior' => 'nullable|numeric',
             'peso_manana' => 'nullable|numeric',
+            'radiacion_hora' => 'required',
             'radiacion_lectura' => 'required|integer|min:0',
             'radiacion_semaforo' => 'required|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
+            'user_id' => 'required|exists:users,id',
         ]);
 
-        // 2. BUSCAR AL OPERADOR DUEÑO DEL SECTOR (MANEJANDO MÚLTIPLES SECTORES SEPARADOS POR COMA)
-        $sectorBuscado = trim($request->sector); // Ej: "Sector 1"
-        $userIdReal = auth()->id(); // Respaldo por defecto
-
-        $operadores = \App\Models\User::where('rol', '!=', 'administrador')
-            ->whereNotNull('sectores')
-            ->get();
-
-        foreach ($operadores as $op) {
-            // Limpiamos y separamos por comas (ej. "Sector 1, Sector 2" se vuelve ['Sector 1', 'Sector 2'])
-            $arraySectores = array_map('trim', explode(',', $op->sectores));
-
-            if (in_array($sectorBuscado, $arraySectores)) {
-                $userIdReal = $op->id;
-                break; // ¡Encontrado! Salimos del ciclo con el ID real del operador
-            }
-        }
-
-        // 3. Lógica de riego por macetas
+        // Lógica de riego por macetas
         $volRiego = $request->vol_riego_entrada;
         if (!is_null($volRiego)) {
             $caracteristica = \App\Models\SectorCaracteristica::where('sector', $request->sector)->first();
@@ -156,7 +154,7 @@ class MonitoreoClimaRiegoController extends Controller
             }
         }
 
-        // 4. Cálculos automatizados
+        // Cálculos automatizados
         $dpv = null;
         $estatus_general = 'SIN DATOS CLIMA';
 
@@ -187,32 +185,18 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
-        // 5. GUARDAR DIRECTAMENTE CON EL ID DEL OPERADOR ENCONTRADO
-        MonitoreoClimaRiego::create([
-            'user_id' => $userIdReal,
-            'fecha' => $request->fecha,
-            'sector' => $request->sector,
-            'temperatura' => $request->temperatura,
-            'humedad' => $request->humedad,
+        // 4. Guardar usando la misma estructura probada en suelo
+        $datosAGuardar = array_merge($request->all(), [
             'dpv' => $dpv,
-            'vol_riego_entrada' => $volRiego,
-            'vol_drenaje_salida' => $request->vol_drenaje_salida,
             'porcentaje_drenaje' => $porcentaje_drenaje,
-            'ce_entrada' => $request->ce_entrada,
-            'ce_salida' => $request->ce_salida,
             'diferencia_ce' => $diferencia_ce,
-            'ph_entrada' => $request->ph_entrada,
-            'ph_salida' => $request->ph_salida,
             'diferencia_ph' => $diferencia_ph,
-            'peso_tarde_anterior' => $request->peso_tarde_anterior,
-            'peso_manana' => $request->peso_manana,
             'porcentaje_caida_nocturna' => $porcentaje_caida_nocturna,
             'estatus_general' => $estatus_general,
-            'radiacion_hora' => now()->format('H:i:s'),
-            'radiacion_lectura' => $request->radiacion_lectura,
-            'radiacion_semaforo' => $request->radiacion_semaforo,
-            'radiacion_accion_tomada' => $request->radiacion_accion_tomada,
+            'vol_riego_entrada' => $volRiego,
         ]);
+
+        MonitoreoClimaRiego::create($datosAGuardar);
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro guardado con éxito!');
     }
