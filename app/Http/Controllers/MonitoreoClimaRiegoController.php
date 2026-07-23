@@ -109,15 +109,12 @@ class MonitoreoClimaRiegoController extends Controller
 
   public function store(Request $request)
     {
-        // 1. PRIMERO VALIDAMOS LOS DATOS BÁSICOS
+        // 1. Validar los datos
         $request->validate([
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
-            
-            // 🔒 LIMITAR RANGOS PARA EVITAR CÁLCULOS DE DPV FUERA DE RANGO
             'temperatura' => 'nullable|numeric|min:-10|max:60',
             'humedad' => 'nullable|numeric|min:0|max:100',
-            
             'vol_riego_entrada' => 'nullable|integer',
             'vol_drenaje_salida' => 'nullable|integer',
             'ce_entrada' => 'nullable|numeric',
@@ -126,40 +123,35 @@ class MonitoreoClimaRiegoController extends Controller
             'ph_salida' => 'nullable|numeric',
             'peso_tarde_anterior' => 'nullable|numeric',
             'peso_manana' => 'nullable|numeric',
-            
-            // Campos de Radiación Solar (Obligatorios)
             'radiacion_lectura' => 'required|integer|min:0',
             'radiacion_semaforo' => 'required|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSCAR AL DUEÑO REAL DEL SECTOR (MÉTODO SEGURO EXPLODE)
-        $userIdReal = auth()->id(); // Por defecto el admin si no encuentra a nadie
+        // 2. BUSCAR AL DUEÑO REAL DEL SECTOR
+        $userIdReal = auth()->id();
         $sectorSeleccionado = trim($request->sector);
 
-        // Obtenemos todos los usuarios que no sean administradores y tengan sectores
         $operadores = User::where('rol', '!=', 'administrador')->whereNotNull('sectores')->get();
 
         foreach ($operadores as $op) {
             $arraySectores = array_map('trim', explode(',', $op->sectores));
-            // Verificamos si el sector seleccionado está dentro de la lista del operador
             if (in_array($sectorSeleccionado, $arraySectores)) {
                 $userIdReal = $op->id;
-                break; // Encontramos al dueño, salimos del ciclo
+                break; 
             }
         }
 
-        // 3. INYECTAR LOS DATOS FINALES AL REQUEST ANTES DE CREAR
+        // 3. Inyectar hora y el ID del dueño real del sector
         $request->merge([
             'radiacion_hora' => now()->format('H:i:s'),
             'user_id' => $userIdReal
         ]);
 
-        // --- NUEVA LÓGICA: DIVIDIR EL RIEGO ENTRE EL NÚMERO DE MACETAS ---
+        // Lógica de riego por macetas
         if ($request->filled('vol_riego_entrada')) {
             $caracteristica = \App\Models\SectorCaracteristica::where('sector', $request->sector)->first();
             $macetas = $caracteristica ? $caracteristica->macetas_por_gotero : 1;
-            
             if ($macetas > 0) {
                 $request->merge([
                     'vol_riego_entrada' => (int) round($request->vol_riego_entrada / $macetas)
@@ -167,7 +159,7 @@ class MonitoreoClimaRiegoController extends Controller
             }
         }
 
-        // --- CÁLCULOS AUTOMATIZADOS CON CONTROL DE NULOS (BACKEND) ---
+        // Cálculos automatizados
         $dpv = null;
         $estatus_general = 'SIN DATOS CLIMA';
 
@@ -198,7 +190,7 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
-        // 4. SE CREA EL REGISTRO CON EL USER_ID CORRECTO
+        // 4. Guardar asignando el ID correcto
         MonitoreoClimaRiego::create(array_merge($request->all(), [
             'dpv' => $dpv,
             'porcentaje_drenaje' => $porcentaje_drenaje,
