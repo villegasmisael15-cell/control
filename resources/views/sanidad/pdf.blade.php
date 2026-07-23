@@ -39,11 +39,9 @@
     <div class="info-box">
         <table class="info-table">
             <tr>
+                 <td><strong>Operador:</strong> {{ $bitacora->operador ? $bitacora->operador->name : 'No asignado' }}</td>
+                 <td><strong>Sector / Nave:</strong> {{ $bitacora->sector }}</td>
                 <td><strong>Fecha de Registro:</strong> {{ \Carbon\Carbon::parse($bitacora->fecha)->format('d/m/Y') }}</td>
-                <td><strong>Sector / Nave:</strong> {{ $bitacora->sector }}</td>
-            </tr>
-            <tr>
-                <td colspan="2"><strong>Operador Responsable:</strong> {{ $bitacora->operador ? $bitacora->operador->name : 'No asignado' }}</td>
             </tr>
         </table>
     </div>
