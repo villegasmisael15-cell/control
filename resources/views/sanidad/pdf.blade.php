@@ -16,6 +16,12 @@
         table.data-table { width: 100%; border-collapse: collapse; margin-top: 5px; margin-bottom: 15px; }
         table.data-table th, table.data-table td { border: 1px solid #d1d5db; padding: 6px; text-align: left; font-size: 10px; }
         table.data-table th { background-color: #059669; color: #ffffff; text-transform: uppercase; }
+        
+        /* Estilos específicos para la tabla de observaciones en 2 columnas */
+        table.obs-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; }
+        table.obs-table th { background-color: #f3f4f6; color: #374151; border: 1px solid #d1d5db; padding: 6px; font-size: 10px; text-transform: uppercase; text-align: left; width: 50%; }
+        table.obs-table td { border: 1px solid #d1d5db; padding: 8px; font-size: 10px; vertical-align: top; width: 50%; background-color: #ffffff; }
+
         .footer { position: fixed; bottom: 0; left: 0; right: 0; text-align: center; font-size: 9px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 5px; }
     </style>
 </head>
@@ -110,14 +116,21 @@
         @endforeach
 
         @php $primerFert = $bitacora->fertilizantes->first(); @endphp
-        @if($primerFert->labores_culturales || $primerFert->observaciones)
-            <table class="info-table" style="margin-top: 10px;">
-                @if($primerFert->labores_culturales)
-                <tr><td><strong>Labores Culturales:</strong> {{ $primerFert->labores_culturales }}</td></tr>
-                @endif
-                @if($primerFert->observaciones)
-                <tr><td><strong>Observaciones Generales:</strong> {{ $primerFert->observaciones }}</td></tr>
-                @endif
+        @if($primerFert && ($primerFert->labores_culturales || $primerFert->observaciones))
+            <!-- TABLA DE 2 COLUMNAS PARA OBSERVACIONES Y LABORES -->
+            <table class="obs-table">
+                <thead>
+                    <tr>
+                        <th>Labores Culturales Realizadas</th>
+                        <th>Observaciones Generales de la Mezcla</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ $primerFert->labores_culturales ?? 'Ninguna registrada.' }}</td>
+                        <td>{{ $primerFert->observaciones ?? 'Sin observaciones generales.' }}</td>
+                    </tr>
+                </tbody>
             </table>
         @endif
     @else
