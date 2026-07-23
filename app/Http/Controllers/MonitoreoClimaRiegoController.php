@@ -128,19 +128,15 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSCAR AL OPERADOR DIRECTAMENTE EN LA TABLA USERS CON SQL PURO
+        // 2. BUSCAR AL OPERADOR DUEÑO DEL SECTOR DE FORMA SEGURA
         $sectorBuscado = trim($request->sector);
 
         $operador = \App\Models\User::where('rol', '!=', 'administrador')
             ->whereRaw("TRIM(sectores) LIKE ?", ["%{$sectorBuscado}%"])
             ->first();
 
-        // SI NO ENCUENTRA AL OPERADOR, DETENEMOS EL PROCESO PARA SABER POR QUÉ
-        if (!$operador) {
-            throw new \Exception("Error: Ningún operador no administrador tiene asignado el sector '{$sectorBuscado}' en la base de datos de producción.");
-        }
-
-        $userIdReal = $operador->id;
+        // 🛡️ RESPALDO BLINDADO: Si el sector no tiene un operador asignado en producción, usa el usuario actual en sesión
+        $userIdReal = $operador ? $operador->id : auth()->id();
 
         // 3. Lógica de riego por macetas
         $volRiego = $request->vol_riego_entrada;
