@@ -185,18 +185,19 @@
                                         <i class="fa-solid fa-magnifying-glass-chart text-sm"></i>
                                     </a>
 
-                                    @can('es-administrador')
+                                    @if(auth()->user()->rol === 'administrador')
                                     <a href="{{ route('monitoreo.edit', $row->id) }}" class="bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-lg transition shadow-2xs border border-blue-200" title="Editar">
                                         <i class="fa-solid fa-pen-to-square text-sm"></i>
                                     </a>
-                                    <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" class="inline">
+
+                                    <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');" style="display: inline;">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition shadow-2xs border border-red-200 cursor-pointer" onclick="return confirm('¿Seguro que deseas eliminar este registro?')" title="Eliminar">
+                                        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition shadow-2xs border border-red-200 cursor-pointer" title="Eliminar">
                                             <i class="fa-solid fa-trash text-sm"></i>
                                         </button>
                                     </form>
-                                    @endcan
+                                    @endif
                                 </div>
                             </td>
                         </tr>
