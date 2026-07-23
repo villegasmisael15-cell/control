@@ -128,21 +128,19 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSCAR AL OPERADOR DUEÑO DEL SECTOR (EXCLUYENDO ADMINISTRADORES)
-        $userIdReal = auth()->id();
-        $sectorSeleccionado = trim($request->sector);
+        // 2. BUSCAR AL OPERADOR DIRECTamente EN LA BD (IGNORANDO ADMINS)
+        $sectorLimpio = trim($request->sector);
+        
+        $operadorSector = \App\Models\User::where('rol', '!=', 'administrador')
+            ->where(function($query) use ($sectorLimpio) {
+                $query->where('sectores', 'LIKE', '%' . $sectorLimpio . '%')
+                      ->orWhere('sectores', 'LIKE', $sectorLimpio . ',%')
+                      ->orWhere('sectores', 'LIKE', '%,' . $sectorLimpio);
+            })
+            ->first();
 
-        $operadorSector = User::where('rol', '!=', 'administrador')
-            ->whereNotNull('sectores')
-            ->get()
-            ->first(function ($user) use ($sectorSeleccionado) {
-                $sectoresUser = array_map('trim', explode(',', $user->sectores));
-                return in_array($sectorSeleccionado, $sectoresUser);
-            });
-
-        if ($operadorSector) {
-            $userIdReal = $operadorSector->id;
-        }
+        // Si lo encuentra usa su ID, si no, fuerza el respaldo pero sabremos que entró aquí
+        $userIdReal = $operadorSector ? $operadorSector->id : auth()->id();
 
         // 3. Inyectar hora y el ID del dueño real del sector
         $request->merge([
