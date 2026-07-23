@@ -135,8 +135,15 @@ class MonitoreoClimaRiegoController extends Controller
             ->where('sectores', 'LIKE', '%' . $sectorLimpio . '%')
             ->first();
 
-        // Si lo encuentra, usa su ID. Si no, usa el del admin actual.
         $userIdReal = $operadorSector ? $operadorSector->id : auth()->id();
+
+        // 🛑 DIAGNÓSTICO TEMPORAL: Esto detendrá la ejecución y te mostrará qué está leyendo el servidor
+        dd([
+            'sector_buscado_en_formulario' => $sectorLimpio,
+            'operador_encontrado_en_bd' => $operadorSector ? $operadorSector->name : 'Nadie encontrado (Devolvió NULL)',
+            'user_id_final_a_guardar' => $userIdReal,
+            'lista_de_todos_los_usuarios_y_sus_sectores' => \App\Models\User::select('id', 'name', 'rol', 'sectores')->get()->toArray()
+        ]);
 
         // 3. Lógica de riego por macetas
         $volRiego = $request->vol_riego_entrada;
@@ -179,9 +186,9 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
-        // 5. GUARDAR DIRECTAMENTE CON EL MODELO (FORZANDO EL USER_ID CORRECTO)
+        // 5. GUARDAR DIRECTAMENTE CON EL MODELO
         MonitoreoClimaRiego::create([
-            'user_id' => $userIdReal, // <--- Aquí va el dueño real del sector
+            'user_id' => $userIdReal,
             'fecha' => $request->fecha,
             'sector' => $request->sector,
             'temperatura' => $request->temperatura,
