@@ -16,22 +16,22 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-4">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <i class="fa-solid fa-leaf text-2xl mr-2"></i>
-                    <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
+        <div class="max-w-[95%] mx-auto px-4 py-3 sm:py-0">
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:h-16">
+                <div class="flex items-center justify-between w-full sm:w-auto">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-leaf text-2xl mr-2"></i>
+                        <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
+                    </div>
                 </div>
                 <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto text-xs sm:text-sm">
-
-                    <span class="bg-emerald-700 px-3 py-1 rounded text-xs">
+                    <span class="bg-emerald-700 px-3 py-1.5 rounded text-xs flex items-center gap-1">
                         <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
                     </span>
-                      <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
+                    <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-sm">
                         <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
                     </a>
                 </div>
-
             </div>
         </div>
     </nav>
@@ -125,7 +125,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse min-w-[950px]">
                     <thead>
                         <tr class="bg-gray-100 border-b border-gray-200 text-gray-700 uppercase tracking-wider text-[11px] font-bold">
                             <th class="py-3 px-4">Fecha</th>
@@ -178,23 +178,26 @@
                                 </span>
                             </td>
 
-                            <td class="py-3 px-4 text-center flex justify-center gap-3">
-                                <a href="{{ route('monitoreo.show', $row->id) }}" class="text-emerald-600 hover:text-emerald-800" title="Ver Detalle completo">
-                                    <i class="fa-solid fa-magnifying-glass-chart"></i>
-                                </a>
+                            <!-- 🛠️ BOTONES DE ACCIÓN MÁS GRANDES Y CÓMODOS -->
+                            <td class="py-3.5 px-4 text-center">
+                                <div class="inline-flex items-center justify-center gap-2">
+                                    <a href="{{ route('monitoreo.show', $row->id) }}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 p-2 rounded-lg transition shadow-2xs border border-emerald-200" title="Ver Detalle completo">
+                                        <i class="fa-solid fa-magnifying-glass-chart text-sm"></i>
+                                    </a>
 
-                                @can('es-administrador')
-                                <a href="{{ route('monitoreo.edit', $row->id) }}" class="text-blue-600 hover:text-blue-800" title="Editar">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </a>
-                                <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-red-600 hover:text-red-800 cursor-pointer" onclick="return confirm('¿Seguro que deseas eliminar este registro?')" title="Eliminar">
-                                        <i class="fa-solid fa-trash"></i>
-                                    </button>
-                                </form>
-                                @endcan
+                                    @can('es-administrador')
+                                    <a href="{{ route('monitoreo.edit', $row->id) }}" class="bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-lg transition shadow-2xs border border-blue-200" title="Editar">
+                                        <i class="fa-solid fa-pen-to-square text-sm"></i>
+                                    </a>
+                                    <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition shadow-2xs border border-red-200 cursor-pointer" onclick="return confirm('¿Seguro que deseas eliminar este registro?')" title="Eliminar">
+                                            <i class="fa-solid fa-trash text-sm"></i>
+                                        </button>
+                                    </form>
+                                    @endcan
+                                </div>
                             </td>
                         </tr>
                         @empty
