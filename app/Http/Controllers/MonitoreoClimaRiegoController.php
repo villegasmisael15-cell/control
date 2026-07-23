@@ -109,7 +109,7 @@ class MonitoreoClimaRiegoController extends Controller
 
  public function store(Request $request)
     {
-        // 1. Validar los datos
+        // 1. Validar los datos (SIN user_id en el validate)
         $request->validate([
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
@@ -128,38 +128,27 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSCAR AL OPERADOR DIRECTamente EN LA BD (IGNORANDO ADMINS)
+        // 2. BUSCAR AL OPERADOR DUEÑO DEL SECTOR EXACTO
         $sectorLimpio = trim($request->sector);
         
         $operadorSector = \App\Models\User::where('rol', '!=', 'administrador')
-            ->where(function($query) use ($sectorLimpio) {
-                $query->where('sectores', 'LIKE', '%' . $sectorLimpio . '%')
-                      ->orWhere('sectores', 'LIKE', $sectorLimpio . ',%')
-                      ->orWhere('sectores', 'LIKE', '%,' . $sectorLimpio);
-            })
+            ->where('sectores', 'LIKE', '%' . $sectorLimpio . '%')
             ->first();
 
-        // Si lo encuentra usa su ID, si no, fuerza el respaldo pero sabremos que entró aquí
+        // Si lo encuentra, usa su ID. Si no, usa el del admin actual.
         $userIdReal = $operadorSector ? $operadorSector->id : auth()->id();
 
-        // 3. Inyectar hora y el ID del dueño real del sector
-        $request->merge([
-            'radiacion_hora' => now()->format('H:i:s'),
-            'user_id' => $userIdReal
-        ]);
-
-        // Lógica de riego por macetas
-        if ($request->filled('vol_riego_entrada')) {
+        // 3. Lógica de riego por macetas
+        $volRiego = $request->vol_riego_entrada;
+        if (!is_null($volRiego)) {
             $caracteristica = \App\Models\SectorCaracteristica::where('sector', $request->sector)->first();
             $macetas = $caracteristica ? $caracteristica->macetas_por_gotero : 1;
             if ($macetas > 0) {
-                $request->merge([
-                    'vol_riego_entrada' => (int) round($request->vol_riego_entrada / $macetas)
-                ]);
+                $volRiego = (int) round($volRiego / $macetas);
             }
         }
 
-        // Cálculos automatizados
+        // 4. Cálculos automatizados
         $dpv = null;
         $estatus_general = 'SIN DATOS CLIMA';
 
@@ -171,8 +160,8 @@ class MonitoreoClimaRiegoController extends Controller
         }
 
         $porcentaje_drenaje = null;
-        if ($request->filled('vol_riego_entrada') && $request->filled('vol_drenaje_salida') && $request->vol_riego_entrada > 0) {
-            $porcentaje_drenaje = round(($request->vol_drenaje_salida / $request->vol_riego_entrada) * 100, 1);
+        if (!is_null($volRiego) && $request->filled('vol_drenaje_salida') && $volRiego > 0) {
+            $porcentaje_drenaje = round(($request->vol_drenaje_salida / $volRiego) * 100, 1);
         }
 
         $diferencia_ce = null;
@@ -190,16 +179,32 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
-        // 4. Guardar asignando el ID correcto
-        MonitoreoClimaRiego::create(array_merge($request->all(), [
+        // 5. GUARDAR DIRECTAMENTE CON EL MODELO (FORZANDO EL USER_ID CORRECTO)
+        MonitoreoClimaRiego::create([
+            'user_id' => $userIdReal, // <--- Aquí va el dueño real del sector
+            'fecha' => $request->fecha,
+            'sector' => $request->sector,
+            'temperatura' => $request->temperatura,
+            'humedad' => $request->humedad,
             'dpv' => $dpv,
+            'vol_riego_entrada' => $volRiego,
+            'vol_drenaje_salida' => $request->vol_drenaje_salida,
             'porcentaje_drenaje' => $porcentaje_drenaje,
+            'ce_entrada' => $request->ce_entrada,
+            'ce_salida' => $request->ce_salida,
             'diferencia_ce' => $diferencia_ce,
+            'ph_entrada' => $request->ph_entrada,
+            'ph_salida' => $request->ph_salida,
             'diferencia_ph' => $diferencia_ph,
+            'peso_tarde_anterior' => $request->peso_tarde_anterior,
+            'peso_manana' => $request->peso_manana,
             'porcentaje_caida_nocturna' => $porcentaje_caida_nocturna,
             'estatus_general' => $estatus_general,
-            'user_id' => $userIdReal,
-        ]));
+            'radiacion_hora' => now()->format('H:i:s'),
+            'radiacion_lectura' => $request->radiacion_lectura,
+            'radiacion_semaforo' => $request->radiacion_semaforo,
+            'radiacion_accion_tomada' => $request->radiacion_accion_tomada,
+        ]);
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro guardado con éxito!');
     }
