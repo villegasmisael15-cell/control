@@ -107,45 +107,45 @@ class MonitoreoClimaRiegoController extends Controller
         return view('monitoreo.create', compact('sectores'));
     }
 
-   public function store(Request $request)
+  public function store(Request $request)
     {
-        // Se inyecta automáticamente la hora actual del servidor antes de validar
-       $operadorSector = \App\Models\User::where('sectores', 'LIKE', '%' . $request->sector . '%')
+        // 1. PRIMERO VALIDAMOS LOS DATOS BÁSICOS
+        $request->validate([
+            'fecha' => 'required|date',
+            'sector' => 'required|string|max:255',
+            
+            // 🔒 LIMITAR RANGOS PARA EVITAR CÁLCULOS DE DPV FUERA DE RANGO
+            'temperatura' => 'nullable|numeric|min:-10|max:60',
+            'humedad' => 'nullable|numeric|min:0|max:100',
+            
+            'vol_riego_entrada' => 'nullable|integer',
+            'vol_drenaje_salida' => 'nullable|integer',
+            'ce_entrada' => 'nullable|numeric',
+            'ce_salida' => 'nullable|numeric',
+            'ph_entrada' => 'nullable|numeric',
+            'ph_salida' => 'nullable|numeric',
+            'peso_tarde_anterior' => 'nullable|numeric',
+            'peso_manana' => 'nullable|numeric',
+            
+            // Campos de Radiación Solar (Obligatorios)
+            'radiacion_lectura' => 'required|integer|min:0',
+            'radiacion_semaforo' => 'required|string|max:255',
+            'radiacion_accion_tomada' => 'nullable|string',
+        ]);
+
+        // 2. BUSCAR AL DUEÑO REAL DEL SECTOR (EXACTAMENTE IGUAL QUE EN EXCEL)
+        $operadorSector = User::where('sectores', 'LIKE', '%' . $request->sector . '%')
                             ->where('rol', '!=', 'administrador')
                             ->first();
 
-        // Se inyecta la hora y el ID del dueño real del sector (si no tiene operador asignado, cae en el usuario actual)
+        // Determinamos el ID del usuario: si se encuentra al dueño del sector se usa su ID, si no, se queda el del admin actual
+        $userIdReal = $operadorSector ? $operadorSector->id : auth()->id();
+
+        // 3. INYECTAR LOS DATOS FINALES AL REQUEST ANTES DE CREAR
         $request->merge([
             'radiacion_hora' => now()->format('H:i:s'),
-            'user_id' => $operadorSector ? $operadorSector->id : auth()->id()
+            'user_id' => $userIdReal
         ]);
-
-        // Se validan los datos (campos técnicos opcionales 'nullable')
-       $request->validate([
-        'fecha' => 'required|date',
-        'sector' => 'required|string|max:255',
-        
-        // 🔒 LIMITAR RANGOS PARA EVITAR CÁLCULOS DE DPV FUERA DE RANGO
-        'temperatura' => 'nullable|numeric|min:-10|max:60',
-        'humedad' => 'nullable|numeric|min:0|max:100',
-        
-        'vol_riego_entrada' => 'nullable|integer',
-        'vol_drenaje_salida' => 'nullable|integer',
-        'ce_entrada' => 'nullable|numeric',
-        'ce_salida' => 'nullable|numeric',
-        'ph_entrada' => 'nullable|numeric',
-        'ph_salida' => 'nullable|numeric',
-        'peso_tarde_anterior' => 'nullable|numeric',
-        'peso_manana' => 'nullable|numeric',
-        
-        // Campos de Radiación Solar (Obligatorios)
-        'radiacion_hora' => 'required',
-        'radiacion_lectura' => 'required|integer|min:0',
-        'radiacion_semaforo' => 'required|string|max:255',
-        'radiacion_accion_tomada' => 'nullable|string',
-
-        'user_id' => 'required|exists:users,id',
-    ]);
 
         // --- NUEVA LÓGICA: DIVIDIR EL RIEGO ENTRE EL NÚMERO DE MACETAS ---
         if ($request->filled('vol_riego_entrada')) {
@@ -153,7 +153,6 @@ class MonitoreoClimaRiegoController extends Controller
             $macetas = $caracteristica ? $caracteristica->macetas_por_gotero : 1;
             
             if ($macetas > 0) {
-                // Modificamos el valor directamente en el Request
                 $request->merge([
                     'vol_riego_entrada' => (int) round($request->vol_riego_entrada / $macetas)
                 ]);
@@ -161,8 +160,6 @@ class MonitoreoClimaRiegoController extends Controller
         }
 
         // --- CÁLCULOS AUTOMATIZADOS CON CONTROL DE NULOS (BACKEND) ---
-        
-        // 1. DPV e Inyección de Estatus General
         $dpv = null;
         $estatus_general = 'SIN DATOS CLIMA';
 
@@ -173,13 +170,11 @@ class MonitoreoClimaRiegoController extends Controller
             $estatus_general = ($dpv >= 0.8 && $dpv <= 1.4) ? 'ÓPTIMO' : 'REVISAR CLIMA';
         }
 
-        // 2. Porcentaje Drenaje (Utilizará automáticamente el valor ya dividido)
         $porcentaje_drenaje = null;
         if ($request->filled('vol_riego_entrada') && $request->filled('vol_drenaje_salida') && $request->vol_riego_entrada > 0) {
             $porcentaje_drenaje = round(($request->vol_drenaje_salida / $request->vol_riego_entrada) * 100, 1);
         }
 
-        // 3. Diferencias CE y pH
         $diferencia_ce = null;
         if ($request->filled('ce_entrada') && $request->filled('ce_salida')) {
             $diferencia_ce = round($request->ce_salida - $request->ce_entrada, 2);
@@ -190,13 +185,12 @@ class MonitoreoClimaRiegoController extends Controller
             $diferencia_ph = round($request->ph_salida - $request->ph_entrada, 2);
         }
 
-        // 4. Porcentaje Caída Nocturna
         $porcentaje_caida_nocturna = null;
         if ($request->filled('peso_tarde_anterior') && $request->filled('peso_manana') && $request->peso_tarde_anterior > 0) {
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
-        // Se crea el registro de forma masiva
+        // 4. SE CREA EL REGISTRO CON TODOS LOS DATOS INCLUYENDO EL USER_ID CORRECTO
         MonitoreoClimaRiego::create(array_merge($request->all(), [
             'dpv' => $dpv,
             'porcentaje_drenaje' => $porcentaje_drenaje,
@@ -204,11 +198,11 @@ class MonitoreoClimaRiegoController extends Controller
             'diferencia_ph' => $diferencia_ph,
             'porcentaje_caida_nocturna' => $porcentaje_caida_nocturna,
             'estatus_general' => $estatus_general,
+            'user_id' => $userIdReal, // Nos aseguramos de pasarlo explícitamente aquí también
         ]));
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro guardado con éxito!');
     }
-
    public function show($id)
 {
     // 1. Buscar el registro técnico o lanzar 404 si no existe (con su operador precargado)
