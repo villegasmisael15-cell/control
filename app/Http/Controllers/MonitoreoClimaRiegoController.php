@@ -128,15 +128,23 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSCAR AL OPERADOR DUEÑO DEL SECTOR DE FORMA SEGURA
-        $sectorBuscado = trim($request->sector);
+        // 2. BUSCAR AL OPERADOR DUEÑO DEL SECTOR (MANEJANDO MÚLTIPLES SECTORES SEPARADOS POR COMA)
+        $sectorBuscado = trim($request->sector); // Ej: "Sector 1"
+        $userIdReal = auth()->id(); // Respaldo por defecto
 
-        $operador = \App\Models\User::where('rol', '!=', 'administrador')
-            ->whereRaw("TRIM(sectores) LIKE ?", ["%{$sectorBuscado}%"])
-            ->first();
+        $operadores = \App\Models\User::where('rol', '!=', 'administrador')
+            ->whereNotNull('sectores')
+            ->get();
 
-        // 🛡️ RESPALDO BLINDADO: Si el sector no tiene un operador asignado en producción, usa el usuario actual en sesión
-        $userIdReal = $operador ? $operador->id : auth()->id();
+        foreach ($operadores as $op) {
+            // Limpiamos y separamos por comas (ej. "Sector 1, Sector 2" se vuelve ['Sector 1', 'Sector 2'])
+            $arraySectores = array_map('trim', explode(',', $op->sectores));
+
+            if (in_array($sectorBuscado, $arraySectores)) {
+                $userIdReal = $op->id;
+                break; // ¡Encontrado! Salimos del ciclo con el ID real del operador
+            }
+        }
 
         // 3. Lógica de riego por macetas
         $volRiego = $request->vol_riego_entrada;
@@ -179,7 +187,7 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
-        // 5. GUARDAR DIRECTAMENTE
+        // 5. GUARDAR DIRECTAMENTE CON EL ID DEL OPERADOR ENCONTRADO
         MonitoreoClimaRiego::create([
             'user_id' => $userIdReal,
             'fecha' => $request->fecha,
