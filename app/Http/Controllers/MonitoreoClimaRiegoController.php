@@ -107,7 +107,7 @@ class MonitoreoClimaRiegoController extends Controller
         return view('monitoreo.create', compact('sectores'));
     }
 
-  public function store(Request $request)
+ public function store(Request $request)
     {
         // 1. Validar los datos
         $request->validate([
@@ -128,18 +128,20 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSCAR AL DUEÑO REAL DEL SECTOR
+        // 2. BUSCAR AL OPERADOR DUEÑO DEL SECTOR (EXCLUYENDO ADMINISTRADORES)
         $userIdReal = auth()->id();
         $sectorSeleccionado = trim($request->sector);
 
-        $operadores = User::where('rol', '!=', 'administrador')->whereNotNull('sectores')->get();
+        $operadorSector = User::where('rol', '!=', 'administrador')
+            ->whereNotNull('sectores')
+            ->get()
+            ->first(function ($user) use ($sectorSeleccionado) {
+                $sectoresUser = array_map('trim', explode(',', $user->sectores));
+                return in_array($sectorSeleccionado, $sectoresUser);
+            });
 
-        foreach ($operadores as $op) {
-            $arraySectores = array_map('trim', explode(',', $op->sectores));
-            if (in_array($sectorSeleccionado, $arraySectores)) {
-                $userIdReal = $op->id;
-                break; 
-            }
+        if ($operadorSector) {
+            $userIdReal = $operadorSector->id;
         }
 
         // 3. Inyectar hora y el ID del dueño real del sector
