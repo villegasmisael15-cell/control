@@ -21,22 +21,27 @@
             </div>
 
             <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto text-xs sm:text-sm">
-                @if(auth()->user()->rol === 'administrador')
-                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 text-white font-bold px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm cursor-pointer">
-                    <i class="fa-solid fa-house"></i> <span class="hidden xs:inline">Panel</span>
+
+                <span class="bg-emerald-700 px-3 py-1 rounded text-xs">
+                    <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
+                </span>
+
+                @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
+                    <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
                 </a>
                 @endif
 
-                <span class="bg-emerald-700/50 px-3 py-2 rounded-lg border border-emerald-500/30 flex items-center gap-1.5 font-medium whitespace-nowrap">
-                    <i class="fa-solid fa-user text-xs"></i> {{ auth()->user()->name }}
-                </span>
 
+
+                @if(auth()->user()->rol === 'usuario_rechazo')
                 <form method="POST" action="{{ route('logout') }}" class="inline">
                     @csrf
                     <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm cursor-pointer border border-red-500/20 whitespace-nowrap">
                         <i class="fa-solid fa-right-from-bracket"></i> Salir
                     </button>
                 </form>
+                @endif
             </div>
         </div>
     </nav>
@@ -465,7 +470,8 @@
                     <select name="recepcion_exportacion_id" id="recepcion_exportacion_select" class="w-full border border-blue-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-blue-50/40 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium">
                         <option value="" selected>-- Selecciona el embarque origen --</option>
                         @foreach($embarquesExportacion as $embarque)
-                        <option class="opcion-embarque hidden" value="{{ $embarque->id }}" data-operador="{{ $embarque->productor_id }}">
+                        <!-- 💡 SOLO SE AGREGA EL ATRIBUTO data-fecha AQUÍ ABAJO -->
+                        <option class="opcion-embarque hidden" value="{{ $embarque->id }}" data-operador="{{ $embarque->productor_id }}" data-fecha="{{ $embarque->fecha_exportacion }}">
                             Fecha: {{ \Carbon\Carbon::parse($embarque->fecha_exportacion)->format('d/m/Y') }} — Cajas Env: {{ $embarque->cajas_exportacion }} (Semana #{{ $embarque->semana_exportacion }})
                         </option>
                         @endforeach
@@ -899,6 +905,7 @@
             const selectProductor = document.getElementById('productor_select');
             const opcionesEmbarque = document.querySelectorAll('.opcion-embarque');
             const selectEmbarque = document.getElementById('recepcion_exportacion_select');
+            const inputFechaNacional = document.getElementById('fecha_nacional_input');
 
             if (!selectProductor) return;
             const idOperador = selectProductor.value;
@@ -908,8 +915,20 @@
             const divEmbarque = document.getElementById('contenedor-embarque-origen');
             if (modoCaptura === 'rechazo' && idOperador) {
                 if (selectEmbarque) selectEmbarque.value = "";
+
+                // Obtener el año y mes seleccionado en el input de fecha (Formato: YYYY-MM)
+                let mesAñoFiltro = "";
+                if (inputFechaNacional && inputFechaNacional.value) {
+                    mesAñoFiltro = inputFechaNacional.value.substring(0, 7);
+                }
+
                 opcionesEmbarque.forEach(opcion => {
-                    if (opcion.getAttribute('data-operador') == idOperador) {
+                    const idOpEmbarque = opcion.getAttribute('data-operador');
+                    const fechaEmbarque = opcion.getAttribute('data-fecha'); // Formato: YYYY-MM-DD
+                    const mesAñoEmbarque = fechaEmbarque ? fechaEmbarque.substring(0, 7) : "";
+
+                    // Coincide con el operador Y con el mes de la fecha que se está capturando
+                    if (idOpEmbarque == idOperador && (mesAñoFiltro === "" || mesAñoEmbarque === mesAñoFiltro)) {
                         opcion.classList.remove('hidden');
                     } else {
                         opcion.classList.add('hidden');
@@ -1060,59 +1079,59 @@
         }
 
 
-       function abrirModalCondensacion(fecha) {
-    const modal = document.getElementById('modalCondensacion');
-    const inputFecha = document.getElementById('condensacion_fecha_input');
-    const inputAgropark = document.getElementById('condensacion_agropark_input');
+        function abrirModalCondensacion(fecha) {
+            const modal = document.getElementById('modalCondensacion');
+            const inputFecha = document.getElementById('condensacion_fecha_input');
+            const inputAgropark = document.getElementById('condensacion_agropark_input');
 
-    if (!modal) return;
+            if (!modal) return;
 
-    if (inputFecha && fecha) {
-        inputFecha.value = fecha;
-    }
-
-    const botonDisparador = document.querySelector(`button[onclick="abrirModalCondensacion('${fecha}')"]`);
-    if (!botonDisparador) return;
-
-    const contenedorTabla = botonDisparador.closest('.bg-white');
-    if (!contenedorTabla) return;
-
-    // 💡 SOLUCIÓN: Forzamos a que siempre se limpie el campo al abrir el modal
-    if (inputAgropark) {
-        inputAgropark.value = ''; // <--- Cambia esto para que inicie vacío siempre
-    }
-
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-
-    if (inputAgropark) {
-        const textoSuma = contenedorTabla.querySelector('.text-red-400') ? contenedorTabla.querySelector('.text-red-400').innerText : '0';
-        let sumaPesosFijos = parseFloat(textoSuma.replace(/[^0-9.-]+/g, ""));
-
-        const nuevoInput = inputAgropark.cloneNode(true);
-        inputAgropark.parentNode.replaceChild(nuevoInput, inputAgropark);
-
-        nuevoInput.addEventListener('input', function() {
-            let cantidadManual = parseFloat(this.value);
-            let celdaPorcentaje = contenedorTabla.querySelector('.text-emerald-400');
-            let celdaAgropark = contenedorTabla.querySelector('.text-blue-400');
-
-            if (!isNaN(cantidadManual) && cantidadManual > 0 && sumaPesosFijos > 0) {
-                let division = cantidadManual / sumaPesosFijos;
-                let porcentaje = (1 - division) * 100;
-
-                if (celdaPorcentaje) celdaPorcentaje.innerText = porcentaje.toFixed(2) + ' %';
-                if (celdaAgropark) {
-                    let formateado = cantidadManual.toLocaleString('en-US', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2
-                    }) + ' kg';
-                    celdaAgropark.innerHTML = `<i class="fa-solid fa-pen-to-square text-xs mr-1"></i> ${formateado}`;
-                }
+            if (inputFecha && fecha) {
+                inputFecha.value = fecha;
             }
-        });
-    }
-}
+
+            const botonDisparador = document.querySelector(`button[onclick="abrirModalCondensacion('${fecha}')"]`);
+            if (!botonDisparador) return;
+
+            const contenedorTabla = botonDisparador.closest('.bg-white');
+            if (!contenedorTabla) return;
+
+            // 💡 SOLUCIÓN: Forzamos a que siempre se limpie el campo al abrir el modal
+            if (inputAgropark) {
+                inputAgropark.value = ''; // <--- Cambia esto para que inicie vacío siempre
+            }
+
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            if (inputAgropark) {
+                const textoSuma = contenedorTabla.querySelector('.text-red-400') ? contenedorTabla.querySelector('.text-red-400').innerText : '0';
+                let sumaPesosFijos = parseFloat(textoSuma.replace(/[^0-9.-]+/g, ""));
+
+                const nuevoInput = inputAgropark.cloneNode(true);
+                inputAgropark.parentNode.replaceChild(nuevoInput, inputAgropark);
+
+                nuevoInput.addEventListener('input', function() {
+                    let cantidadManual = parseFloat(this.value);
+                    let celdaPorcentaje = contenedorTabla.querySelector('.text-emerald-400');
+                    let celdaAgropark = contenedorTabla.querySelector('.text-blue-400');
+
+                    if (!isNaN(cantidadManual) && cantidadManual > 0 && sumaPesosFijos > 0) {
+                        let division = cantidadManual / sumaPesosFijos;
+                        let porcentaje = (1 - division) * 100;
+
+                        if (celdaPorcentaje) celdaPorcentaje.innerText = porcentaje.toFixed(2) + ' %';
+                        if (celdaAgropark) {
+                            let formateado = cantidadManual.toLocaleString('en-US', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            }) + ' kg';
+                            celdaAgropark.innerHTML = `<i class="fa-solid fa-pen-to-square text-xs mr-1"></i> ${formateado}`;
+                        }
+                    }
+                });
+            }
+        }
 
         function cerrarModalCondensacion() {
             const modal = document.getElementById('modalCondensacion');

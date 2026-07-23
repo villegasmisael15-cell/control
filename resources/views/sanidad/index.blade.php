@@ -27,8 +27,8 @@
                     <span class="bg-emerald-700 px-3 py-1 rounded text-xs flex items-center gap-1">
                         <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
                     </span>
-                    <a href="{{ url('/') }}" class="text-emerald-100 hover:text-white transition flex items-center gap-1">
-                        <i class="fa-solid fa-house"></i> Panel Principal
+                     <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
+                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
                     </a>
                 </div>
             </div>
@@ -48,24 +48,31 @@
             @if(auth()->user()->rol === 'administrador')
             <div>
                 <a href="{{ route('sanidad.create') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded shadow transition">
-                    <i class="fa-solid fa-plus mr-2"></i> Nueva Bitácora Combinada
+                    <i class="fa-solid fa-plus mr-2"></i> Nueva Bitácora 
                 </a>
             </div>
             @endif
         </div>
 
+        @if(session('status'))
+        <div class="mb-6 p-4 bg-emerald-100 border-l-4 border-emerald-500 text-emerald-900 rounded-r-lg shadow-sm flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fa-solid fa-circle-check text-xl mr-3 text-emerald-600"></i>
+                <span class="font-medium text-sm">{{ session('status') }}</span>
+            </div>
+            <button onclick="this.parentElement.remove()" class="text-emerald-500 hover:text-emerald-700 font-bold text-lg cursor-pointer">&times;</button>
+        </div>
+        @endif
+
         <!-- BLOQUE DE FILTROS OPTIMIZADO -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
             <form method="GET" action="{{ route('sanidad.index') }}" id="formFiltros" class="grid grid-cols-1 md:grid-cols-12 items-end gap-4">
 
-                {{-- 📅 EL ÚNICO FILTRADO POR SEMANA (CON FLATPICKR) --}}
+                {{-- 📅 FILTRADO POR SEMANA (CON FLATPICKR) --}}
                 <div class="col-span-1 md:col-span-4">
                     <label for="semana_picker" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Semana:</label>
                     <div class="flex items-center gap-2">
-                        <!-- Input oculto real que se envía a Laravel -->
                         <input type="hidden" name="semana" id="semana_final_input" value="{{ request('semana') }}">
-
-                        <!-- Input estético controlado por Flatpickr -->
                         <div class="relative w-full">
                             <input type="text"
                                 id="semana_picker"
@@ -116,7 +123,7 @@
             <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
 
                 <!-- ENCABEZADO REGISTRO MAESTRO -->
-                <div class="bg-gray-50 px-5 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div class="bg-gray-50 px-5 py-4 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div class="flex flex-wrap items-center gap-3">
                         <span class="text-sm font-bold text-gray-700 flex items-center gap-1">
                             <i class="fa-solid fa-calendar text-gray-400"></i>
@@ -125,11 +132,28 @@
                         <span class="bg-emerald-50 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold border border-emerald-200">
                             Sector: {{ $bitacora->sector }}
                         </span>
+                        <span class="text-xs text-gray-500 font-medium flex items-center gap-1">
+                            <i class="fa-solid fa-user-gear text-emerald-600"></i>
+                            Operador: <strong class="text-emerald-700">{{ $bitacora->operador ? $bitacora->operador->name : 'No asignado' }}</strong>
+                        </span>
                     </div>
-                    <span class="text-xs text-gray-500 font-medium flex items-center gap-1">
-                        <i class="fa-solid fa-user-gear text-emerald-600"></i>
-                        Operador: <strong class="text-emerald-700">{{ $bitacora->operador ? $bitacora->operador->name : 'No asignado' }}</strong>
-                    </span>
+
+                    <!-- 💡 NUEVOS BOTONES: PDF Y ELIMINAR (EXCLUSIVO ADMINISTRADOR) -->
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('sanidad.pdf', $bitacora->id) }}" target="_blank" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1">
+                            <i class="fa-solid fa-file-pdf"></i> PDF
+                        </a>
+
+                        @if(auth()->user()->rol === 'administrador')
+                        <form action="{{ route('sanidad.destroy', $bitacora->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar permanentemente esta bitácora de sanidad y nutrición? Esta acción no se puede deshacer.');" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-trash-can"></i> Eliminar
+                            </button>
+                        </form>
+                        @endif
+                    </div>
                 </div>
 
                 <!-- DETALLES ACOMODADOS -->
@@ -221,7 +245,7 @@
                         @endif
                     </div>
 
-                    <!-- 2. MANEJO DE FERTILIZANTES (💡 CORREGIDO) -->
+                    <!-- 2. MANEJO DE FERTILIZANTES -->
                     <div class="space-y-4 pt-6">
                         <h4 class="text-sm font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
                             <i class="fa-solid fa-flask-vial text-lg"></i>

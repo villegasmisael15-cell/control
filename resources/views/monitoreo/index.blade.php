@@ -7,7 +7,7 @@
     <title>Monitoreo Clima y Riego - Sistema Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- 🔌 CDNs Obligatorias para Flatpickr (Estilos y Plugin de Semanas) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.css">
@@ -22,9 +22,16 @@
                     <i class="fa-solid fa-leaf text-2xl mr-2"></i>
                     <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
                 </div>
-                <a href="{{ url('/') }}" class="text-sm bg-emerald-700 hover:bg-emerald-800 px-3 py-2 rounded-md transition font-medium">
-                    <i class="fa-solid fa-house mr-1"></i> Dashboard
-                </a>
+                <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto text-xs sm:text-sm">
+
+                    <span class="bg-emerald-700 px-3 py-1 rounded text-xs">
+                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
+                    </span>
+                      <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
+                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
+                    </a>
+                </div>
+
             </div>
         </div>
     </nav>
@@ -58,7 +65,7 @@
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
             <form method="GET" action="{{ route('monitoreo.index') }}" id="formFiltros" class="grid grid-cols-1 md:grid-cols-12 items-end gap-4">
-                
+
                 {{-- 📅 EL ÚNICO FILTRADO POR SEMANA (CON FLATPICKR) --}}
                 <div class="col-span-1 md:col-span-4">
                     <label for="semana_picker" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Semana:</label>
@@ -88,9 +95,9 @@
                         <div class="relative">
                             <input type="text" name="buscar_termino" id="buscar_termino" value="{{ request('buscar_termino') }}" placeholder="Ej: Sector 1 o Nombre del trabajador..." class="w-full bg-gray-50 border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2 pr-8">
                             @if(request('buscar_termino'))
-                                <button type="button" onclick="document.getElementById('buscar_termino').value=''; this.form.submit();" class="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 text-xs">
-                                    <i class="fa-solid fa-xmark"></i>
-                                </button>
+                            <button type="button" onclick="document.getElementById('buscar_termino').value=''; this.form.submit();" class="absolute right-2.5 top-2.5 text-gray-400 hover:text-gray-600 text-xs">
+                                <i class="fa-solid fa-xmark"></i>
+                            </button>
                             @endif
                         </div>
                     </div>
@@ -220,17 +227,17 @@
             flatpickr("#semana_picker", {
                 locale: "es",
                 firstDayOfWeek: 1, // Iniciar en Lunes
-                defaultDate: "{{ request('semana') }}" ? null : null, 
+                defaultDate: "{{ request('semana') }}" ? null : null,
                 plugins: [new weekSelect({})],
                 onChange: function(selectedDates, dateStr, instance) {
                     if (selectedDates.length > 0) {
                         // Extraer el año y el número de semana calculado por Flatpickr
                         const numeroSemana = instance.config.getWeek(selectedDates[0]);
                         const anio = selectedDates[0].getFullYear();
-                        
+
                         // Formatear al estándar WXX (Ejemplo: 2026-W30)
                         const stringSemanaFinal = anio + "-W" + String(numeroSemana).padStart(2, '0');
-                        
+
                         // Inyectar el valor estructurado en el input oculto y enviar el formulario automáticamente
                         document.getElementById("semana_final_input").value = stringSemanaFinal;
                         document.getElementById("formFiltros").submit();

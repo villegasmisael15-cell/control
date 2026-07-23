@@ -30,7 +30,6 @@ class SueloMonitoreo extends Model
         'radiacion_semaforo',
         'radiacion_accion_tomada',
         
-        // 💡 NUEVOS CAMPOS AÑADIDOS:
         // Control de Alerta CE
         'alerta_ce_opcion',
 
@@ -57,6 +56,9 @@ class SueloMonitoreo extends Model
         'lab_b',
         'lab_s',
         'lab_n_no3',
+        
+        // 💡 Identificador del Tipo de Laboratorio (Fertilidad / Pasta Saturada)
+        'tipo_analisis_lab',
     ];
 
     /**
@@ -65,5 +67,13 @@ class SueloMonitoreo extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    /**
+     * Relación uno a muchos con los renglones dinámicos de Análisis Rápidos (EPS / ECP).
+     */
+    public function analisisRapidos()
+    {
+        return $this->hasMany(SueloAnalisisRapido::class, 'suelo_monitoreo_id');
     }
 }

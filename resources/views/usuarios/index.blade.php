@@ -20,12 +20,14 @@
                 </div>
 
                 <div class="flex items-center gap-4 text-sm font-medium">
-                    <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
-                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
-                    </a>
+                   
                     <span class="bg-emerald-700 px-3 py-1 rounded text-xs">
                         <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
                     </span>
+
+                     <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
+                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
+                    </a>
                 </div>
             </div>
         </div>

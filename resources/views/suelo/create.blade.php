@@ -105,10 +105,10 @@
                             <span class="text-[11px] font-bold text-red-700 uppercase block"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Alerta: CE Excesiva (> 3.0)</span>
                             <div class="flex flex-wrap gap-3 text-xs font-semibold text-gray-700">
                                 <label class="flex items-center gap-1 cursor-pointer">
-                                    <input type="checkbox" name="alerta_opcion[]" value="EPS" class="rounded text-red-600 focus:ring-red-500"> EPS
+                                    <input type="checkbox" name="alerta_opcion[]" id="chk_eps" value="EPS" class="rounded text-red-600 focus:ring-red-500"> EPS
                                 </label>
                                 <label class="flex items-center gap-1 cursor-pointer">
-                                    <input type="checkbox" name="alerta_opcion[]" value="ECP" class="rounded text-red-600 focus:ring-red-500"> ECP
+                                    <input type="checkbox" name="alerta_opcion[]" id="chk_ecp" value="ECP" class="rounded text-red-600 focus:ring-red-500"> ECP
                                 </label>
                             </div>
                         </div>
@@ -149,7 +149,7 @@
                 </div>
 
                 {{-- APARTADO: ANÁLISIS RÁPIDO --}}
-                <div id="seccion_analisis_rapido" class="hidden bg-cyan-50/40 p-5 rounded-xl border border-cyan-200 space-y-4">
+                <div id="seccion_analisis_rapido" class="hidden bg-cyan-50/40 p-5 rounded-xl border border-cyan-200 space-y-6">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-cyan-200 pb-2 gap-2">
                         <h3 class="font-bold text-base text-cyan-900 flex items-center gap-1.5">
                             <i class="fa-solid fa-bolt-lightning text-cyan-600"></i> Análisis Rápido
@@ -163,43 +163,102 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">No3</label>
-                            <input type="text" name="rapido_no3" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">K</label>
-                            <input type="text" name="rapido_k" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Ca</label>
-                            <input type="text" name="rapido_ca" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Na</label>
-                            <input type="text" name="rapido_na" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">P</label>
-                            <input type="text" name="rapido_p" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">PH</label>
-                            <input type="text" name="rapido_ph" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
-                        </div>
-                        <div>
-                            <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Ce</label>
-                            <input type="text" name="rapido_ce" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                    <!-- BLOQUE REGISTRO: EPS -->
+                    <div id="fila_analisis_eps" class="hidden space-y-2">
+                        <span class="text-xs font-bold text-cyan-800 uppercase tracking-wider block bg-cyan-100/50 px-2 py-1 rounded border border-cyan-200/40 w-fit">
+                            • Análisis EPS
+                        </span>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">No3 (EPS)</label>
+                                <input type="text" name="eps_rapido_no3" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">K (EPS)</label>
+                                <input type="text" name="eps_rapido_k" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Ca (EPS)</label>
+                                <input type="text" name="eps_rapido_ca" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Na (EPS)</label>
+                                <input type="text" name="eps_rapido_na" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">P (EPS)</label>
+                                <input type="text" name="eps_rapido_p" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">PH (EPS)</label>
+                                <input type="text" name="eps_rapido_ph" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Ce (EPS)</label>
+                                <input type="text" name="eps_rapido_ce" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
                         </div>
                     </div>
+
+                    <!-- BLOQUE REGISTRO: ECP -->
+                    <div id="fila_analisis_ecp" class="hidden space-y-2">
+                        <span class="text-xs font-bold text-cyan-800 uppercase tracking-wider block bg-cyan-100/50 px-2 py-1 rounded border border-cyan-200/40 w-fit">
+                            • Análisis ECP
+                        </span>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-3">
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">No3 (ECP)</label>
+                                <input type="text" name="ecp_rapido_no3" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">K (ECP)</label>
+                                <input type="text" name="ecp_rapido_k" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Ca (ECP)</label>
+                                <input type="text" name="ecp_rapido_ca" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Na (ECP)</label>
+                                <input type="text" name="ecp_rapido_na" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">P (ECP)</label>
+                                <input type="text" name="ecp_rapido_p" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">PH (ECP)</label>
+                                <input type="text" name="ecp_rapido_ph" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-bold text-gray-600 mb-0.5">Ce (ECP)</label>
+                                <input type="text" name="ecp_rapido_ce" placeholder="Valor" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm outline-none focus:border-cyan-500">
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
 
                 {{-- APARTADO: ANÁLISIS DE LABORATORIO --}}
-                <div id="seccion_laboratorio" class="hidden bg-emerald-50/30 p-5 rounded-xl border border-emerald-200 space-y-4">
+                <div id="seccion_laboratorio" class="hidden bg-emerald-50/30 p-5 rounded-xl border border-emerald-200 space-y-5">
                     <h3 class="font-bold text-base text-emerald-900 border-b border-emerald-200 pb-2 flex items-center gap-1.5">
                         <i class="fa-solid fa-microscope text-emerald-600"></i> Análisis de Laboratorio
                     </h3>
+                    
+                    <!-- NUEVO: TIPO DE ANÁLISIS -->
+                    <div>
+                        <label class="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Tipo de Análisis:</label>
+                        <div class="flex flex-wrap gap-4">
+                            <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-700 font-medium">
+                                <input type="radio" name="tipo_analisis_lab" value="fertilidad" class="text-emerald-600 focus:ring-emerald-500" checked> 
+                                Fertilidad
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-700 font-medium">
+                                <input type="radio" name="tipo_analisis_lab" value="pasta_saturada" class="text-emerald-600 focus:ring-emerald-500"> 
+                                Pasta Saturada
+                            </label>
+                        </div>
+                    </div>
                     
                     <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
                         <div>
@@ -262,11 +321,37 @@
         </div>
     </main>
 
-    <script>
+  <script>
+    // Inputs generales del clima y suelo
     const inputs = ['temperatura', 'humedad', 'radiacion_lectura', 'lectura_tensiometro', 'ce'];
 
     inputs.forEach(id => {
         document.getElementById(id).addEventListener('input', calcularValores);
+    });
+
+    document.getElementById('chk_eps').addEventListener('change', alternarFilasAnalisis);
+    document.getElementById('chk_ecp').addEventListener('change', alternarFilasAnalisis);
+
+    // Inputs de Análisis Rápido (EPS y ECP) y Laboratorio para activar los semáforos
+    const inputsSemaforos = [
+        // EPS Rápido
+        'eps_rapido_no3', 'eps_rapido_k', 'eps_rapido_ca', 'eps_rapido_na', 'eps_rapido_p', 'eps_rapido_ph', 'eps_rapido_ce',
+        // ECP Rápido
+        'ecp_rapido_no3', 'ecp_rapido_k', 'ecp_rapido_ca', 'ecp_rapido_na', 'ecp_rapido_p', 'ecp_rapido_ph', 'ecp_rapido_ce',
+        // Laboratorio
+        'lab_mo', 'lab_p_bray', 'lab_k', 'lab_mg', 'lab_na', 'lab_fe', 'lab_zn', 'lab_mn', 'lab_cu', 'lab_b', 'lab_s', 'lab_n_no3'
+    ];
+
+    inputsSemaforos.forEach(name => {
+        const el = document.getElementsByName(name)[0];
+        if(el) {
+            el.addEventListener('input', evaluarSemaforosDinamicos);
+        }
+    });
+
+    // También escuchar cuando cambie el tipo de análisis de laboratorio
+    document.querySelectorAll('input[name="tipo_analisis_lab"]').forEach(radio => {
+        radio.addEventListener('change', evaluarSemaforosDinamicos);
     });
 
     function calcularValores() {
@@ -284,6 +369,7 @@
         if (!isNaN(ceValor) && ceValor > 3.0) {
             divAlertaCe.classList.remove('hidden');
             divAnalisisRapido.classList.remove('hidden');
+            alternarFilasAnalisis();
             if (selectCumplio.value === 'no') {
                 divSeccionLab.classList.remove('hidden');
             }
@@ -397,6 +483,180 @@
             seccionLab.classList.remove('hidden');
         } else {
             seccionLab.classList.add('hidden');
+        }
+    }
+
+    function alternarFilasAnalisis() {
+        const epsChecked = document.getElementById('chk_eps').checked;
+        const ecpChecked = document.getElementById('chk_ecp').checked;
+
+        const filaEps = document.getElementById('fila_analisis_eps');
+        const filaEcp = document.getElementById('fila_analisis_ecp');
+
+        if (epsChecked) {
+            filaEps.classList.remove('hidden');
+        } else {
+            filaEps.classList.add('hidden');
+        }
+
+        if (ecpChecked) {
+            filaEcp.classList.remove('hidden');
+        } else {
+            filaEcp.classList.add('hidden');
+        }
+    }
+
+    // Función encargada de evaluar y renderizar los semáforos dinámicos en los campos
+    function evaluarSemaforosDinamicos() {
+        const bajo = ['bg-red-50', 'border-red-400', 'focus:ring-red-500', 'text-red-900'];
+        const optimo = ['bg-green-50', 'border-green-400', 'focus:ring-green-500', 'text-green-900'];
+        const alto = ['bg-amber-50', 'border-amber-400', 'focus:ring-amber-500', 'text-amber-900'];
+        const limpiar = ['bg-white', 'border-gray-300', 'focus:border-cyan-500', 'focus:border-emerald-500', 'bg-red-50', 'border-red-400', 'bg-green-50', 'border-green-400', 'bg-amber-50', 'border-amber-400', 'text-red-900', 'text-green-900', 'text-amber-900'];
+
+        function aplicarColor(inputName, valor, minOptimo, maxOptimo, forzarGris = false) {
+            const el = document.getElementsByName(inputName)[0];
+            if (!el || el.value === "") {
+                if(el) el.classList.remove(...limpiar);
+                return;
+            }
+            
+            el.classList.remove(...limpiar);
+
+            // 💡 SI SE INDICA FORZAR GRIS (Caso Sodio en Fertilidad), NO COMPARA RANGOS
+            if (forzarGris) {
+                return; 
+            }
+
+            if (valor < minOptimo) {
+                el.classList.add(...bajo);
+            } else if (valor >= minOptimo && valor <= maxOptimo) {
+                el.classList.add(...optimo);
+            } else {
+                el.classList.add(...alto);
+            }
+        }
+
+        // ==========================================
+        // 1. EVALUAR REGISTRO SECCIÓN EPS (RÁPIDO)
+        // ==========================================
+        const epsNo3 = parseFloat(document.getElementsByName('eps_rapido_no3')[0]?.value);
+        aplicarColor('eps_rapido_no3', epsNo3, 150, 250); 
+
+        const epsK = parseFloat(document.getElementsByName('eps_rapido_k')[0]?.value);
+        aplicarColor('eps_rapido_k', epsK, 117, 234); 
+
+        const epsCa = parseFloat(document.getElementsByName('eps_rapido_ca')[0]?.value);
+        aplicarColor('eps_rapido_ca', epsCa, 120, 200); 
+
+        const epsNa = parseFloat(document.getElementsByName('eps_rapido_na')[0]?.value);
+        aplicarColor('eps_rapido_na', epsNa, 0, 60); 
+
+        const epsP = parseFloat(document.getElementsByName('eps_rapido_p')[0]?.value);
+        aplicarColor('eps_rapido_p', epsP, 15, 30); 
+
+        const epsPh = parseFloat(document.getElementsByName('eps_rapido_ph')[0]?.value);
+        aplicarColor('eps_rapido_ph', epsPh, 5.5, 6.5); 
+
+        const epsCe = parseFloat(document.getElementsByName('eps_rapido_ce')[0]?.value);
+        aplicarColor('eps_rapido_ce', epsCe, 2.0, 3.5); 
+
+        // ==========================================
+        // 2. EVALUAR REGISTRO SECCIÓN ECP (RÁPIDO)
+        // ==========================================
+        const ecpNo3 = parseFloat(document.getElementsByName('ecp_rapido_no3')[0]?.value);
+        aplicarColor('ecp_rapido_no3', ecpNo3, 500, 800); 
+
+        const ecpK = parseFloat(document.getElementsByName('ecp_rapido_k')[0]?.value);
+        aplicarColor('ecp_rapido_k', ecpK, 3500, 5000); 
+
+        const ecpCa = parseFloat(document.getElementsByName('ecp_rapido_ca')[0]?.value);
+        aplicarColor('ecp_rapido_ca', ecpCa, 200, 450); 
+
+        const ecpNa = parseFloat(document.getElementsByName('ecp_rapido_na')[0]?.value);
+        aplicarColor('ecp_rapido_na', ecpNa, 0, 100); 
+
+        const ecpP = parseFloat(document.getElementsByName('ecp_rapido_p')[0]?.value);
+        aplicarColor('ecp_rapido_p', ecpP, 200, 400); 
+
+        const ecpPh = parseFloat(document.getElementsByName('ecp_rapido_ph')[0]?.value);
+        aplicarColor('ecp_rapido_ph', ecpPh, 5.5, 6.2); 
+
+        const ecpCe = parseFloat(document.getElementsByName('ecp_rapido_ce')[0]?.value);
+        aplicarColor('ecp_rapido_ce', ecpCe, 8.0, 12.0); 
+
+        // ==========================================
+        // 3. EVALUAR SECCIÓN LABORATORIO (DINÁMICO)
+        // ==========================================
+        const tipoLab = document.querySelector('input[name="tipo_analisis_lab"]:checked')?.value;
+
+        if (tipoLab === 'fertilidad') {
+            const labNo3 = parseFloat(document.getElementsByName('lab_n_no3')[0]?.value);
+            aplicarColor('lab_n_no3', labNo3, 25, 45); 
+
+            const labP = parseFloat(document.getElementsByName('lab_p_bray')[0]?.value);
+            aplicarColor('lab_p_bray', labP, 25, 45); 
+
+            const labK = parseFloat(document.getElementsByName('lab_k')[0]?.value);
+            aplicarColor('lab_k', labK, 180, 300); 
+
+            const labMg = parseFloat(document.getElementsByName('lab_mg')[0]?.value);
+            aplicarColor('lab_mg', labMg, 250, 450); 
+
+            // 💡 SOLUCIÓN OPERATIVA: Forzamos el estado neutral gris para el Na en Fertilidad
+            const labNa = parseFloat(document.getElementsByName('lab_na')[0]?.value);
+            aplicarColor('lab_na', labNa, 0, 0, true); 
+
+            const labFe = parseFloat(document.getElementsByName('lab_fe')[0]?.value);
+            aplicarColor('lab_fe', labFe, 5.0, 15.0); 
+
+            const labZn = parseFloat(document.getElementsByName('lab_zn')[0]?.value);
+            aplicarColor('lab_zn', labZn, 1.5, 3.5); 
+
+            const labMn = parseFloat(document.getElementsByName('lab_mn')[0]?.value);
+            aplicarColor('lab_mn', labMn, 2.0, 10.0); 
+
+            const labCu = parseFloat(document.getElementsByName('lab_cu')[0]?.value);
+            aplicarColor('lab_cu', labCu, 0.4, 1.5); 
+
+            const labB = parseFloat(document.getElementsByName('lab_b')[0]?.value);
+            aplicarColor('lab_b', labB, 0.6, 1.2); 
+
+            const labS = parseFloat(document.getElementsByName('lab_s')[0]?.value);
+            aplicarColor('lab_s', labS, 15, 35); 
+
+        } else if (tipoLab === 'pasta_saturada') {
+            const labNo3 = parseFloat(document.getElementsByName('lab_n_no3')[0]?.value);
+            aplicarColor('lab_n_no3', labNo3, 150, 250); 
+
+            const labP = parseFloat(document.getElementsByName('lab_p_bray')[0]?.value);
+            aplicarColor('lab_p_bray', labP, 15, 30); 
+
+            const labK = parseFloat(document.getElementsByName('lab_k')[0]?.value);
+            aplicarColor('lab_k', labK, 150, 250); 
+
+            const labMg = parseFloat(document.getElementsByName('lab_mg')[0]?.value);
+            aplicarColor('lab_mg', labMg, 36, 60); 
+
+            const labNa = parseFloat(document.getElementsByName('lab_na')[0]?.value);
+            aplicarColor('lab_na', labNa, 0, 60); 
+
+            const labFe = parseFloat(document.getElementsByName('lab_fe')[0]?.value);
+            aplicarColor('lab_fe', labFe, 0, 0, true); 
+
+            const labZn = parseFloat(document.getElementsByName('lab_zn')[0]?.value);
+            aplicarColor('lab_zn', labZn, 0, 0, true);
+
+            const labMn = parseFloat(document.getElementsByName('lab_mn')[0]?.value);
+            aplicarColor('lab_mn', labMn, 0, 0, true);
+
+            const labCu = parseFloat(document.getElementsByName('lab_cu')[0]?.value);
+            aplicarColor('lab_cu', labCu, 0, 0, true);
+
+            const labB = parseFloat(document.getElementsByName('lab_b')[0]?.value);
+            aplicarColor('lab_b', labB, 0, 0, true);
+
+            const labS = parseFloat(document.getElementsByName('lab_s')[0]?.value);
+            aplicarColor('lab_s', labS, 192, 480); 
         }
     }
 </script>

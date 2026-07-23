@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class SanidadNutricionBitacoraController extends Controller
 {
@@ -243,4 +244,37 @@ class SanidadNutricionBitacoraController extends Controller
             return redirect()->back()->withInput()->withErrors(['error' => 'Error al guardar el registro: ' . $e->getMessage()]);
         }
     }
+
+
+    public function destroy($id)
+{
+    // 1. Buscamos la bitácora principal
+    $bitacora = SanidadNutricionBitacora::findOrFail($id);
+
+    // 2. Si tus relaciones en el modelo maestro (sanidad_nutricion_bitacoras) 
+    // están configuradas con onDelete('cascade'), puedes borrar directamente:
+    $bitacora->agroquimicos()->delete();
+    $bitacora->fertilizantes()->delete();
+
+    // 3. Eliminamos el registro maestro
+    $bitacora->delete();
+
+    // 4. Redireccionamos con mensaje de éxito
+    return redirect()->route('sanidad.index')->with('status', '¡La bitácora de sanidad y nutrición fue eliminada permanentemente!');
+}
+
+   public function pdf($id)
+{
+    // Usamos tu modelo real: SanidadNutricionBitacora
+    $bitacora = SanidadNutricionBitacora::with(['operador', 'agroquimicos', 'fertilizantes'])->findOrFail($id);
+
+    // Cargamos la vista de PDF
+    $pdf = Pdf::loadView('sanidad.pdf', compact('bitacora'));
+
+    // Formato de hoja Carta vertical
+    $pdf->setPaper('letter', 'portrait');
+
+    // Retornamos el PDF para visualizarse en el navegador
+    return $pdf->stream('Bitacora-Sanidad-Sector-' . $bitacora->sector . '-' . $bitacora->fecha . '.pdf');
+}
 }

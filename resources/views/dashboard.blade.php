@@ -26,7 +26,7 @@
 
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
-                        <button type="submit" class="text-emerald-100 hover:text-white transition flex items-center gap-1 cursor-pointer">
+                        <button type="submit"class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
                             <i class="fa-solid fa-right-from-bracket"></i> Salir
                         </button>
                     </form>
@@ -43,7 +43,8 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
+            <!-- MÓDULO: HIDROPONÍA (Acceso: Administrador, Operador y Usuario Comercial) -->
+            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador' || auth()->user()->rol === 'usuario_comercial')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
@@ -60,6 +61,7 @@
             </div>
             @endif
 
+            <!-- MÓDULO: SUELO (Acceso: Administrador y Operador) -->
             @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -67,7 +69,7 @@
                         <i class="fa-solid fa-mound"></i>
                     </div>
                     <h3 class="text-lg font-bold text-gray-800 mb-2">Suelo</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed">Monitoreo periódico y control de las condiciones directas del suelo, humedad de la tierra, nutrientes y análisis edafológicos del cultivo.</p>
+                    <p class="text-gray-600 text-sm leading-relaxed">Monitoreo periódico y control de las condiciones directas del suelo, humedad de la tierra, nutrients y análisis edafológicos del cultivo.</p>
                 </div>
                 <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
                     <a href="{{ route('suelo.index') }}" class="text-sm text-stone-600 hover:text-stone-700 font-bold flex items-center gap-1">
@@ -77,6 +79,7 @@
             </div>
             @endif
 
+            <!-- MÓDULO: SANIDAD Y NUTRICIÓN (Acceso: Administrador y Operador) -->
             @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -94,6 +97,7 @@
             </div>
             @endif
 
+            <!-- MÓDULO: GRÁFICAS Y ANÁLISIS (Acceso: Solo Administrador) -->
             @can('es-administrador')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -111,7 +115,8 @@
             </div>
             @endcan
 
-            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario')
+            <!-- MÓDULO: RECEPCIÓN (Acceso: Administrador, Usuario Comercial y Usuario Rechazo) -->
+            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'usuario_rechazo')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-xl mb-4">
@@ -128,6 +133,7 @@
             </div>
             @endif
 
+            <!-- MÓDULO: REPORTES COMERCIALES (Acceso: Administrador, Operador) -->
             @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -145,6 +151,7 @@
             </div>
             @endif
 
+            <!-- MÓDULO: CONTROL DE USUARIOS (Acceso: Solo Administrador) -->
             @can('es-administrador')
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">

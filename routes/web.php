@@ -11,6 +11,7 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SueloMonitoreoController;
 use App\Http\Controllers\SanidadNutricionBitacoraController;
 
+
 // Redireccionar la raíz al login si no está autenticado, o al dashboard si ya inició sesión
 Route::get('/', function () {
     return Auth::check() ? redirect('/dashboard') : redirect('/register');
@@ -49,7 +50,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/recepcion/exportacion/actualizar/{id}', [RecepcionController::class, 'updateExportacion'])->name('recepcion.updateExportacion');
     Route::post('/recepcion/exportacion/restituir', [RecepcionController::class, 'storeRestituidas'])->name('recepcion.storeRestituidas');
     Route::get('/reportes/{id}/descargar-pdf', [ReporteController::class, 'descargarPDF'])->name('reportes.pdf');
-    
+    Route::get('/sanidad/pdf/{id}', [SanidadNutricionBitacoraController::class, 'pdf'])->name('sanidad.pdf');
     // UBICACIÓN CORREGIDA: Permite procesar el envío del formulario de Condensación de forma segura
     Route::post('/condensacion/guardar', [RecepcionController::class, 'guardarCondensacion'])->name('condensacion.guardar');
 
@@ -126,6 +127,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('usuarios', UsuarioController::class);
         Route::delete('/recepcion/nacional/eliminar/{id}', [RecepcionController::class, 'destroyNacional'])->name('recepcion.destroyNacional');
         Route::delete('/recepcion/exportacion/{id}', [RecepcionController::class, 'destroyExportacion'])->name('recepcion.destroyExportacion');
+        Route::delete('/suelo/{id}', [SueloMonitoreoController::class, 'destroy'])->name('suelo.destroy');
+        Route::delete('/sanidad/{id}', [SanidadNutricionBitacoraController::class, 'destroy'])->name('sanidad.destroy');
     });
 
 }); // Cierre correcto del middleware global group

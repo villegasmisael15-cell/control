@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SueloMonitoreo;
+use App\Models\SueloAnalisisRapido;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -65,7 +66,7 @@ class SueloMonitoreoController extends Controller
             $request->session()->forget('ultimo_filtro_suelo');
         }
 
-        // 💡 CORRECCIÓN AQUI: Mapeamos los resultados para buscar al dueño real del sector
+        // Mapeamos los resultados para buscar al dueño real del sector
         $monitoreos = $query->get()->map(function($monitoreo) {
             $dueno = User::where('sectores', 'LIKE', '%' . trim($monitoreo->sector) . '%')->first();
             $monitoreo->dueno_sector = $dueno ? $dueno->name : 'Sin asignar / General';
@@ -75,7 +76,7 @@ class SueloMonitoreoController extends Controller
         return view('suelo.index', compact('monitoreos'));
     }
 
-  public function create()
+    public function create()
     {
         $user = auth()->user();
 
@@ -114,7 +115,7 @@ class SueloMonitoreoController extends Controller
         // 2. Forzamos la hora actual y el ID del DUEÑO REAL del sector en el request antes de validar
         $request->merge([
             'radiacion_hora' => now()->format('H:i:s'),
-            'user_id'        => $idDuenoReal // <-- AQUÍ SE REALIZA LA MAGIA
+            'user_id'        => $idDuenoReal
         ]);
 
         $request->validate([
@@ -133,19 +134,31 @@ class SueloMonitoreoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
 
-            // Alertas condicionales
+            // Alertas condicionales de CE
             'alerta_opcion'           => 'nullable|array',
             'alerta_opcion.*'         => 'string|in:EPS,ECP',
 
-            // Análisis Rápido
+            // Estatus e Identificador de Tipo de Laboratorio
             'analisis_rapido_cumplio' => 'required|string|in:si,no',
-            'rapido_no3'              => 'nullable|string|max:50',
-            'rapido_k'                => 'nullable|string|max:50',
-            'rapido_ca'               => 'nullable|string|max:50',
-            'rapido_na'               => 'nullable|string|max:50',
-            'rapido_p'                => 'nullable|string|max:50',
-            'rapido_ph'               => 'nullable|string|max:50',
-            'rapido_ce'               => 'nullable|string|max:50',
+            'tipo_analisis_lab'       => 'nullable|string|in:fertilidad,pasta_saturada',
+
+            // Validación de los bloques dinámicos de Análisis Rápido (EPS)
+            'eps_rapido_no3'          => 'nullable|string|max:50',
+            'eps_rapido_k'            => 'nullable|string|max:50',
+            'eps_rapido_ca'           => 'nullable|string|max:50',
+            'eps_rapido_na'           => 'nullable|string|max:50',
+            'eps_rapido_p'            => 'nullable|string|max:50',
+            'eps_rapido_ph'           => 'nullable|string|max:50',
+            'eps_rapido_ce'           => 'nullable|string|max:50',
+
+            // Validación de los bloques dinámicos de Análisis Rápido (ECP)
+            'ecp_rapido_no3'          => 'nullable|string|max:50',
+            'ecp_rapido_k'            => 'nullable|string|max:50',
+            'ecp_rapido_ca'           => 'nullable|string|max:50',
+            'ecp_rapido_na'           => 'nullable|string|max:50',
+            'ecp_rapido_p'            => 'nullable|string|max:50',
+            'ecp_rapido_ph'           => 'nullable|string|max:50',
+            'ecp_rapido_ce'           => 'nullable|string|max:50',
 
             // Análisis de Laboratorio
             'lab_mo'                  => 'nullable|string|max:50',
@@ -179,15 +192,62 @@ class SueloMonitoreoController extends Controller
             $alertaCeOpcion = implode(', ', $request->alerta_opcion);
         }
 
-        // --- MAPEADO FORZADO E INSERCIÓN BLINDADA ---
+        // --- INSERCIÓN EN TABLA MADRE (`suelo_monitoreos`) ---
         $datosAGuardar = array_merge($request->all(), [
             'dpv'              => $dpv,
             'estatus_general'  => $estatus_general,
             'alerta_ce_opcion' => $alertaCeOpcion,
         ]);
 
-        SueloMonitoreo::create($datosAGuardar);
+        $monitoreo = SueloMonitoreo::create($datosAGuardar);
 
-        return redirect()->route('suelo.index')->with('status', '¡Registro de Suelo guardado con éxito!');
+        // --- NUEVO: INSERCIÓN EN TABLA HIJA RELACIONAL (`suelo_analisis_rapidos`) ---
+
+        // Fila EPS
+        if ($request->filled('eps_rapido_no3') || $request->filled('eps_rapido_ce')) {
+            SueloAnalisisRapido::create([
+                'suelo_monitoreo_id' => $monitoreo->id,
+                'tipo_analisis'      => 'eps',
+                'no3'                => $request->eps_rapido_no3,
+                'k'                  => $request->eps_rapido_k,
+                'ca'                 => $request->eps_rapido_ca,
+                'na'                 => $request->eps_rapido_na,
+                'p'                  => $request->eps_rapido_p,
+                'ph'                 => $request->eps_rapido_ph,
+                'ce'                 => $request->eps_rapido_ce,
+            ]);
+        }
+
+        // Fila ECP
+        if ($request->filled('ecp_rapido_no3') || $request->filled('ecp_rapido_ce')) {
+            SueloAnalisisRapido::create([
+                'suelo_monitoreo_id' => $monitoreo->id,
+                'tipo_analisis'      => 'ecp',
+                'no3'                => $request->ecp_rapido_no3,
+                'k'                  => $request->ecp_rapido_k,
+                'ca'                 => $request->ecp_rapido_ca,
+                'na'                 => $request->ecp_rapido_na,
+                'p'                  => $request->ecp_rapido_p,
+                'ph'                 => $request->ecp_rapido_ph,
+                'ce'                 => $request->ecp_rapido_ce,
+            ]);
+        }
+
+        return redirect()->route('suelo.index')->with('status', '¡Monitoreo de Suelo y Análisis guardados con éxito!');
     }
+
+    public function destroy($id)
+{
+    // 1. Buscar el monitoreo principal o lanzar error 404 si no existe
+    $monitoreo = SueloMonitoreo::findOrFail($id);
+
+    // 2. Eliminar primero los análisis rápidos asociados en la tabla hija
+    SueloAnalisisRapido::where('suelo_monitoreo_id', $monitoreo->id)->delete();
+
+    // 3. Eliminar el registro de monitoreo general
+    $monitoreo->delete();
+
+    // 4. Redireccionar de vuelta con un mensaje de estado
+    return redirect()->route('suelo.index')->with('status', '¡El registro de monitoreo y sus análisis asociados fueron eliminados correctamente!');
+}
 }

@@ -7,7 +7,7 @@
     <title>Monitoreo Suelo - Sistema Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+
     <!-- 🔌 CDNs Obligatorias para Flatpickr (Estilos y Plugin de Semanas) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.css">
@@ -15,19 +15,24 @@
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
-    <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-4">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <i class="fa-solid fa-leaf text-2xl mr-2"></i>
-                    <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
+        <nav class="bg-emerald-600 text-white shadow-md">
+            <div class="max-w-[95%] mx-auto px-4">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <i class="fa-solid fa-leaf text-2xl mr-2"></i>
+                        <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
+                    </div>
+                    <div class="flex items-center gap-4 text-sm font-medium">
+                     <span class="bg-emerald-700 px-3 py-1 rounded text-xs">
+                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
+                    </span>
+                         <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
+                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
+                    </a>
+                    </div>
                 </div>
-                <a href="{{ url('/') }}" class="text-sm bg-emerald-700 hover:bg-emerald-800 px-3 py-2 rounded-md transition font-medium">
-                    <i class="fa-solid fa-house mr-1"></i> Dashboard
-                </a>
             </div>
-        </div>
-    </nav>
+        </nav>
 
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
 
@@ -59,15 +64,12 @@
         <!-- BLOQUE DE FILTROS OPTIMIZADO -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
             <form method="GET" action="{{ route('suelo.index') }}" id="formFiltros" class="grid grid-cols-1 md:grid-cols-12 items-end gap-4">
-                
-                {{-- 📅 EL ÚNICO FILTRADO POR SEMANA (CON FLATPICKR) --}}
+
+                {{-- 📅 FILTRADO POR SEMANA (CON FLATPICKR) --}}
                 <div class="col-span-1 md:col-span-4">
                     <label for="semana_picker" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Semana:</label>
                     <div class="flex items-center gap-2">
-                        <!-- Input oculto real que se envía a Laravel -->
                         <input type="hidden" name="semana" id="semana_final_input" value="{{ request('semana') }}">
-
-                        <!-- Input estético controlado por Flatpickr -->
                         <div class="relative w-full">
                             <input type="text"
                                 id="semana_picker"
@@ -143,7 +145,7 @@
                             <td class="py-3.5 px-4">
                                 <span class="text-xs text-gray-600 font-medium flex items-center gap-1">
                                     <i class="fa-solid fa-user-tie text-emerald-600 text-[10px]"></i>
-                                    {{ $row->user ? $row->user->name : 'Sin asignar / General' }}
+                                    {{ $row->dueno_sector }}
                                 </span>
                             </td>
                             <td class="py-3.5 px-4 font-mono text-xs font-semibold">{{ $row->dpv ?? '—' }}</td>
@@ -176,38 +178,48 @@
                                     {{ $row->estatus_general }}
                                 </span>
                             </td>
-                            
+
                             <td class="py-3.5 px-4 text-center whitespace-nowrap">
-                                <button type="button" 
-                                    onclick="mostrarDetalleSuelo(this)"
-                                    data-fecha="{{ \Carbon\Carbon::parse($row->fecha)->format('d/m/Y') }}"
-                                    data-sector="{{ $row->sector }}"
-                                    data-operador="{{ $row->user ? $row->user->name : 'Sin asignar / General' }}"
-                                    data-temperatura="{{ $row->temperatura ?? '—' }}"
-                                    data-humedad="{{ $row->humedad ?? '—' }}"
-                                    data-dpv="{{ $row->dpv ?? '—' }}"
-                                    data-estatus_clima="{{ $row->estatus_general }}"
-                                    data-tensiometro="{{ $row->lectura_tensiometro ?? '—' }}"
-                                    data-tensiometro_estatus="{{ $row->tensiometro_estatus ?? 'Sin diagnostico' }}"
-                                    data-ce="{{ $row->ce ?? '—' }}"
-                                    data-ph="{{ $row->ph ?? '—' }}"
-                                    data-alerta_ce="{{ $row->alerta_ce_opcion ?? 'Ninguna' }}"
-                                    data-radiacion="{{ number_format($row->radiacion_lectura) }} Lux ({{ $row->radiacion_semaforo }})"
-                                    data-radiacion_accion="{{ $row->radiacion_accion_tomada ?? 'Ninguna' }}"
-                                    data-rapido_cumplio="{{ strtoupper($row->analisis_rapido_cumplio) }}"
-                                    data-r_no3="{{ $row->rapido_no3 ?? '—' }}" data-r_k="{{ $row->rapido_k ?? '—' }}"
-                                    data-r_ca="{{ $row->rapido_ca ?? '—' }}" data-r_na="{{ $row->rapido_na ?? '—' }}"
-                                    data-r_p="{{ $row->rapido_p ?? '—' }}" data-r_ph="{{ $row->rapido_ph ?? '—' }}"
-                                    data-r_ce="{{ $row->rapido_ce ?? '—' }}"
-                                    data-l_mo="{{ $row->lab_mo ?? '—' }}" data-l_pbray="{{ $row->lab_p_bray ?? '—' }}"
-                                    data-l_k="{{ $row->lab_k ?? '—' }}" data-l_mg="{{ $row->lab_mg ?? '—' }}"
-                                    data-l_na="{{ $row->lab_na ?? '—' }}" data-l_fe="{{ $row->lab_fe ?? '—' }}"
-                                    data-l_zn="{{ $row->lab_zn ?? '—' }}" data-l_mn="{{ $row->lab_mn ?? '—' }}"
-                                    data-l_cu="{{ $row->lab_cu ?? '—' }}" data-l_b="{{ $row->lab_b ?? '—' }}"
-                                    data-l_s="{{ $row->lab_s ?? '—' }}" data-l_nno3="{{ $row->lab_n_no3 ?? '—' }}"
-                                    class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 mx-auto cursor-pointer">
-                                    <i class="fa-solid fa-eye"></i> Ver Detalle
-                                </button>
+                                <div class="flex items-center justify-center gap-2">
+                                    <button type="button"
+                                        onclick="mostrarDetalleSuelo(this)"
+                                        data-fecha="{{ \Carbon\Carbon::parse($row->fecha)->format('d/m/Y') }}"
+                                        data-sector="{{ $row->sector }}"
+                                        data-operador="{{ $row->dueno_sector }}"
+                                        data-temperatura="{{ $row->temperatura ?? '—' }}"
+                                        data-humedad="{{ $row->humedad ?? '—' }}"
+                                        data-dpv="{{ $row->dpv ?? '—' }}"
+                                        data-estatus_clima="{{ $row->estatus_general }}"
+                                        data-tensiometro="{{ $row->lectura_tensiometro ?? '—' }}"
+                                        data-tensiometro_estatus="{{ $row->tensiometro_estatus ?? 'Sin diagnostico' }}"
+                                        data-ce="{{ $row->ce ?? '—' }}"
+                                        data-ph="{{ $row->ph ?? '—' }}"
+                                        data-alerta_ce="{{ $row->alerta_ce_opcion ?? 'Ninguna' }}"
+                                        data-radiacion="{{ number_format($row->radiacion_lectura) }} Lux ({{ $row->radiacion_semaforo }})"
+                                        data-radiacion_accion="{{ $row->radiacion_accion_tomada ?? 'Ninguna' }}"
+                                        data-rapido_cumplio="{{ strtoupper($row->analisis_rapido_cumplio) }}"
+                                        data-tipo_lab="{{ $row->tipo_analisis_lab ?? 'ninguno' }}"
+                                        data-analisis_rapidos="{{ json_encode($row->analisisRapidos) }}"
+                                        data-l_mo="{{ $row->lab_mo ?? '—' }}" data-l_pbray="{{ $row->lab_p_bray ?? '—' }}"
+                                        data-l_k="{{ $row->lab_k ?? '—' }}" data-l_mg="{{ $row->lab_mg ?? '—' }}"
+                                        data-l_na="{{ $row->lab_na ?? '—' }}" data-l_fe="{{ $row->lab_fe ?? '—' }}"
+                                        data-l_zn="{{ $row->lab_zn ?? '—' }}" data-l_mn="{{ $row->lab_mn ?? '—' }}"
+                                        data-l_cu="{{ $row->lab_cu ?? '—' }}" data-l_b="{{ $row->lab_b ?? '—' }}"
+                                        data-l_s="{{ $row->lab_s ?? '—' }}" data-l_nno3="{{ $row->lab_n_no3 ?? '—' }}"
+                                        class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 cursor-pointer">
+                                        <i class="fa-solid fa-eye"></i> Ver Detalle
+                                    </button>
+
+                                    @if(auth()->user()->rol === 'administrador')
+                                    <form action="{{ route('suelo.destroy', $row->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar permanentemente este registro de monitoreo y sus análisis asociados? Esta acción no se puede deshacer.');" class="inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 cursor-pointer">
+                                            <i class="fa-solid fa-trash-can"></i> Eliminar
+                                        </button>
+                                    </form>
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                         @empty
@@ -226,7 +238,7 @@
 
     {{-- MODAL INTERACTIVO DE DETALLES --}}
     <div id="modal_detalle_suelo" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 animate-fade-in">
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-3xl my-auto flex flex-col overflow-hidden max-h-[90vh]">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl my-auto flex flex-col overflow-hidden max-h-[90vh]">
             <div class="bg-emerald-600 text-white px-6 py-4 flex justify-between items-center shrink-0">
                 <h3 class="text-base font-bold uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-file-invoice text-xl"></i> Reporte Detallado de Inspección de Suelo
@@ -234,69 +246,98 @@
                 <button type="button" onclick="cerrarModalDetalle()" class="text-white/80 hover:text-white text-2xl font-bold cursor-pointer outline-none">&times;</button>
             </div>
 
-            <div class="p-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs">
+            <div class="p-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin text-xs">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div><span class="text-gray-400 block uppercase font-bold">Fecha</span><span id="md_fecha" class="font-bold text-gray-800 text-sm"></span></div>
                     <div><span class="text-gray-400 block uppercase font-bold">Sector / Nave</span><span id="md_sector" class="font-bold text-gray-800 text-sm"></span></div>
                     <div><span class="text-gray-400 block uppercase font-bold">Dueño del Sector</span><span id="md_operador" class="font-bold text-gray-800 text-sm"></span></div>
                     <div><span class="text-gray-400 block uppercase font-bold">Estatus General</span><span id="md_estatus_clima" class="font-black"></span></div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="border border-gray-200 rounded-xl overflow-hidden">
-                        <div class="bg-gray-100 p-2 font-bold text-gray-700 border-b border-gray-200">Condiciones Ambientales</div>
+                        <div class="bg-gray-100 p-2 font-bold text-gray-700 border-b border-gray-200">Conditions Ambientales</div>
                         <table class="w-full text-left font-medium divide-y divide-gray-100">
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Temperatura</td><td id="md_temp" class="p-2 font-bold text-gray-800"></td></tr>
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Humedad Clima</td><td id="md_hum" class="p-2 font-bold text-gray-800"></td></tr>
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">DPV Calculado</td><td id="md_dpv" class="p-2 font-mono font-bold text-gray-800"></td></tr>
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Radiación Registrada</td><td id="md_radiacion" class="p-2 font-bold text-gray-800"></td></tr>
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Acción Radiación</td><td id="md_radiacion_accion" class="p-2 text-gray-600"></td></tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Temperatura</td>
+                                <td id="md_temp" class="p-2 font-bold text-gray-800"></td>
+                            </tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Humedad Clima</td>
+                                <td id="md_hum" class="p-2 font-bold text-gray-800"></td>
+                            </tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">DPV Calculado</td>
+                                <td id="md_dpv" class="p-2 font-mono font-bold text-gray-800"></td>
+                            </tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Radiación Registrada</td>
+                                <td id="md_radiacion" class="p-2 font-bold text-gray-800"></td>
+                            </tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Acción Radiación</td>
+                                <td id="md_radiacion_accion" class="p-2 text-gray-600"></td>
+                            </tr>
                         </table>
                     </div>
 
                     <div class="border border-gray-200 rounded-xl overflow-hidden">
                         <div class="bg-gray-100 p-2 font-bold text-gray-700 border-b border-gray-200">Física y Química Base</div>
                         <table class="w-full text-left font-medium divide-y divide-gray-100">
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Tensiómetro</td><td id="md_tensiometro" class="p-2 font-bold text-gray-800"></td></tr>
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Estatus del Suelo</td><td id="md_tensiometro_estatus" class="p-2 font-bold text-gray-800"></td></tr>
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Conductividad (CE)</td><td id="md_ce" class="p-2 font-bold text-gray-800"></td></tr>
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Potencial pH</td><td id="md_ph" class="p-2 font-bold text-gray-800"></td></tr>
-                            <tr class="divide-x divide-gray-100"><td class="p-2 text-gray-500">Acción Alerta CE</td><td id="md_alerta_ce" class="p-2 font-bold text-red-700"></td></tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Tensiómetro</td>
+                                <td id="md_tensiometro" class="p-2 font-bold text-gray-800"></td>
+                            </tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Estatus del Suelo</td>
+                                <td id="md_tensiometro_estatus" class="p-2 font-bold text-gray-800"></td>
+                            </tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Conductividad (CE)</td>
+                                <td id="md_ce" class="p-2 font-bold text-gray-800"></td>
+                            </tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Potencial pH</td>
+                                <td id="md_ph" class="p-2 font-bold text-gray-800"></td>
+                            </tr>
+                            <tr class="divide-x divide-gray-100">
+                                <td class="p-2 text-gray-500">Acción Alerta CE</td>
+                                <td id="md_alerta_ce" class="p-2 font-bold text-red-700"></td>
+                            </tr>
                         </table>
                     </div>
                 </div>
 
-                <div class="border border-cyan-200 rounded-xl overflow-hidden text-xs">
-                    <div class="bg-cyan-600 text-white p-2.5 font-bold flex justify-between items-center">
-                        <span>Resultados: Análisis Rápido</span>
+                {{-- CONTAINER MÚLTIPLE PARA ANÁLISIS RÁPIDOS (EPS Y ECP DINÁMICOS DESDE TABLA RELACIONAL) --}}
+                <div class="border border-cyan-200 rounded-xl overflow-hidden">
+                    <div class="bg-cyan-600 text-white px-3 py-2.5 font-bold flex justify-between items-center">
+                        <span>Resultados: Análisis Rápidos Realizados en Campo</span>
                         <span id="md_rapido_cumplio" class="bg-white text-cyan-800 px-2 py-0.5 rounded font-black text-[10px]"></span>
                     </div>
-                    <div class="grid grid-cols-3 sm:grid-cols-7 text-center divide-x divide-y sm:divide-y-0 divide-gray-200 font-semibold bg-cyan-50/10">
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">No3</span><span id="md_r_no3" class="text-gray-800"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">K</span><span id="md_r_k" class="text-gray-800"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">Ca</span><span id="md_r_ca" class="text-gray-800"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">Na</span><span id="md_r_na" class="text-gray-800"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">P</span><span id="md_r_p" class="text-gray-800"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">PH</span><span id="md_r_ph" class="text-gray-800"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">CE</span><span id="md_r_ce" class="text-gray-800"></span></div>
+                    <div id="contenedor_tablas_rapidas" class="p-4 space-y-4 bg-gray-50/50">
+                        <!-- Generado por JS -->
                     </div>
                 </div>
 
-                <div id="md_box_laboratorio" class="border border-emerald-200 rounded-xl overflow-hidden text-xs hidden">
-                    <div class="bg-emerald-600 text-white p-2.5 font-bold"><i class="fa-solid fa-microscope mr-1"></i> Desglose Completo: Análisis de Laboratorio</div>
-                    <div class="grid grid-cols-3 sm:grid-cols-6 text-center divide-x divide-y divide-gray-200 font-semibold bg-emerald-50/10">
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">MO</span><span id="md_l_mo"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">P-Bray</span><span id="md_l_pbray"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">K</span><span id="md_l_k"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">Mg</span><span id="md_l_mg"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">Na</span><span id="md_l_na"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">Fe</span><span id="md_l_fe"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">Zn</span><span id="md_l_zn"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">Mn</span><span id="md_l_mn"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">Cu</span><span id="md_l_cu"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">B</span><span id="md_l_b"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">S</span><span id="md_l_s"></span></div>
-                        <div class="p-2"><span class="text-gray-400 block text-[10px] uppercase">N-NO3</span><span id="md_l_nno3"></span></div>
+                {{-- DETALLE DE LABORATORIO --}}
+                <div id="md_box_laboratorio" class="border border-emerald-200 rounded-xl overflow-hidden hidden">
+                    <div class="bg-emerald-600 text-white p-2.5 font-bold flex justify-between items-center">
+                        <span><i class="fa-solid fa-microscope mr-1"></i> Desglose Completo: Análisis de Laboratorio</span>
+                        <span id="md_tipo_lab_badge" class="bg-white text-emerald-800 px-2 py-0.5 rounded font-bold text-[10px] uppercase"></span>
+                    </div>
+                    <div class="grid grid-cols-3 sm:grid-cols-6 text-center divide-x divide-y divide-gray-200 font-semibold bg-white" id="grid_laboratorio_elementos">
+                        <div class="p-2" id="box_l_mo"><span class="text-gray-400 block text-[10px] uppercase">MO</span><span id="md_l_mo">—</span></div>
+                        <div class="p-2" id="box_l_pbray"><span class="text-gray-400 block text-[10px] uppercase">P-Bray</span><span id="md_l_pbray">—</span></div>
+                        <div class="p-2" id="box_l_k"><span class="text-gray-400 block text-[10px] uppercase">K</span><span id="md_l_k">—</span></div>
+                        <div class="p-2" id="box_l_mg"><span class="text-gray-400 block text-[10px] uppercase">Mg</span><span id="md_l_mg">—</span></div>
+                        <div class="p-2" id="box_l_na"><span class="text-gray-400 block text-[10px] uppercase">Na</span><span id="md_l_na">—</span></div>
+                        <div class="p-2" id="box_l_fe"><span class="text-gray-400 block text-[10px] uppercase">Fe</span><span id="md_l_fe">—</span></div>
+                        <div class="p-2" id="box_l_zn"><span class="text-gray-400 block text-[10px] uppercase">Zn</span><span id="md_l_zn">—</span></div>
+                        <div class="p-2" id="box_l_mn"><span class="text-gray-400 block text-[10px] uppercase">Mn</span><span id="md_l_mn">—</span></div>
+                        <div class="p-2" id="box_l_cu"><span class="text-gray-400 block text-[10px] uppercase">Cu</span><span id="md_l_cu">—</span></div>
+                        <div class="p-2" id="box_l_b"><span class="text-gray-400 block text-[10px] uppercase">B</span><span id="md_l_b">—</span></div>
+                        <div class="p-2" id="box_l_s"><span class="text-gray-400 block text-[10px] uppercase">S</span><span id="md_l_s">—</span></div>
+                        <div class="p-2" id="box_l_nno3"><span class="text-gray-400 block text-[10px] uppercase">N-NO3</span><span id="md_l_nno3">—</span></div>
                     </div>
                 </div>
             </div>
@@ -318,18 +359,17 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // Inicializar Flatpickr con el plugin de selección de semanas
             flatpickr("#semana_picker", {
                 locale: "es",
                 firstDayOfWeek: 1, // Iniciar en Lunes
-                defaultDate: "{{ request('semana') }}" ? null : null, 
+                defaultDate: "{{ request('semana') }}" ? null : null,
                 plugins: [new weekSelect({})],
                 onChange: function(selectedDates, dateStr, instance) {
                     if (selectedDates.length > 0) {
                         const numeroSemana = instance.config.getWeek(selectedDates[0]);
                         const anio = selectedDates[0].getFullYear();
                         const stringSemanaFinal = anio + "-W" + String(numeroSemana).padStart(2, '0');
-                        
+
                         document.getElementById("semana_final_input").value = stringSemanaFinal;
                         document.getElementById("formFiltros").submit();
                     }
@@ -342,11 +382,75 @@
             }
         });
 
+        // LÓGICA DE DIÁGNOSTICO DE SEMÁFOROS DINÁMICOS EN BASE A REQUISITOS WORD
+        function obtenerClaseSemaforo(tipo, elemento, valorStr) {
+            const valor = parseFloat(valorStr);
+            if(isNaN(valor)) return 'text-gray-500 font-semibold';
+
+            const clases = {
+                bajo: 'text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded font-bold',
+                optimo: 'text-green-600 bg-green-50 border border-green-200 px-1.5 py-0.5 rounded font-bold',
+                alto: 'text-amber-600 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded font-bold'
+            };
+
+            // 1. ANÁLISIS RÁPIDO: EXTRACTO DE PASTA SATURADA (EPS)
+            if (tipo === 'eps') {
+                switch(elemento) {
+                    case 'no3': return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto; 
+                    case 'p':   return (valor < 15) ? clases.bajo : (valor <= 30) ? clases.optimo : clases.alto; 
+                    case 'k':   return (valor < 117) ? clases.bajo : (valor <= 234) ? clases.optimo : clases.alto; 
+                    case 'ca':  return (valor < 120) ? clases.bajo : (valor <= 200) ? clases.optimo : clases.alto; 
+                    case 'na':  return (valor <= 30) ? clases.optimo : (valor <= 60) ? clases.optimo : clases.bajo; 
+                    case 'ph':  return (valor < 5.5) ? clases.bajo : (valor <= 6.5) ? clases.optimo : clases.alto; 
+                    case 'ce':  return (valor < 2.0) ? clases.bajo : (valor <= 3.5) ? clases.optimo : clases.alto; 
+                }
+            }
+            // 2. ANÁLISIS RÁPIDO: EXTRACTO CELULAR (ECP - SAVIA)
+            if (tipo === 'ecp') {
+                switch(elemento) {
+                    case 'no3': return (valor < 500) ? clases.bajo : (valor <= 800) ? clases.optimo : clases.alto; 
+                    case 'k':   return (valor < 3000) ? clases.bajo : (valor <= 5000) ? clases.optimo : clases.alto; 
+                    case 'ca':  return (valor < 200) ? clases.bajo : (valor <= 450) ? clases.optimo : clases.alto; 
+                    case 'na':  return (valor <= 40) ? clases.optimo : (valor <= 100) ? clases.optimo : clases.alto; 
+                    case 'p':   return (valor < 200) ? clases.bajo : (valor <= 400) ? clases.optimo : clases.alto; 
+                    case 'ph':  return (valor < 5.5) ? clases.bajo : (valor <= 6.2) ? clases.optimo : clases.alto; 
+                    case 'ce':  return (valor < 8.0) ? clases.bajo : (valor <= 12.0) ? clases.optimo : clases.alto; 
+                }
+            }
+            // 3. LABORATORIO: FERTILIDAD
+            if (tipo === 'fertilidad') {
+                switch(elemento) {
+                    case 'n_no3':  return (valor < 25) ? clases.bajo : (valor <= 45) ? clases.optimo : clases.alto; 
+                    case 'p_bray': return (valor < 25) ? clases.bajo : (valor <= 45) ? clases.optimo : clases.alto; 
+                    case 'k':      return (valor < 180) ? clases.bajo : (valor <= 300) ? clases.optimo : clases.alto; 
+                    case 'mg':     return (valor < 250) ? clases.bajo : (valor <= 450) ? clases.optimo : clases.alto; 
+                    case 's':      return (valor < 15) ? clases.bajo : (valor <= 35) ? clases.optimo : clases.alto; 
+                    case 'fe':     return (valor < 5.0) ? clases.bajo : (valor <= 15.0) ? clases.optimo : clases.alto; 
+                    case 'mn':     return (valor < 2.0) ? clases.bajo : (valor <= 10.0) ? clases.optimo : clases.alto; 
+                    case 'zn':     return (valor < 1.5) ? clases.bajo : (valor <= 3.5) ? clases.optimo : clases.alto; 
+                    case 'cu':     return (valor < 0.4) ? clases.bajo : (valor <= 1.5) ? clases.optimo : clases.alto; 
+                    case 'b':      return (valor < 0.6) ? clases.bajo : (valor <= 1.2) ? clases.optimo : clases.alto; 
+                }
+            }
+            // 4. LABORATORIO: PASTA SATURADA
+            if (tipo === 'pasta_saturada') {
+                switch(elemento) {
+                    case 'n_no3':  return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto; 
+                    case 'p_bray': return (valor < 15) ? clases.bajo : (valor <= 30) ? clases.optimo : clases.alto; 
+                    case 'k':      return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto; 
+                    case 'mg':     return (valor < 36) ? clases.bajo : (valor <= 60) ? clases.optimo : clases.alto; 
+                    case 'na':     return (valor <= 60) ? clases.optimo : clases.alto; 
+                    case 's':      return (valor < 192) ? clases.bajo : (valor <= 480) ? clases.optimo : clases.alto; 
+                }
+            }
+            return 'text-gray-800 font-bold';
+        }
+
         function mostrarDetalleSuelo(boton) {
             document.getElementById('md_fecha').innerText = boton.getAttribute('data-fecha');
             document.getElementById('md_sector').innerText = boton.getAttribute('data-sector');
             document.getElementById('md_operador').innerText = boton.getAttribute('data-operador');
-            
+
             const estClima = boton.getAttribute('data-estatus_clima');
             const mdEstClima = document.getElementById('md_estatus_clima');
             mdEstClima.innerText = estClima;
@@ -365,32 +469,74 @@
 
             const cumplio = boton.getAttribute('data-rapido_cumplio');
             document.getElementById('md_rapido_cumplio').innerText = 'CUMPLIÓ: ' + cumplio;
-            document.getElementById('md_r_no3').innerText = boton.getAttribute('data-r_no3');
-            document.getElementById('md_r_k').innerText = boton.getAttribute('data-r_k');
-            document.getElementById('md_r_ca').innerText = boton.getAttribute('data-r_ca');
-            document.getElementById('md_r_na').innerText = boton.getAttribute('data-r_na');
-            document.getElementById('md_r_p').innerText = boton.getAttribute('data-r_p');
-            document.getElementById('md_r_ph').innerText = boton.getAttribute('data-r_ph');
-            document.getElementById('md_r_ce').innerText = boton.getAttribute('data-r_ce');
 
-            const boxLab = document.getElementById('md_box_laboratorio');
-            if (cumplio === 'NO') {
-                document.getElementById('md_l_mo').innerText = boton.getAttribute('data-l_mo');
-                document.getElementById('md_l_pbray').innerText = boton.getAttribute('data-l_pbray');
-                document.getElementById('md_l_k').innerText = boton.getAttribute('data-l_k');
-                document.getElementById('md_l_mg').innerText = boton.getAttribute('data-l_mg');
-                document.getElementById('md_l_na').innerText = boton.getAttribute('data-l_na');
-                document.getElementById('md_l_fe').innerText = boton.getAttribute('data-l_fe');
-                document.getElementById('md_l_zn').innerText = boton.getAttribute('data-l_zn');
-                document.getElementById('md_l_mn').innerText = boton.getAttribute('data-l_mn');
-                document.getElementById('md_l_cu').innerText = boton.getAttribute('data-l_cu');
-                document.getElementById('md_l_b').innerText = boton.getAttribute('data-l_b');
-                document.getElementById('md_l_s').innerText = boton.getAttribute('data-l_s');
-                document.getElementById('md_l_nno3').innerText = boton.getAttribute('data-l_nno3');
-                boxLab.classList.remove('hidden');
+            // Renderizado e interpretación dinámica de las tablas relacionales EPS y ECP
+            const analisisRapidosJson = JSON.parse(boton.getAttribute('data-analisis_rapidos') || '[]');
+            const contenedorTablas = document.getElementById('contenedor_tablas_rapidas');
+            contenedorTablas.innerHTML = ''; 
+
+            if (analisisRapidosJson.length === 0) {
+                contenedorTablas.innerHTML = `<div class="text-center py-2 text-gray-400 italic">No se adjuntaron registros de campo EPS/ECP.</div>`;
             } else {
-                boxLab.classList.add('hidden');
+                analisisRapidosJson.forEach(ana => {
+                    const tipoNombre = ana.tipo_analisis.toUpperCase();
+                    const divFila = document.createElement('div');
+                    divFila.className = "bg-white p-3 rounded-lg border border-gray-200 shadow-sm";
+                    divFila.innerHTML = `
+                        <div class="font-bold text-cyan-700 border-b border-gray-100 pb-1 mb-2">Método: Renglón ${tipoNombre}</div>
+                        <div class="grid grid-cols-4 sm:grid-cols-7 text-center divide-x divide-gray-100">
+                            <div class="p-1"><span class="text-gray-400 block text-[9px] uppercase">No3</span><span class="${obtenerClaseSemaforo(ana.tipo_analisis, 'no3', ana.no3)}">${ana.no3 ?? '—'}</span></div>
+                            <div class="p-1"><span class="text-gray-400 block text-[9px] uppercase">K</span><span class="${obtenerClaseSemaforo(ana.tipo_analisis, 'k', ana.k)}">${ana.k ?? '—'}</span></div>
+                            <div class="p-1"><span class="text-gray-400 block text-[9px] uppercase">Ca</span><span class="${obtenerClaseSemaforo(ana.tipo_analisis, 'ca', ana.ca)}">${ana.ca ?? '—'}</span></div>
+                            <div class="p-1"><span class="text-gray-400 block text-[9px] uppercase">Na</span><span class="${obtenerClaseSemaforo(ana.tipo_analisis, 'na', ana.na)}">${ana.na ?? '—'}</span></div>
+                            <div class="p-1"><span class="text-gray-400 block text-[9px] uppercase">P</span><span class="${obtenerClaseSemaforo(ana.tipo_analisis, 'p', ana.p)}">${ana.p ?? '—'}</span></div>
+                            <div class="p-1"><span class="text-gray-400 block text-[9px] uppercase">pH</span><span class="${obtenerClaseSemaforo(ana.tipo_analisis, 'ph', ana.ph)}">${ana.ph ?? '—'}</span></div>
+                            <div class="p-1"><span class="text-gray-400 block text-[9px] uppercase">CE</span><span class="${obtenerClaseSemaforo(ana.tipo_analisis, 'ce', ana.ce)}">${ana.ce ?? '—'}</span></div>
+                        </div>
+                    `;
+                    contenedorTablas.appendChild(divFila);
+                });
             }
+
+            // ========================================================
+            // FORZADO DE VISUALIZACIÓN DEL REPORTE DE LABORATORIO
+            // ========================================================
+            const tipoLab = boton.getAttribute('data-tipo_lab');
+            const boxLab = document.getElementById('md_box_laboratorio');
+            
+            // Formateamos el título del badge
+            if (tipoLab && tipoLab !== 'ninguno' && tipoLab !== 'null') {
+                document.getElementById('md_tipo_lab_badge').innerText = 'Tipo: ' + tipoLab.replace('_', ' ');
+            } else {
+                document.getElementById('md_tipo_lab_badge').innerText = 'Tipo: No especificado';
+            }
+
+            const elementosLab = ['mo', 'pbray', 'k', 'mg', 'na', 'fe', 'zn', 'mn', 'cu', 'b', 's', 'nno3'];
+            elementosLab.forEach(el => {
+                const val = boton.getAttribute(`data-l_${el}`);
+                const spanVal = document.getElementById(`md_l_${el}`);
+                const boxEl = document.getElementById(`box_l_${el}`);
+                
+                if (spanVal) {
+                    // Si el valor no existe o es un guion plano, dejamos '—'
+                    spanVal.innerText = (val && val !== '—') ? val : '—';
+                    
+                    let DB_Elemento = el === 'pbray' ? 'p_bray' : el === 'nno3' ? 'n_no3' : el;
+                    spanVal.className = obtenerClaseSemaforo(tipoLab, DB_Elemento, val);
+                }
+
+                // Ocultar dinámicamente los campos de micronutrientes solo si es pasta saturada
+                if (boxEl) {
+                    if (tipoLab === 'pasta_saturada' && ['mo', 'fe', 'zn', 'mn', 'cu', 'b'].includes(el)) {
+                        boxEl.classList.add('hidden');
+                    } else {
+                        boxEl.classList.remove('hidden');
+                    }
+                }
+            });
+
+            // 🔥 OBLIGAMOS A LA CAJA A MOSTRARSE SIEMPRE REMOVIENDO EL HIDDEN
+            boxLab.classList.remove('hidden');
 
             const modal = document.getElementById('modal_detalle_suelo');
             modal.classList.remove('hidden');
