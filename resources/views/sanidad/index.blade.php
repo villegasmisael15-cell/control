@@ -266,7 +266,7 @@
                     @if($bitacora->fertilizantes->isNotEmpty())
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         @foreach($bitacora->fertilizantes->groupBy('tanque') as $nombreTanque => $accionesTanque)
-                        <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 shadow-2xs space-y-3">
+                        <div class="bg-stone-40  border-stone-200 rounded- p-6 shadow-2xs space-y-2">
                             <div class="bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 uppercase tracking-wide">
                                 <i class="fa-solid fa-prescription-bottle-droplet"></i>
                                 Tanque: {{ $nombreTanque }}
