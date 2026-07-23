@@ -109,7 +109,7 @@ class MonitoreoClimaRiegoController extends Controller
 
  public function store(Request $request)
     {
-        // 1. Validar los datos (SIN user_id en el validate)
+        // 1. Validar los datos
         $request->validate([
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
@@ -128,27 +128,19 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSQUEDA BLINDADA E INTELIGENTE DEL DUEÑO DEL SECTOR
-        $sectorBuscado = trim(strtolower($request->sector)); // Ej: "sector 2"
-        $userIdReal = auth()->id(); // Respaldo por defecto
+        // 2. BUSCAR AL OPERADOR DIRECTAMENTE EN LA TABLA USERS CON SQL PURO
+        $sectorBuscado = trim($request->sector);
 
-        // Obtenemos todos los usuarios que no sean administradores y tengan sectores
-        $operadores = \App\Models\User::where('rol', '!=', 'administrador')
-            ->whereNotNull('sectores')
-            ->get();
+        $operador = \App\Models\User::where('rol', '!=', 'administrador')
+            ->whereRaw("TRIM(sectores) LIKE ?", ["%{$sectorBuscado}%"])
+            ->first();
 
-        foreach ($operadores as $op) {
-            // Limpiamos y separamos por comas los sectores del usuario en la BD
-            $sectoresDelOp = array_map(function($sec) {
-                return trim(strtolower($sec));
-            }, explode(',', $op->sectores));
-
-            // Comparamos sin importar mayúsculas, minúsculas o espacios
-            if (in_array($sectorBuscado, $sectoresDelOp)) {
-                $userIdReal = $op->id;
-                break; // ¡Encontrado! Salimos del ciclo
-            }
+        // SI NO ENCUENTRA AL OPERADOR, DETENEMOS EL PROCESO PARA SABER POR QUÉ
+        if (!$operador) {
+            throw new \Exception("Error: Ningún operador no administrador tiene asignado el sector '{$sectorBuscado}' en la base de datos de producción.");
         }
+
+        $userIdReal = $operador->id;
 
         // 3. Lógica de riego por macetas
         $volRiego = $request->vol_riego_entrada;
@@ -191,9 +183,9 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
-        // 5. GUARDAR DIRECTAMENTE CON EL MODELO
+        // 5. GUARDAR DIRECTAMENTE
         MonitoreoClimaRiego::create([
-            'user_id' => $userIdReal, // ID real del operador asignado
+            'user_id' => $userIdReal,
             'fecha' => $request->fecha,
             'sector' => $request->sector,
             'temperatura' => $request->temperatura,
