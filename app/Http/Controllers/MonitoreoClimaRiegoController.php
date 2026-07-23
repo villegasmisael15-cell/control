@@ -128,22 +128,27 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
-        // 2. BUSCAR AL OPERADOR DUEÑO DEL SECTOR EXACTO
-        $sectorLimpio = trim($request->sector);
-        
-        $operadorSector = \App\Models\User::where('rol', '!=', 'administrador')
-            ->where('sectores', 'LIKE', '%' . $sectorLimpio . '%')
-            ->first();
+        // 2. BUSQUEDA BLINDADA E INTELIGENTE DEL DUEÑO DEL SECTOR
+        $sectorBuscado = trim(strtolower($request->sector)); // Ej: "sector 2"
+        $userIdReal = auth()->id(); // Respaldo por defecto
 
-        $userIdReal = $operadorSector ? $operadorSector->id : auth()->id();
+        // Obtenemos todos los usuarios que no sean administradores y tengan sectores
+        $operadores = \App\Models\User::where('rol', '!=', 'administrador')
+            ->whereNotNull('sectores')
+            ->get();
 
-        // 🛑 DIAGNÓSTICO TEMPORAL: Esto detendrá la ejecución y te mostrará qué está leyendo el servidor
-        dd([
-            'sector_buscado_en_formulario' => $sectorLimpio,
-            'operador_encontrado_en_bd' => $operadorSector ? $operadorSector->name : 'Nadie encontrado (Devolvió NULL)',
-            'user_id_final_a_guardar' => $userIdReal,
-            'lista_de_todos_los_usuarios_y_sus_sectores' => \App\Models\User::select('id', 'name', 'rol', 'sectores')->get()->toArray()
-        ]);
+        foreach ($operadores as $op) {
+            // Limpiamos y separamos por comas los sectores del usuario en la BD
+            $sectoresDelOp = array_map(function($sec) {
+                return trim(strtolower($sec));
+            }, explode(',', $op->sectores));
+
+            // Comparamos sin importar mayúsculas, minúsculas o espacios
+            if (in_array($sectorBuscado, $sectoresDelOp)) {
+                $userIdReal = $op->id;
+                break; // ¡Encontrado! Salimos del ciclo
+            }
+        }
 
         // 3. Lógica de riego por macetas
         $volRiego = $request->vol_riego_entrada;
@@ -188,7 +193,7 @@ class MonitoreoClimaRiegoController extends Controller
 
         // 5. GUARDAR DIRECTAMENTE CON EL MODELO
         MonitoreoClimaRiego::create([
-            'user_id' => $userIdReal,
+            'user_id' => $userIdReal, // ID real del operador asignado
             'fecha' => $request->fecha,
             'sector' => $request->sector,
             'temperatura' => $request->temperatura,
