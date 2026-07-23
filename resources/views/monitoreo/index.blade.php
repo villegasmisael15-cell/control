@@ -16,25 +16,27 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-4 py-3 sm:py-0">
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 sm:h-16">
-                <div class="flex items-center justify-between w-full sm:w-auto">
-                    <div class="flex items-center">
-                        <i class="fa-solid fa-leaf text-2xl mr-2"></i>
-                        <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
-                    </div>
-                </div>
-                <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto text-xs sm:text-sm">
-                    <span class="bg-emerald-700 px-3 py-1.5 rounded text-xs flex items-center gap-1">
-                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
-                    </span>
-                    <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-sm">
-                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
-                    </a>
-                </div>
-            </div>
+    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <!-- Logotipo compacto -->
+        <div class="flex items-center min-w-0">
+            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
         </div>
-    </nav>
+
+        <!-- Acciones adaptadas con truncamiento de texto -->
+        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                <i class="fa-solid fa-user text-[10px]"></i> 
+                <span class="truncate">{{ auth()->user()->name }}</span>
+            </span>
+            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
+                <span class="hidden xs:inline">Volver al Panel</span>
+                <span class="inline xs:hidden">Panel</span>
+            </a>
+        </div>
+    </div>
+</nav>
 
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
 
@@ -66,14 +68,11 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
             <form method="GET" action="{{ route('monitoreo.index') }}" id="formFiltros" class="grid grid-cols-1 md:grid-cols-12 items-end gap-4">
 
-                {{-- 📅 EL ÚNICO FILTRADO POR SEMANA (CON FLATPICKR) --}}
+                {{-- 📅 FILTRADO POR SEMANA (CON FLATPICKR) --}}
                 <div class="col-span-1 md:col-span-4">
                     <label for="semana_picker" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Filtrar por Semana:</label>
                     <div class="flex items-center gap-2">
-                        <!-- Input oculto real que se envía a Laravel -->
                         <input type="hidden" name="semana" id="semana_final_input" value="{{ request('semana') }}">
-
-                        <!-- Input estético controlado por Flatpickr -->
                         <div class="relative w-full">
                             <input type="text"
                                 id="semana_picker"
@@ -178,26 +177,27 @@
                                 </span>
                             </td>
 
-                            <!-- 🛠️ BOTONES DE ACCIÓN MÁS GRANDES Y CÓMODOS -->
+                            <!-- 🛠️ BOTONES DE ACCIÓN -->
                             <td class="py-3.5 px-4 text-center">
                                 <div class="inline-flex items-center justify-center gap-2">
                                     <a href="{{ route('monitoreo.show', $row->id) }}" class="bg-emerald-50 hover:bg-emerald-100 text-emerald-700 p-2 rounded-lg transition shadow-2xs border border-emerald-200" title="Ver Detalle completo">
                                         <i class="fa-solid fa-magnifying-glass-chart text-sm"></i>
                                     </a>
 
-                                    @if(auth()->user()->rol === 'administrador')
+                                    @can('es-administrador')
                                     <a href="{{ route('monitoreo.edit', $row->id) }}" class="bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-lg transition shadow-2xs border border-blue-200" title="Editar">
                                         <i class="fa-solid fa-pen-to-square text-sm"></i>
                                     </a>
 
-                                    <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" onsubmit="return confirm('¿Seguro que deseas eliminar este registro?');" style="display: inline;">
+                                    <!-- Formulario con Modal Personalizado (Sin rastro de unitasrubra.com) -->
+                                    <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" id="delete-form-{{ $row->id }}" class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition shadow-2xs border border-red-200 cursor-pointer" title="Eliminar">
+                                        <button type="button" onclick="mostrarModalEliminar('{{ $row->id }}')" class="bg-red-50 hover:bg-red-100 text-red-700 p-2 rounded-lg transition shadow-2xs border border-red-200 cursor-pointer" title="Eliminar">
                                             <i class="fa-solid fa-trash text-sm"></i>
                                         </button>
                                     </form>
-                                    @endif
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -216,40 +216,84 @@
 
     </main>
 
+    <!-- 🎨 MODAL PERSONALIZADO DE ELIMINACIÓN (Diseño Limpio) -->
+    <div id="modalEliminar" class="fixed inset-0 bg-black/50 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all scale-95 opacity-0 duration-200" id="modalContenido">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1">¿Eliminar registro?</h3>
+            <p class="text-xs text-gray-500 mb-6">Esta acción no se puede deshacer y borrará los datos seleccionados del sistema.</p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalEliminar()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer">
+                    Cancelar
+                </button>
+                <button type="button" id="btnConfirmarEliminar" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer shadow-md">
+                    Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500 w-full mt-auto">
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
-    <!-- 🔌 SCRIPTS DE CONTEXTO Y FUNCIONAMIENTO FLATPICKR -->
+    <!-- 🔌 SCRIPTS DE CONTEXTO Y FUNCIONAMIENTO FLATPICKR Y MODAL -->
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
     <script>
+        let formIdParaEliminar = null;
+
+        function mostrarModalEliminar(id) {
+            formIdParaEliminar = id;
+            const modal = document.getElementById('modalEliminar');
+            const contenido = document.getElementById('modalContenido');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                contenido.classList.remove('scale-95', 'opacity-0');
+                contenido.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function cerrarModalEliminar() {
+            const modal = document.getElementById('modalEliminar');
+            const contenido = document.getElementById('modalContenido');
+            contenido.classList.remove('scale-100', 'opacity-100');
+            contenido.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                formIdParaEliminar = null;
+            }, 200);
+        }
+
+        document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
+            if (formIdParaEliminar) {
+                document.getElementById('delete-form-' + formIdParaEliminar).submit();
+            }
+        });
+
         document.addEventListener("DOMContentLoaded", function() {
-            // Inicializar Flatpickr con el plugin de selección de semanas
             flatpickr("#semana_picker", {
                 locale: "es",
-                firstDayOfWeek: 1, // Iniciar en Lunes
+                firstDayOfWeek: 1,
                 defaultDate: "{{ request('semana') }}" ? null : null,
                 plugins: [new weekSelect({})],
                 onChange: function(selectedDates, dateStr, instance) {
                     if (selectedDates.length > 0) {
-                        // Extraer el año y el número de semana calculado por Flatpickr
                         const numeroSemana = instance.config.getWeek(selectedDates[0]);
                         const anio = selectedDates[0].getFullYear();
-
-                        // Formatear al estándar WXX (Ejemplo: 2026-W30)
                         const stringSemanaFinal = anio + "-W" + String(numeroSemana).padStart(2, '0');
-
-                        // Inyectar el valor estructurado en el input oculto y enviar el formulario automáticamente
                         document.getElementById("semana_final_input").value = stringSemanaFinal;
                         document.getElementById("formFiltros").submit();
                     }
                 }
             });
 
-            // Mostrar visualmente la semana cargada actualmente si existe en la URL
             const semanaActual = "{{ request('semana') }}";
             if (semanaActual) {
                 document.getElementById("semana_picker").value = "Semana " + semanaActual.split("-W")[1] + ", " + semanaActual.split("-W")[0];

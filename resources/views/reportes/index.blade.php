@@ -12,24 +12,27 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-4 shadow-sm">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <i class="fa-solid fa-leaf text-2xl mr-2"></i>
-                    <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
-                </div>
-                <div class="flex items-center gap-4 text-sm font-medium">
-                    <span class="bg-emerald-700 px-3 py-1 rounded text-xs">
-                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
-                    </span>
-                    <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
-                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
-                    </a>
-                </div>
-            </div>
+    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <!-- Logotipo compacto -->
+        <div class="flex items-center min-w-0">
+            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
         </div>
-    </nav>
 
+        <!-- Acciones adaptadas con truncamiento de texto -->
+        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                <i class="fa-solid fa-user text-[10px]"></i> 
+                <span class="truncate">{{ auth()->user()->name }}</span>
+            </span>
+            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
+                <span class="hidden xs:inline">Volver al Panel</span>
+                <span class="inline xs:hidden">Panel</span>
+            </a>
+        </div>
+    </div>
+</nav>
     <main class="max-w-[95%] mx-auto px-2 sm:px-4 py-6 w-full flex-grow">
         <div class="mb-6">
             <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">

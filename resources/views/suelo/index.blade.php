@@ -15,25 +15,28 @@
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
-        <nav class="bg-emerald-600 text-white shadow-md">
-            <div class="max-w-[95%] mx-auto px-4">
-                <div class="flex items-center justify-between h-16">
-                    <div class="flex items-center">
-                        <i class="fa-solid fa-leaf text-2xl mr-2"></i>
-                        <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
-                    </div>
-                    <div class="flex items-center gap-4 text-sm font-medium">
-                     <span class="bg-emerald-700 px-3 py-1 rounded text-xs">
-                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
-                    </span>
-                         <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
-                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
-                    </a>
-                    </div>
-                </div>
-            </div>
-        </nav>
+   <nav class="bg-emerald-600 text-white shadow-md">
+    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <!-- Logotipo compacto -->
+        <div class="flex items-center min-w-0">
+            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+        </div>
 
+        <!-- Acciones adaptadas con truncamiento de texto -->
+        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                <i class="fa-solid fa-user text-[10px]"></i> 
+                <span class="truncate">{{ auth()->user()->name }}</span>
+            </span>
+            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
+                <span class="hidden xs:inline">Volver al Panel</span>
+                <span class="inline xs:hidden">Panel</span>
+            </a>
+        </div>
+    </div>
+</nav>
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
 
         <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
@@ -153,15 +156,15 @@
                             <td class="py-3.5 px-4 bg-blue-50/20">
                                 <span class="font-bold text-blue-600 block text-sm">{{ $row->lectura_tensiometro ?? '—' }}</span>
                                 @if($row->tensiometro_estatus)
-                                    @if($row->tensiometro_estatus === 'SUELO SATURADO')
-                                    <span class="text-[10px] px-1.5 py-0.5 inline-block font-bold rounded bg-blue-100 text-blue-800 mt-1">Saturado</span>
-                                    @elseif($row->tensiometro_estatus === 'HUMEDAD ADECUADA')
-                                    <span class="text-[10px] px-1.5 py-0.5 inline-block font-bold rounded bg-emerald-100 text-emerald-800 mt-1">Óptimo</span>
-                                    @elseif($row->tensiometro_estatus === 'SOLICITAR RIEGO')
-                                    <span class="text-[10px] px-1.5 py-0.5 inline-block font-bold rounded bg-amber-100 text-amber-800 mt-1">Falta Riego</span>
-                                    @elseif($row->tensiometro_estatus === 'SUELO SECO CRÍTICO')
-                                    <span class="text-[10px] px-1.5 py-0.5 inline-block font-black rounded bg-red-100 text-red-800 mt-1 animate-pulse">¡Seco Crítico!</span>
-                                    @endif
+                                @if($row->tensiometro_estatus === 'SUELO SATURADO')
+                                <span class="text-[10px] px-1.5 py-0.5 inline-block font-bold rounded bg-blue-100 text-blue-800 mt-1">Saturado</span>
+                                @elseif($row->tensiometro_estatus === 'HUMEDAD ADECUADA')
+                                <span class="text-[10px] px-1.5 py-0.5 inline-block font-bold rounded bg-emerald-100 text-emerald-800 mt-1">Óptimo</span>
+                                @elseif($row->tensiometro_estatus === 'SOLICITAR RIEGO')
+                                <span class="text-[10px] px-1.5 py-0.5 inline-block font-bold rounded bg-amber-100 text-amber-800 mt-1">Falta Riego</span>
+                                @elseif($row->tensiometro_estatus === 'SUELO SECO CRÍTICO')
+                                <span class="text-[10px] px-1.5 py-0.5 inline-block font-black rounded bg-red-100 text-red-800 mt-1 animate-pulse">¡Seco Crítico!</span>
+                                @endif
                                 @else
                                 <span class="text-[10px] text-gray-400 italic">Sin diagnóstico</span>
                                 @endif
@@ -211,10 +214,10 @@
                                     </button>
 
                                     @if(auth()->user()->rol === 'administrador')
-                                    <form action="{{ route('suelo.destroy', $row->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar permanentemente este registro de monitoreo y sus análisis asociados? Esta acción no se puede deshacer.');" class="inline">
+                                    <form action="{{ route('suelo.destroy', $row->id) }}" method="POST" id="form-delete-suelo-{{ $row->id }}" class="inline">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 cursor-pointer">
+                                        <button type="button" onclick="mostrarModalGenerico('form-delete-suelo-{{ $row->id }}')" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 cursor-pointer">
                                             <i class="fa-solid fa-trash-can"></i> Eliminar
                                         </button>
                                     </form>
@@ -348,6 +351,25 @@
         </div>
     </div>
 
+    <!-- MODAL DE ELIMINACIÓN UNIFICADO -->
+<div id="modalGenericoEliminar" class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all scale-95 opacity-0 duration-200 border border-gray-100" id="modalContenidoGenerico">
+        <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3 class="text-lg font-bold text-gray-800 mb-1">¿Eliminar registro?</h3>
+        <p class="text-xs text-gray-500 mb-6">Esta acción no se puede deshacer y borrará los datos seleccionados del sistema.</p>
+        <div class="flex gap-3">
+            <button type="button" onclick="cerrarModalGenerico()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer">
+                Cancelar
+            </button>
+            <button type="button" id="btnConfirmarEliminarGenerico" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer shadow-md">
+                Sí, eliminar
+            </button>
+        </div>
+    </div>
+</div>
+
     <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500 w-full mt-auto">
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
@@ -385,7 +407,7 @@
         // LÓGICA DE DIÁGNOSTICO DE SEMÁFOROS DINÁMICOS EN BASE A REQUISITOS WORD
         function obtenerClaseSemaforo(tipo, elemento, valorStr) {
             const valor = parseFloat(valorStr);
-            if(isNaN(valor)) return 'text-gray-500 font-semibold';
+            if (isNaN(valor)) return 'text-gray-500 font-semibold';
 
             const clases = {
                 bajo: 'text-red-600 bg-red-50 border border-red-200 px-1.5 py-0.5 rounded font-bold',
@@ -395,52 +417,82 @@
 
             // 1. ANÁLISIS RÁPIDO: EXTRACTO DE PASTA SATURADA (EPS)
             if (tipo === 'eps') {
-                switch(elemento) {
-                    case 'no3': return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto; 
-                    case 'p':   return (valor < 15) ? clases.bajo : (valor <= 30) ? clases.optimo : clases.alto; 
-                    case 'k':   return (valor < 117) ? clases.bajo : (valor <= 234) ? clases.optimo : clases.alto; 
-                    case 'ca':  return (valor < 120) ? clases.bajo : (valor <= 200) ? clases.optimo : clases.alto; 
-                    case 'na':  return (valor <= 30) ? clases.optimo : (valor <= 60) ? clases.optimo : clases.bajo; 
-                    case 'ph':  return (valor < 5.5) ? clases.bajo : (valor <= 6.5) ? clases.optimo : clases.alto; 
-                    case 'ce':  return (valor < 2.0) ? clases.bajo : (valor <= 3.5) ? clases.optimo : clases.alto; 
+                switch (elemento) {
+                    case 'no3':
+                        return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto;
+                    case 'p':
+                        return (valor < 15) ? clases.bajo : (valor <= 30) ? clases.optimo : clases.alto;
+                    case 'k':
+                        return (valor < 117) ? clases.bajo : (valor <= 234) ? clases.optimo : clases.alto;
+                    case 'ca':
+                        return (valor < 120) ? clases.bajo : (valor <= 200) ? clases.optimo : clases.alto;
+                    case 'na':
+                        return (valor <= 30) ? clases.optimo : (valor <= 60) ? clases.optimo : clases.bajo;
+                    case 'ph':
+                        return (valor < 5.5) ? clases.bajo : (valor <= 6.5) ? clases.optimo : clases.alto;
+                    case 'ce':
+                        return (valor < 2.0) ? clases.bajo : (valor <= 3.5) ? clases.optimo : clases.alto;
                 }
             }
             // 2. ANÁLISIS RÁPIDO: EXTRACTO CELULAR (ECP - SAVIA)
             if (tipo === 'ecp') {
-                switch(elemento) {
-                    case 'no3': return (valor < 500) ? clases.bajo : (valor <= 800) ? clases.optimo : clases.alto; 
-                    case 'k':   return (valor < 3000) ? clases.bajo : (valor <= 5000) ? clases.optimo : clases.alto; 
-                    case 'ca':  return (valor < 200) ? clases.bajo : (valor <= 450) ? clases.optimo : clases.alto; 
-                    case 'na':  return (valor <= 40) ? clases.optimo : (valor <= 100) ? clases.optimo : clases.alto; 
-                    case 'p':   return (valor < 200) ? clases.bajo : (valor <= 400) ? clases.optimo : clases.alto; 
-                    case 'ph':  return (valor < 5.5) ? clases.bajo : (valor <= 6.2) ? clases.optimo : clases.alto; 
-                    case 'ce':  return (valor < 8.0) ? clases.bajo : (valor <= 12.0) ? clases.optimo : clases.alto; 
+                switch (elemento) {
+                    case 'no3':
+                        return (valor < 500) ? clases.bajo : (valor <= 800) ? clases.optimo : clases.alto;
+                    case 'k':
+                        return (valor < 3000) ? clases.bajo : (valor <= 5000) ? clases.optimo : clases.alto;
+                    case 'ca':
+                        return (valor < 200) ? clases.bajo : (valor <= 450) ? clases.optimo : clases.alto;
+                    case 'na':
+                        return (valor <= 40) ? clases.optimo : (valor <= 100) ? clases.optimo : clases.alto;
+                    case 'p':
+                        return (valor < 200) ? clases.bajo : (valor <= 400) ? clases.optimo : clases.alto;
+                    case 'ph':
+                        return (valor < 5.5) ? clases.bajo : (valor <= 6.2) ? clases.optimo : clases.alto;
+                    case 'ce':
+                        return (valor < 8.0) ? clases.bajo : (valor <= 12.0) ? clases.optimo : clases.alto;
                 }
             }
             // 3. LABORATORIO: FERTILIDAD
             if (tipo === 'fertilidad') {
-                switch(elemento) {
-                    case 'n_no3':  return (valor < 25) ? clases.bajo : (valor <= 45) ? clases.optimo : clases.alto; 
-                    case 'p_bray': return (valor < 25) ? clases.bajo : (valor <= 45) ? clases.optimo : clases.alto; 
-                    case 'k':      return (valor < 180) ? clases.bajo : (valor <= 300) ? clases.optimo : clases.alto; 
-                    case 'mg':     return (valor < 250) ? clases.bajo : (valor <= 450) ? clases.optimo : clases.alto; 
-                    case 's':      return (valor < 15) ? clases.bajo : (valor <= 35) ? clases.optimo : clases.alto; 
-                    case 'fe':     return (valor < 5.0) ? clases.bajo : (valor <= 15.0) ? clases.optimo : clases.alto; 
-                    case 'mn':     return (valor < 2.0) ? clases.bajo : (valor <= 10.0) ? clases.optimo : clases.alto; 
-                    case 'zn':     return (valor < 1.5) ? clases.bajo : (valor <= 3.5) ? clases.optimo : clases.alto; 
-                    case 'cu':     return (valor < 0.4) ? clases.bajo : (valor <= 1.5) ? clases.optimo : clases.alto; 
-                    case 'b':      return (valor < 0.6) ? clases.bajo : (valor <= 1.2) ? clases.optimo : clases.alto; 
+                switch (elemento) {
+                    case 'n_no3':
+                        return (valor < 25) ? clases.bajo : (valor <= 45) ? clases.optimo : clases.alto;
+                    case 'p_bray':
+                        return (valor < 25) ? clases.bajo : (valor <= 45) ? clases.optimo : clases.alto;
+                    case 'k':
+                        return (valor < 180) ? clases.bajo : (valor <= 300) ? clases.optimo : clases.alto;
+                    case 'mg':
+                        return (valor < 250) ? clases.bajo : (valor <= 450) ? clases.optimo : clases.alto;
+                    case 's':
+                        return (valor < 15) ? clases.bajo : (valor <= 35) ? clases.optimo : clases.alto;
+                    case 'fe':
+                        return (valor < 5.0) ? clases.bajo : (valor <= 15.0) ? clases.optimo : clases.alto;
+                    case 'mn':
+                        return (valor < 2.0) ? clases.bajo : (valor <= 10.0) ? clases.optimo : clases.alto;
+                    case 'zn':
+                        return (valor < 1.5) ? clases.bajo : (valor <= 3.5) ? clases.optimo : clases.alto;
+                    case 'cu':
+                        return (valor < 0.4) ? clases.bajo : (valor <= 1.5) ? clases.optimo : clases.alto;
+                    case 'b':
+                        return (valor < 0.6) ? clases.bajo : (valor <= 1.2) ? clases.optimo : clases.alto;
                 }
             }
             // 4. LABORATORIO: PASTA SATURADA
             if (tipo === 'pasta_saturada') {
-                switch(elemento) {
-                    case 'n_no3':  return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto; 
-                    case 'p_bray': return (valor < 15) ? clases.bajo : (valor <= 30) ? clases.optimo : clases.alto; 
-                    case 'k':      return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto; 
-                    case 'mg':     return (valor < 36) ? clases.bajo : (valor <= 60) ? clases.optimo : clases.alto; 
-                    case 'na':     return (valor <= 60) ? clases.optimo : clases.alto; 
-                    case 's':      return (valor < 192) ? clases.bajo : (valor <= 480) ? clases.optimo : clases.alto; 
+                switch (elemento) {
+                    case 'n_no3':
+                        return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto;
+                    case 'p_bray':
+                        return (valor < 15) ? clases.bajo : (valor <= 30) ? clases.optimo : clases.alto;
+                    case 'k':
+                        return (valor < 150) ? clases.bajo : (valor <= 250) ? clases.optimo : clases.alto;
+                    case 'mg':
+                        return (valor < 36) ? clases.bajo : (valor <= 60) ? clases.optimo : clases.alto;
+                    case 'na':
+                        return (valor <= 60) ? clases.optimo : clases.alto;
+                    case 's':
+                        return (valor < 192) ? clases.bajo : (valor <= 480) ? clases.optimo : clases.alto;
                 }
             }
             return 'text-gray-800 font-bold';
@@ -473,7 +525,7 @@
             // Renderizado e interpretación dinámica de las tablas relacionales EPS y ECP
             const analisisRapidosJson = JSON.parse(boton.getAttribute('data-analisis_rapidos') || '[]');
             const contenedorTablas = document.getElementById('contenedor_tablas_rapidas');
-            contenedorTablas.innerHTML = ''; 
+            contenedorTablas.innerHTML = '';
 
             if (analisisRapidosJson.length === 0) {
                 contenedorTablas.innerHTML = `<div class="text-center py-2 text-gray-400 italic">No se adjuntaron registros de campo EPS/ECP.</div>`;
@@ -503,7 +555,7 @@
             // ========================================================
             const tipoLab = boton.getAttribute('data-tipo_lab');
             const boxLab = document.getElementById('md_box_laboratorio');
-            
+
             // Formateamos el título del badge
             if (tipoLab && tipoLab !== 'ninguno' && tipoLab !== 'null') {
                 document.getElementById('md_tipo_lab_badge').innerText = 'Tipo: ' + tipoLab.replace('_', ' ');
@@ -516,11 +568,11 @@
                 const val = boton.getAttribute(`data-l_${el}`);
                 const spanVal = document.getElementById(`md_l_${el}`);
                 const boxEl = document.getElementById(`box_l_${el}`);
-                
+
                 if (spanVal) {
                     // Si el valor no existe o es un guion plano, dejamos '—'
                     spanVal.innerText = (val && val !== '—') ? val : '—';
-                    
+
                     let DB_Elemento = el === 'pbray' ? 'p_bray' : el === 'nno3' ? 'n_no3' : el;
                     spanVal.className = obtenerClaseSemaforo(tipoLab, DB_Elemento, val);
                 }
@@ -548,6 +600,45 @@
             modal.classList.remove('flex');
             modal.classList.add('hidden');
         }
+
+        let formIdParaEliminar = null;
+
+function mostrarModalGenerico(formId) {
+    formIdParaEliminar = formId;
+    const modal = document.getElementById('modalGenericoEliminar');
+    const contenido = document.getElementById('modalContenidoGenerico');
+    if (!modal) return;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    setTimeout(() => {
+        contenido.classList.remove('scale-95', 'opacity-0');
+        contenido.classList.add('scale-100', 'opacity-100');
+    }, 10);
+}
+
+function cerrarModalGenerico() {
+    const modal = document.getElementById('modalGenericoEliminar');
+    const contenido = document.getElementById('modalContenidoGenerico');
+    if (!modal) return;
+    contenido.classList.remove('scale-100', 'opacity-100');
+    contenido.classList.add('scale-95', 'opacity-0');
+    setTimeout(() => {
+        modal.classList.remove('flex');
+        modal.classList.add('hidden');
+        formIdParaEliminar = null;
+    }, 200);
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+    const btnConfirmar = document.getElementById('btnConfirmarEliminarGenerico');
+    if (btnConfirmar) {
+        btnConfirmar.addEventListener('click', function() {
+            if (formIdParaEliminar) {
+                document.getElementById(formIdParaEliminar).submit();
+            }
+        });
+    }
+});
     </script>
 </body>
 

@@ -16,24 +16,28 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <!-- Navbar Institucional -->
-    <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-4 shadow-sm">
-            <div class="flex items-center justify-between h-16">
-                <div class="flex items-center">
-                    <i class="fa-solid fa-leaf text-2xl mr-2"></i>
-                    <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
-                </div>
-                <div class="flex items-center gap-4 text-sm font-medium">
-                    <span class="bg-emerald-700 px-3 py-1 rounded text-xs flex items-center gap-1">
-                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
-                    </span>
-                    <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
-                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
-                    </a>
-                </div>
-            </div>
+   <nav class="bg-emerald-600 text-white shadow-md">
+    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <!-- Logotipo compacto -->
+        <div class="flex items-center min-w-0">
+            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
         </div>
-    </nav>
+
+        <!-- Acciones adaptadas con truncamiento de texto -->
+        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                <i class="fa-solid fa-user text-[10px]"></i> 
+                <span class="truncate">{{ auth()->user()->name }}</span>
+            </span>
+            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
+                <span class="hidden xs:inline">Volver al Panel</span>
+                <span class="inline xs:hidden">Panel</span>
+            </a>
+        </div>
+    </div>
+</nav>
 
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
 
@@ -145,10 +149,10 @@
                         </a>
 
                         @if(auth()->user()->rol === 'administrador')
-                        <form action="{{ route('sanidad.destroy', $bitacora->id) }}" method="POST" onsubmit="return confirm('¿Estás seguro de que deseas eliminar permanentemente esta bitácora de sanidad y nutrición? Esta acción no se puede deshacer.');" class="inline">
+                        <form action="{{ route('sanidad.destroy', $bitacora->id) }}" method="POST" id="form-delete-sanidad-{{ $bitacora->id }}" class="inline">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 cursor-pointer">
+                            <button type="button" onclick="mostrarModalGenerico('form-delete-sanidad-{{ $bitacora->id }}')" class="bg-red-600 hover:bg-red-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 cursor-pointer">
                                 <i class="fa-solid fa-trash-can"></i> Eliminar
                             </button>
                         </form>
@@ -168,20 +172,17 @@
 
                         @if($bitacora->agroquimicos->isNotEmpty())
                         @php $primerArq = $bitacora->agroquimicos->first(); @endphp
-                        
-                        <!-- BARRA DE DATOS GENERALES (VARIEDAD, PLANTAS, TRASPLANTE) -->
+
+                        <!-- BARRA DE DATOS GENERALES -->
                         <div class="bg-orange-50/60 border border-orange-200/80 rounded-lg px-3 py-2.5 grid grid-cols-3 gap-1 text-xs items-center">
-                            <!-- Variedad -->
                             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2 text-left">
                                 <span class="text-orange-900 font-semibold text-[9px] sm:text-[10px]">Variedad:</span>
                                 <span class="text-orange-950 font-black tracking-wide text-xs sm:text-sm">{{ $primerArq->variedad ?? '—' }}</span>
                             </div>
-                            <!-- N° Plantas -->
                             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2 text-center items-center justify-center">
                                 <span class="text-orange-900 font-semibold text-[9px] sm:text-[10px] block">N° Plantas:</span>
                                 <span class="text-gray-900 font-mono font-bold tracking-tight text-xs sm:text-sm">{{ $primerArq->numero_plantas ? number_format($primerArq->numero_plantas) : '—' }}</span>
                             </div>
-                            <!-- Trasplante -->
                             <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2 text-right justify-end">
                                 <span class="text-orange-900 font-semibold text-[9px] sm:text-[10px]">Trasplante:</span>
                                 <span class="text-emerald-800 font-bold text-xs sm:text-sm">{{ $primerArq->fecha_trasplante ? \Carbon\Carbon::parse($primerArq->fecha_trasplante)->format('d/m/Y') : '—' }}</span>
@@ -261,7 +262,7 @@
                         @if($bitacora->fertilizantes->isNotEmpty())
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             @foreach($bitacora->fertilizantes->groupBy('tanque') as $nombreTanque => $accionesTanque)
-                            <div class="bg-stone-20  border-stone-200 rounded-lg p-4 shadow-2xs space-y-2">
+                            <div class="bg-stone-20 border-stone-200 rounded-lg p-4 shadow-2xs space-y-2">
                                 <div class="bg-emerald-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg inline-flex items-center gap-1.5 uppercase tracking-wide">
                                     <i class="fa-solid fa-prescription-bottle-droplet"></i>
                                     Tanque: {{ $nombreTanque }}
@@ -325,8 +326,26 @@
         </div>
 
     </main>
-</body>
-</html>
+
+    <!-- MODAL DE ELIMINACIÓN UNIFICADO -->
+    <div id="modalGenericoEliminar" class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all scale-95 opacity-0 duration-200 border border-gray-100" id="modalContenidoGenerico">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1">¿Eliminar registro?</h3>
+            <p class="text-xs text-gray-500 mb-6">Esta acción no se puede deshacer y borrará los datos seleccionados del sistema.</p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalGenerico()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer">
+                    Cancelar
+                </button>
+                <button type="button" id="btnConfirmarEliminarGenerico" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer shadow-md">
+                    Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500 w-full mt-auto">
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
@@ -337,10 +356,39 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
     <script>
+        let formIdParaEliminar = null;
+
+        function mostrarModalGenerico(formId) {
+            formIdParaEliminar = formId;
+            const modal = document.getElementById('modalGenericoEliminar');
+            const contenido = document.getElementById('modalContenidoGenerico');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                contenido.classList.remove('scale-95', 'opacity-0');
+                contenido.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function cerrarModalGenerico() {
+            const modal = document.getElementById('modalGenericoEliminar');
+            const contenido = document.getElementById('modalContenidoGenerico');
+            if (!modal) return;
+            contenido.classList.remove('scale-100', 'opacity-100');
+            contenido.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                formIdParaEliminar = null;
+            }, 200);
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
+            // Inicializar Flatpickr
             flatpickr("#semana_picker", {
                 locale: "es",
-                firstDayOfWeek: 1, // Iniciar en Lunes
+                firstDayOfWeek: 1,
                 defaultDate: "{{ request('semana') }}" ? null : null,
                 plugins: [new weekSelect({})],
                 onChange: function(selectedDates, dateStr, instance) {
@@ -358,6 +406,16 @@
             const semanaActual = "{{ request('semana') }}";
             if (semanaActual) {
                 document.getElementById("semana_picker").value = "Semana " + semanaActual.split("-W")[1] + ", " + semanaActual.split("-W")[0];
+            }
+
+            // Manejador del botón de confirmación del modal de eliminación
+            const btnConfirmar = document.getElementById('btnConfirmarEliminarGenerico');
+            if (btnConfirmar) {
+                btnConfirmar.addEventListener('click', function() {
+                    if (formIdParaEliminar) {
+                        document.getElementById(formIdParaEliminar).submit();
+                    }
+                });
             }
         });
     </script>

@@ -14,37 +14,39 @@
 
     <!-- NAV TOTALMENTE RESPONSIVO -->
     <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-4 flex flex-col sm:flex-row items-center justify-between py-3 sm:h-16 gap-3">
-            <div class="flex items-center self-start sm:self-auto">
-                <i class="fa-solid fa-leaf text-2xl mr-2"></i>
-                <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
-            </div>
-
-            <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto text-xs sm:text-sm">
-
-                <span class="bg-emerald-700 px-3 py-1 rounded text-xs">
-                    <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
-                </span>
-
-                @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
-                <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
-                    <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
-                </a>
-                @endif
-
-
-
-                @if(auth()->user()->rol === 'usuario_rechazo')
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-3 py-2 rounded-lg transition flex items-center gap-1.5 shadow-sm cursor-pointer border border-red-500/20 whitespace-nowrap">
-                        <i class="fa-solid fa-right-from-bracket"></i> Salir
-                    </button>
-                </form>
-                @endif
-            </div>
+    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <!-- Logotipo compacto -->
+        <div class="flex items-center min-w-0">
+            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
         </div>
-    </nav>
+
+        <!-- Acciones con soporte para tus roles condicionales -->
+        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[110px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                <i class="fa-solid fa-user text-[10px]"></i> 
+                <span class="truncate">{{ auth()->user()->name }}</span>
+            </span>
+
+            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
+                <span class="hidden xs:inline">Volver al Panel</span>
+                <span class="inline xs:hidden">Panel</span>
+            </a>
+            @endif
+
+            @if(auth()->user()->rol === 'usuario_rechazo')
+            <form method="POST" action="{{ route('logout') }}" class="inline">
+                @csrf
+                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1.5 rounded-md transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap">
+                    <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Salir
+                </button>
+            </form>
+            @endif
+        </div>
+    </div>
+</nav>
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-4 py-6 sm:py-8 w-full flex-grow">
         @if (session('status'))
@@ -189,10 +191,10 @@
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         @can('es-administrador')
-                                        <form action="{{ route('recepcion.destroyNacional', $nacional->id) }}" method="POST" onsubmit="return confirm('¿Seguro de eliminar?');" class="inline">
+                                        <form action="{{ route('recepcion.destroyNacional', $nacional->id) }}" method="POST" id="form-delete-nacional-{{ $nacional->id }}" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-800 p-1 transition cursor-pointer">
+                                            <button type="button" onclick="mostrarModalGenerico('form-delete-nacional-{{ $nacional->id }}')" class="text-red-600 hover:text-red-800 p-1 transition cursor-pointer" title="Eliminar">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>
@@ -712,6 +714,24 @@
     </div>
     @endif
 
+    <div id="modalGenericoEliminar" class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all scale-95 opacity-0 duration-200 border border-gray-100" id="modalContenidoGenerico">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1">¿Eliminar registro?</h3>
+            <p class="text-xs text-gray-500 mb-6">Esta acción no se puede deshacer y borrará los datos seleccionados del sistema.</p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalGenerico()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer">
+                    Cancelar
+                </button>
+                <button type="button" id="btnConfirmarEliminarGenerico" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer shadow-md">
+                    Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500 w-full mt-auto">
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
@@ -1145,11 +1165,44 @@
             }
         }
 
-        function confirmarEliminacion(id) {
-            if (confirm('¿Estás seguro de que deseas eliminar? Esta acción no se puede deshacer.')) {
-                document.getElementById('form-delete-' + id).submit();
-            }
+        let formIdParaEliminar = null;
+
+        function mostrarModalGenerico(formId) {
+            formIdParaEliminar = formId;
+            const modal = document.getElementById('modalGenericoEliminar');
+            const contenido = document.getElementById('modalContenidoGenerico');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                contenido.classList.remove('scale-95', 'opacity-0');
+                contenido.classList.add('scale-100', 'opacity-100');
+            }, 10);
         }
+
+        function cerrarModalGenerico() {
+            const modal = document.getElementById('modalGenericoEliminar');
+            const contenido = document.getElementById('modalContenidoGenerico');
+            if (!modal) return;
+            contenido.classList.remove('scale-100', 'opacity-100');
+            contenido.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                formIdParaEliminar = null;
+            }, 200);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnConfirmar = document.getElementById('btnConfirmarEliminarGenerico');
+            if (btnConfirmar) {
+                btnConfirmar.addEventListener('click', function() {
+                    if (formIdParaEliminar) {
+                        document.getElementById(formIdParaEliminar).submit();
+                    }
+                });
+            }
+        });
 
         function abrirModalRestituidasPorFecha(fechaSeleccionada) {
             const modal = document.getElementById('modalRestituidas');
