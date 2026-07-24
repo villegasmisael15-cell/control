@@ -11,6 +11,17 @@
     <!-- 🔌 CDNs Obligatorias para Flatpickr (Estilos y Plugin de Semanas) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/weekSelect.css">
+
+    <!-- 🛑 ESTILOS OBLIGATORIOS PARA EVITAR EL PULL-TO-REFRESH EN EL MODAL -->
+    <style>
+        #modal_detalle_suelo {
+            overscroll-behavior: none;
+            touch-action: pan-y;
+        }
+        .scrollbar-thin {
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
 </head>
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
@@ -410,6 +421,32 @@
             }
         });
 
+        // 🛑 BLOQUEO ESTRICTO DEL GESTO TÁCTIL PARA EVITAR EL REFRESCO EN MÓVILES
+        document.addEventListener("DOMContentLoaded", function() {
+            const modalScrollable = document.querySelector('#modal_detalle_suelo .overflow-y-auto');
+            
+            if (modalScrollable) {
+                let startY = 0;
+
+                modalScrollable.addEventListener('touchstart', function(e) {
+                    startY = e.touches[0].clientY;
+                }, { passive: true });
+
+                modalScrollable.addEventListener('touchmove', function(e) {
+                    let currentY = e.touches[0].clientY;
+                    let scrollTop = modalScrollable.scrollTop;
+                    let scrollHeight = modalScrollable.scrollHeight;
+                    let height = modalScrollable.clientHeight;
+
+                    if ((scrollTop === 0 && currentY > startY) || (scrollTop + height >= scrollHeight && currentY < startY)) {
+                        if(e.cancelable) {
+                            e.preventDefault();
+                        }
+                    }
+                }, { passive: false });
+            }
+        });
+
         // LÓGICA DE DIÁGNOSTICO DE SEMÁFOROS DINÁMICOS EN BASE A REQUISITOS WORD
         function obtenerClaseSemaforo(tipo, elemento, valorStr) {
             const valor = parseFloat(valorStr);
@@ -504,7 +541,7 @@
             return 'text-gray-800 font-bold';
         }
 
-      function mostrarDetalleSuelo(boton) {
+        function mostrarDetalleSuelo(boton) {
             document.getElementById('md_fecha').innerText = boton.getAttribute('data-fecha') || '—';
             document.getElementById('md_sector').innerText = boton.getAttribute('data-sector') || '—';
             document.getElementById('md_operador').innerText = boton.getAttribute('data-operador') || '—';
