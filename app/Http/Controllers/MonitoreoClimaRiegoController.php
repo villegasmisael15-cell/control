@@ -260,22 +260,28 @@ class MonitoreoClimaRiegoController extends Controller
     return view('monitoreo.edit', compact('monitoreo', 'sectores', 'sectoresAsignados'));
 }
 
-    public function update(Request $request, $id)
+   public function update(Request $request, $id)
     {
-        if (auth()->user()->rol !== 'administrador') {
-            abort(403, 'Acción no autorizada.');
-        }
-
         $monitoreo = MonitoreoClimaRiego::findOrFail($id);
 
-        // Validación adaptada para permitir nulos en edición si es necesario
+        // Verificación de seguridad: Si es operador, validar que el registro pertenezca a sus sectores
+        if (auth()->user()->rol !== 'administrador') {
+            $sectoresTexto = auth()->user()->sectores;
+            $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+
+            if (!in_array($monitoreo->sector, $sectoresAsignados)) {
+                abort(403, 'No tienes permiso para actualizar este registro.');
+            }
+        }
+
+        // Validación adaptada para permitir decimales y nulos de forma segura
         $request->validate([
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
             'temperatura' => 'nullable|numeric',
             'humedad' => 'nullable|numeric',
-            'vol_riego_entrada' => 'nullable|integer',
-            'vol_drenaje_salida' => 'nullable|integer',
+            'vol_riego_entrada' => 'nullable|numeric',
+            'vol_drenaje_salida' => 'nullable|numeric',
             'ce_entrada' => 'nullable|numeric',
             'ce_salida' => 'nullable|numeric',
             'ph_entrada' => 'nullable|numeric',
