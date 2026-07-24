@@ -122,7 +122,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // 2. RUTAS PRIVADAS (Exclusivas de Administrador)
     Route::middleware('can:es-administrador')->group(function () {
         
-        Route::put('/monitoreo/{id}/actualizar', [MonitoreoClimaRiegoController::class, 'update'])->name('monitoreo.update');
         Route::delete('/monitoreo/{id}/eliminar', [MonitoreoClimaRiegoController::class, 'destroy'])->name('monitoreo.destroy');
         Route::get('/monitoreo/{id}/exportar-excel', [MonitoreoClimaRiegoController::class, 'exportarExcel'])->name('monitoreo.excel');
         Route::patch('/usuarios/{id}/cambiar-rol', [UsuarioController::class, 'cambiarRol'])->name('usuarios.cambiarRol');
