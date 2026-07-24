@@ -124,22 +124,22 @@ class MonitoreoClimaRiegoController extends Controller
         ]);
 
         // 3. Validar los datos (incluyendo user_id igual que en suelo)
+       // 3. Validar los datos de forma flexible para evitar rechazos silenciosos
         $request->validate([
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
-            'temperatura' => 'nullable|numeric|min:-10|max:60',
-            'humedad' => 'nullable|numeric|min:0|max:100',
-            'vol_riego_entrada' => 'nullable|integer',
-            'vol_drenaje_salida' => 'nullable|integer',
+            'temperatura' => 'nullable|numeric',
+            'humedad' => 'nullable|numeric',
+            'vol_riego_entrada' => 'nullable|numeric',      // Cambiado de integer a numeric por seguridad
+            'vol_drenaje_salida' => 'nullable|numeric',   // Cambiado de integer a numeric por seguridad
             'ce_entrada' => 'nullable|numeric',
             'ce_salida' => 'nullable|numeric',
             'ph_entrada' => 'nullable|numeric',
             'ph_salida' => 'nullable|numeric',
             'peso_tarde_anterior' => 'nullable|numeric',
             'peso_manana' => 'nullable|numeric',
-            'radiacion_hora' => 'required',
-            'radiacion_lectura' => 'required|integer|min:0',
-            'radiacion_semaforo' => 'required|string|max:255',
+            'radiacion_lectura' => 'nullable|integer|min:0', // Cambiado a nullable por si viene vacío
+            'radiacion_semaforo' => 'nullable|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
         ]);
