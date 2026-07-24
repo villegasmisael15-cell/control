@@ -15,31 +15,31 @@
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
-   <nav class="bg-emerald-600 text-white shadow-md">
-    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-        <!-- Logotipo compacto -->
-        <div class="flex items-center min-w-0">
-            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
-            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
-        </div>
+    <nav class="bg-emerald-600 text-white shadow-md">
+        <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+            <!-- Logotipo compacto -->
+            <div class="flex items-center min-w-0">
+                <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+                <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+            </div>
 
-        <!-- Acciones adaptadas con truncamiento de texto -->
-        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
-            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
-                <i class="fa-solid fa-user text-[10px]"></i> 
-                <span class="truncate">{{ auth()->user()->name }}</span>
-            </span>
-            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
-                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
-                <span class="hidden xs:inline">Volver al Panel</span>
-                <span class="inline xs:hidden">Panel</span>
-            </a>
+            <!-- Acciones adaptadas con truncamiento de texto -->
+            <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                    <i class="fa-solid fa-user text-[10px]"></i>
+                    <span class="truncate">{{ auth()->user()->name }}</span>
+                </span>
+                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                    <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
+                    <span class="hidden xs:inline">Volver al Panel</span>
+                    <span class="inline xs:hidden">Panel</span>
+                </a>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
 
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8 gap-4">
+        <div class="flex flex-col  md:flex-row md:items-center md:justify-between mb-8 gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
                     <i class="fa-solid fa-mound text-emerald-600"></i>
@@ -139,7 +139,7 @@
                     <tbody class="divide-y divide-gray-200 text-gray-700 text-sm">
                         @forelse($monitoreos as $row)
                         @php
-                            $colorRadiacion = $row->radiacion_semaforo === 'VERDE' ? 'text-emerald-600 font-bold' : ($row->radiacion_semaforo === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
+                        $colorRadiacion = $row->radiacion_semaforo === 'VERDE' ? 'text-emerald-600 font-bold' : ($row->radiacion_semaforo === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
                         @endphp
                         <tr class="hover:bg-gray-50 transition duration-150">
                             <td class="py-3.5 px-4 font-medium">
@@ -358,23 +358,23 @@
     </div>
 
     <!-- MODAL DE ELIMINACIÓN UNIFICADO -->
-<div id="modalGenericoEliminar" class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all scale-95 opacity-0 duration-200 border border-gray-100" id="modalContenidoGenerico">
-        <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">
-            <i class="fa-solid fa-triangle-exclamation"></i>
-        </div>
-        <h3 class="text-lg font-bold text-gray-800 mb-1">¿Eliminar registro?</h3>
-        <p class="text-xs text-gray-500 mb-6">Esta acción no se puede deshacer y borrará los datos seleccionados del sistema.</p>
-        <div class="flex gap-3">
-            <button type="button" onclick="cerrarModalGenerico()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer">
-                Cancelar
-            </button>
-            <button type="button" id="btnConfirmarEliminarGenerico" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer shadow-md">
-                Sí, eliminar
-            </button>
+    <div id="modalGenericoEliminar" class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all scale-95 opacity-0 duration-200 border border-gray-100" id="modalContenidoGenerico">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1">¿Eliminar registro?</h3>
+            <p class="text-xs text-gray-500 mb-6">Esta acción no se puede deshacer y borrará los datos seleccionados del sistema.</p>
+            <div class="flex gap-3">
+                <button type="button" onclick="cerrarModalGenerico()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer">
+                    Cancelar
+                </button>
+                <button type="button" id="btnConfirmarEliminarGenerico" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-2.5 rounded-xl transition text-xs cursor-pointer shadow-md">
+                    Sí, eliminar
+                </button>
+            </div>
         </div>
     </div>
-</div>
 
     <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500 w-full mt-auto">
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
@@ -504,39 +504,43 @@
             return 'text-gray-800 font-bold';
         }
 
-        function mostrarDetalleSuelo(boton) {
-            document.getElementById('md_fecha').innerText = boton.getAttribute('data-fecha');
-            document.getElementById('md_sector').innerText = boton.getAttribute('data-sector');
-            document.getElementById('md_operador').innerText = boton.getAttribute('data-operador');
+      function mostrarDetalleSuelo(boton) {
+            document.getElementById('md_fecha').innerText = boton.getAttribute('data-fecha') || '—';
+            document.getElementById('md_sector').innerText = boton.getAttribute('data-sector') || '—';
+            document.getElementById('md_operador').innerText = boton.getAttribute('data-operador') || '—';
 
             const estClima = boton.getAttribute('data-estatus_clima');
             const mdEstClima = document.getElementById('md_estatus_clima');
-            mdEstClima.innerText = estClima;
+            mdEstClima.innerText = estClima || '—';
             mdEstClima.className = estClima === 'ÓPTIMO' ? 'font-black text-emerald-600 text-sm' : 'font-black text-red-600 text-sm';
 
-            document.getElementById('md_temp').innerText = boton.getAttribute('data-temperatura') + ' °C';
-            document.getElementById('md_hum').innerText = boton.getAttribute('data-humedad') + ' %';
-            document.getElementById('md_dpv').innerText = boton.getAttribute('data-dpv');
+            document.getElementById('md_temp').innerText = (boton.getAttribute('data-temperatura') || '—') + ' °C';
+            document.getElementById('md_hum').innerText = (boton.getAttribute('data-humedad') || '—') + ' %';
+            document.getElementById('md_dpv').innerText = boton.getAttribute('data-dpv') || '—';
             
-            // Radiación detallada con color en el número
-            const radNum = boton.getAttribute('data-radiacion_num');
-            const radSem = boton.getAttribute('data-radiacion_semaforo');
+            // Radiación detallada con color en el número de forma segura
+            const radNum = boton.getAttribute('data-radiacion_num') || '0';
+            const radSem = boton.getAttribute('data-radiacion_semaforo') || 'VERDE';
             const spanRadNum = document.getElementById('md_radiacion_num');
             const spanRadSem = document.getElementById('md_radiacion_semaforo');
             
-            spanRadNum.innerText = radNum + ' Lux';
-            spanRadNum.className = radSem === 'VERDE' ? 'text-emerald-600 font-bold' : (radSem === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
-            spanRadSem.innerText = '(' + radSem + ')';
-            spanRadSem.className = 'text-[10px] ml-1 font-semibold text-gray-500';
+            if (spanRadNum) {
+                spanRadNum.innerText = radNum + ' Lux';
+                spanRadNum.className = radSem === 'VERDE' ? 'text-emerald-600 font-bold' : (radSem === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
+            }
+            if (spanRadSem) {
+                spanRadSem.innerText = '(' + radSem + ')';
+                spanRadSem.className = 'text-[10px] ml-1 font-semibold text-gray-500';
+            }
 
-            document.getElementById('md_radiacion_accion').innerText = boton.getAttribute('data-radiacion_accion');
-            document.getElementById('md_tensiometro').innerText = boton.getAttribute('data-tensiometro') + ' cb';
-            document.getElementById('md_tensiometro_estatus').innerText = boton.getAttribute('data-tensiometro_estatus');
-            document.getElementById('md_ce').innerText = boton.getAttribute('data-ce');
-            document.getElementById('md_ph').innerText = boton.getAttribute('data-ph');
-            document.getElementById('md_alerta_ce').innerText = boton.getAttribute('data-alerta_ce');
+            document.getElementById('md_radiacion_accion').innerText = boton.getAttribute('data-radiacion_accion') || 'Ninguna';
+            document.getElementById('md_tensiometro').innerText = (boton.getAttribute('data-tensiometro') || '—') + ' cb';
+            document.getElementById('md_tensiometro_estatus').innerText = boton.getAttribute('data-tensiometro_estatus') || 'Sin diagnóstico';
+            document.getElementById('md_ce').innerText = boton.getAttribute('data-ce') || '—';
+            document.getElementById('md_ph').innerText = boton.getAttribute('data-ph') || '—';
+            document.getElementById('md_alerta_ce').innerText = boton.getAttribute('data-alerta_ce') || 'Ninguna';
 
-            const cumplio = boton.getAttribute('data-rapido_cumplio');
+            const cumplio = boton.getAttribute('data-rapido_cumplio') || 'NO';
             document.getElementById('md_rapido_cumplio').innerText = 'CUMPLIÓ: ' + cumplio;
 
             // Renderizado e interpretación dinámica de las tablas relacionales EPS y ECP
@@ -548,7 +552,7 @@
                 contenedorTablas.innerHTML = `<div class="text-center py-2 text-gray-400 italic">No se adjuntaron registros de campo EPS/ECP.</div>`;
             } else {
                 analisisRapidosJson.forEach(ana => {
-                    const tipoNombre = ana.tipo_analisis.toUpperCase();
+                    const tipoNombre = (ana.tipo_analisis || '').toUpperCase();
                     const divFila = document.createElement('div');
                     divFila.className = "bg-white p-3 rounded-lg border border-gray-200 shadow-sm";
                     divFila.innerHTML = `
@@ -567,13 +571,9 @@
                 });
             }
 
-            // ========================================================
-            // FORZADO DE VISUALIZACIÓN DEL REPORTE DE LABORATORIO
-            // ========================================================
             const tipoLab = boton.getAttribute('data-tipo_lab');
             const boxLab = document.getElementById('md_box_laboratorio');
 
-            // Formateamos el título del badge
             if (tipoLab && tipoLab !== 'ninguno' && tipoLab !== 'null') {
                 document.getElementById('md_tipo_lab_badge').innerText = 'Tipo: ' + tipoLab.replace('_', ' ');
             } else {
@@ -587,14 +587,11 @@
                 const boxEl = document.getElementById(`box_l_${el}`);
 
                 if (spanVal) {
-                    // Si el valor no existe o es un guion plano, dejamos '—'
                     spanVal.innerText = (val && val !== '—') ? val : '—';
-
                     let DB_Elemento = el === 'pbray' ? 'p_bray' : el === 'nno3' ? 'n_no3' : el;
                     spanVal.className = obtenerClaseSemaforo(tipoLab, DB_Elemento, val);
                 }
 
-                // Ocultar dinámicamente los campos de micronutrientes solo si es pasta saturada
                 if (boxEl) {
                     if (tipoLab === 'pasta_saturada' && ['mo', 'fe', 'zn', 'mn', 'cu', 'b'].includes(el)) {
                         boxEl.classList.add('hidden');
@@ -604,58 +601,66 @@
                 }
             });
 
-            // 🔥 OBLIGAMOS A LA CAJA A MOSTRARSE SIEMPRE REMOVIENDO EL HIDDEN
             boxLab.classList.remove('hidden');
 
             const modal = document.getElementById('modal_detalle_suelo');
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+
+            // 🛑 BLOQUEO ESTRICTO DEL SCROLL DE LA PÁGINA DE FONDO EN MÓVILES
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.width = '100%';
         }
 
         function cerrarModalDetalle() {
             const modal = document.getElementById('modal_detalle_suelo');
             modal.classList.remove('flex');
             modal.classList.add('hidden');
+
+            // 🟢 RESTAURACIÓN COMPLETA DEL SCROLL DE LA PÁGINA
+            document.body.style.overflow = 'auto';
+            document.body.style.position = 'static';
         }
 
         let formIdParaEliminar = null;
 
-function mostrarModalGenerico(formId) {
-    formIdParaEliminar = formId;
-    const modal = document.getElementById('modalGenericoEliminar');
-    const contenido = document.getElementById('modalContenidoGenerico');
-    if (!modal) return;
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    setTimeout(() => {
-        contenido.classList.remove('scale-95', 'opacity-0');
-        contenido.classList.add('scale-100', 'opacity-100');
-    }, 10);
-}
+        function mostrarModalGenerico(formId) {
+            formIdParaEliminar = formId;
+            const modal = document.getElementById('modalGenericoEliminar');
+            const contenido = document.getElementById('modalContenidoGenerico');
+            if (!modal) return;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            setTimeout(() => {
+                contenido.classList.remove('scale-95', 'opacity-0');
+                contenido.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
 
-function cerrarModalGenerico() {
-    const modal = document.getElementById('modalGenericoEliminar');
-    const contenido = document.getElementById('modalContenidoGenerico');
-    if (!modal) return;
-    contenido.classList.remove('scale-100', 'opacity-100');
-    contenido.classList.add('scale-95', 'opacity-0');
-    setTimeout(() => {
-        modal.classList.remove('flex');
-        modal.classList.add('hidden');
-        formIdParaEliminar = null;
-    }, 200);
-}
+        function cerrarModalGenerico() {
+            const modal = document.getElementById('modalGenericoEliminar');
+            const contenido = document.getElementById('modalContenidoGenerico');
+            if (!modal) return;
+            contenido.classList.remove('scale-100', 'opacity-100');
+            contenido.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.remove('flex');
+                modal.classList.add('hidden');
+                formIdParaEliminar = null;
+            }, 200);
+        }
 
-document.addEventListener("DOMContentLoaded", function() {
-    const btnConfirmar = document.getElementById('btnConfirmarEliminarGenerico');
-    if (btnConfirmar) {
-        btnConfirmar.addEventListener('click', function() {
-            if (formIdParaEliminar) {
-                document.getElementById(formIdParaEliminar).submit();
+        document.addEventListener("DOMContentLoaded", function() {
+            const btnConfirmar = document.getElementById('btnConfirmarEliminarGenerico');
+            if (btnConfirmar) {
+                btnConfirmar.addEventListener('click', function() {
+                    if (formIdParaEliminar) {
+                        document.getElementById(formIdParaEliminar).submit();
+                    }
+                });
             }
         });
-    }
-});
     </script>
 </body>
 
