@@ -183,12 +183,13 @@
                                         <i class="fa-solid fa-magnifying-glass-chart text-sm"></i>
                                     </a>
 
-                                    @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')  
+
                                     <a href="{{ route('monitoreo.edit', $row->id) }}" class="bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-lg transition shadow-2xs border border-blue-200" title="Editar">
                                         <i class="fa-solid fa-pen-to-square text-sm"></i>
                                     </a>
 
-                                    <!-- Formulario con Modal Personalizado (Sin rastro de unitasrubra.com) -->
+                                    
+                                    @can('es-administrador')
                                     <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" id="delete-form-{{ $row->id }}" class="inline">
                                         @csrf
                                         @method('DELETE')
@@ -196,7 +197,7 @@
                                             <i class="fa-solid fa-trash text-sm"></i>
                                         </button>
                                     </form>
-                                       @endif
+                                    @endcan
                                 </div>
                             </td>
                         </tr>

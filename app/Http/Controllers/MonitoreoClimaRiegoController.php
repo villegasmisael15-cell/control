@@ -222,14 +222,23 @@ class MonitoreoClimaRiegoController extends Controller
     return view('monitoreo.show', compact('monitoreo', 'caracteristicas'));
 }
     public function edit($id)
-    {
-        if (auth()->user()->rol !== 'administrador') {
-            abort(403, 'Acción no autorizada.');
+{
+    $monitoreo = MonitoreoClimaRiego::findOrFail($id);
+
+    // Verificación de seguridad para operadores
+    if (auth()->user()->rol !== 'administrador') {
+        $sectoresTexto = auth()->user()->sectores;
+        $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+
+        // Si el sector del registro no le pertenece al operador, bloqueamos el acceso
+        if (!in_array($monitoreo->sector, $sectoresAsignados)) {
+            abort(403, 'No tienes permiso para editar este registro.');
         }
-
-        $monitoreo = MonitoreoClimaRiego::findOrFail($id);
-
-        // Obtener los sectores de forma dinámica para el select de edición también
+        
+        // Si es operador, solo le mostramos sus propios sectores asignados en el select
+        $sectores = $sectoresAsignados;
+    } else {
+        // Si es administrador, obtiene todos los sectores como antes
         $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
         $sectoresUnicos = [];
         foreach ($todosLosSectoresTexto as $cadena) {
@@ -243,8 +252,9 @@ class MonitoreoClimaRiegoController extends Controller
         }
         $sectores = array_unique($sectoresUnicos);
         sort($sectores);
+    }
 
-        $sectoresAsignados = $sectores;
+    $sectoresAsignados = $sectores;
 
     // Retornamos enviando ambas variables por seguridad
     return view('monitoreo.edit', compact('monitoreo', 'sectores', 'sectoresAsignados'));
