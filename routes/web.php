@@ -55,6 +55,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/condensacion/guardar', [RecepcionController::class, 'guardarCondensacion'])->name('condensacion.guardar');
 
     // 1. RUTAS PÚBLICAS (Para Administradores y Operadores)
+    Route::get('/monitoreo/{id}/editar', [MonitoreoClimaRiegoController::class, 'edit'])->name('monitoreo.edit');
     Route::get('/monitoreo', [MonitoreoClimaRiegoController::class, 'index'])->name('monitoreo.index');
     Route::get('/monitoreo/ver/{id}', [MonitoreoClimaRiegoController::class, 'show'])->name('monitoreo.show');
     Route::get('/monitoreo/nuevo', [MonitoreoClimaRiegoController::class, 'create'])->name('monitoreo.create');
@@ -119,7 +120,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // 2. RUTAS PRIVADAS (Exclusivas de Administrador)
     Route::middleware('can:es-administrador')->group(function () {
-        Route::get('/monitoreo/{id}/editar', [MonitoreoClimaRiegoController::class, 'edit'])->name('monitoreo.edit');
+        
         Route::put('/monitoreo/{id}/actualizar', [MonitoreoClimaRiegoController::class, 'update'])->name('monitoreo.update');
         Route::delete('/monitoreo/{id}/eliminar', [MonitoreoClimaRiegoController::class, 'destroy'])->name('monitoreo.destroy');
         Route::get('/monitoreo/{id}/exportar-excel', [MonitoreoClimaRiegoController::class, 'exportarExcel'])->name('monitoreo.excel');
