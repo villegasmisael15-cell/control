@@ -138,6 +138,9 @@
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-gray-700 text-sm">
                         @forelse($monitoreos as $row)
+                        @php
+                            $colorRadiacion = $row->radiacion_semaforo === 'VERDE' ? 'text-emerald-600 font-bold' : ($row->radiacion_semaforo === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
+                        @endphp
                         <tr class="hover:bg-gray-50 transition duration-150">
                             <td class="py-3.5 px-4 font-medium">
                                 {{ \Carbon\Carbon::parse($row->fecha)->format('d/m/Y') }}
@@ -171,8 +174,8 @@
                             </td>
 
                             <td class="py-3.5 px-4 bg-orange-50/10 font-medium">
-                                {{ number_format($row->radiacion_lectura) }}
-                                <span class="text-[10px] block font-bold {{ $row->radiacion_semaforo === 'VERDE' ? 'text-emerald-600' : ($row->radiacion_semaforo === 'AMARILLO' ? 'text-amber-600' : 'text-red-600') }}">
+                                <span class="{{ $colorRadiacion }}">{{ number_format($row->radiacion_lectura) }}</span>
+                                <span class="text-[10px] block font-semibold text-gray-500">
                                     {{ $row->radiacion_semaforo }}
                                 </span>
                             </td>
@@ -198,7 +201,8 @@
                                         data-ce="{{ $row->ce ?? '—' }}"
                                         data-ph="{{ $row->ph ?? '—' }}"
                                         data-alerta_ce="{{ $row->alerta_ce_opcion ?? 'Ninguna' }}"
-                                        data-radiacion="{{ number_format($row->radiacion_lectura) }} Lux ({{ $row->radiacion_semaforo }})"
+                                        data-radiacion_num="{{ number_format($row->radiacion_lectura) }}"
+                                        data-radiacion_semaforo="{{ $row->radiacion_semaforo }}"
                                         data-radiacion_accion="{{ $row->radiacion_accion_tomada ?? 'Ninguna' }}"
                                         data-rapido_cumplio="{{ strtoupper($row->analisis_rapido_cumplio) }}"
                                         data-tipo_lab="{{ $row->tipo_analisis_lab ?? 'ninguno' }}"
@@ -249,7 +253,7 @@
                 <button type="button" onclick="cerrarModalDetalle()" class="text-white/80 hover:text-white text-2xl font-bold cursor-pointer outline-none">&times;</button>
             </div>
 
-            <div class="p-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin text-xs">
+            <div class="p-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin text-xs overscroll-behavior-contain">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div><span class="text-gray-400 block uppercase font-bold">Fecha</span><span id="md_fecha" class="font-bold text-gray-800 text-sm"></span></div>
                     <div><span class="text-gray-400 block uppercase font-bold">Sector / Nave</span><span id="md_sector" class="font-bold text-gray-800 text-sm"></span></div>
@@ -275,7 +279,9 @@
                             </tr>
                             <tr class="divide-x divide-gray-100">
                                 <td class="p-2 text-gray-500">Radiación Registrada</td>
-                                <td id="md_radiacion" class="p-2 font-bold text-gray-800"></td>
+                                <td class="p-2 font-bold text-gray-800">
+                                    <span id="md_radiacion_num"></span> <span id="md_radiacion_semaforo" class="text-[10px] ml-1"></span>
+                                </td>
                             </tr>
                             <tr class="divide-x divide-gray-100">
                                 <td class="p-2 text-gray-500">Acción Radiación</td>
@@ -444,7 +450,7 @@
                     case 'ca':
                         return (valor < 200) ? clases.bajo : (valor <= 450) ? clases.optimo : clases.alto;
                     case 'na':
-                        return (valor <= 40) ? clases.optimo : (valor <= 100) ? clases.optimo : clases.alto;
+                        return (valor <= 40) ? clases.optimo : (valor <= 100) ? clases.optimo : clases.bajo;
                     case 'p':
                         return (valor < 200) ? clases.bajo : (valor <= 400) ? clases.optimo : clases.alto;
                     case 'ph':
@@ -511,7 +517,18 @@
             document.getElementById('md_temp').innerText = boton.getAttribute('data-temperatura') + ' °C';
             document.getElementById('md_hum').innerText = boton.getAttribute('data-humedad') + ' %';
             document.getElementById('md_dpv').innerText = boton.getAttribute('data-dpv');
-            document.getElementById('md_radiacion').innerText = boton.getAttribute('data-radiacion');
+            
+            // Radiación detallada con color en el número
+            const radNum = boton.getAttribute('data-radiacion_num');
+            const radSem = boton.getAttribute('data-radiacion_semaforo');
+            const spanRadNum = document.getElementById('md_radiacion_num');
+            const spanRadSem = document.getElementById('md_radiacion_semaforo');
+            
+            spanRadNum.innerText = radNum + ' Lux';
+            spanRadNum.className = radSem === 'VERDE' ? 'text-emerald-600 font-bold' : (radSem === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
+            spanRadSem.innerText = '(' + radSem + ')';
+            spanRadSem.className = 'text-[10px] ml-1 font-semibold text-gray-500';
+
             document.getElementById('md_radiacion_accion').innerText = boton.getAttribute('data-radiacion_accion');
             document.getElementById('md_tensiometro').innerText = boton.getAttribute('data-tensiometro') + ' cb';
             document.getElementById('md_tensiometro_estatus').innerText = boton.getAttribute('data-tensiometro_estatus');
