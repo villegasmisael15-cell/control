@@ -14,12 +14,11 @@
 
     <!-- 🛑 ESTILOS OBLIGATORIOS PARA EVITAR EL PULL-TO-REFRESH EN EL MODAL -->
     <style>
+        /* Forzamos a que todo el modal actúe como una sola capa de scroll limpia */
         #modal_detalle_suelo {
-            overscroll-behavior: none;
-            touch-action: pan-y;
-        }
-        .scrollbar-thin {
+            overflow-y: auto;
             -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: none;
         }
     </style>
 </head>
@@ -254,17 +253,20 @@
         </div>
     </main>
 
-    {{-- MODAL INTERACTIVO DE DETALLES --}}
-    <div id="modal_detalle_suelo" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4 animate-fade-in">
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl my-auto flex flex-col overflow-hidden max-h-[90vh]">
-            <div class="bg-emerald-600 text-white px-6 py-4 flex justify-between items-center shrink-0">
+    {{-- MODAL INTERACTIVO DE DETALLES SIN SCROLL ANIDADO --}}
+<div id="modal_detalle_suelo" class="fixed inset-0 bg-gray-900/80 backdrop-blur-sm hidden z-50 overflow-y-auto p-4 sm:p-6 animate-fade-in">
+    <div class="min-h-full flex items-center justify-center py-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 w-full max-w-4xl flex flex-col overflow-hidden my-auto">
+            
+            <div class="bg-emerald-600 text-white px-6 py-4 flex justify-between items-center shrink-0 sticky top-0 z-20">
                 <h3 class="text-base font-bold uppercase tracking-wider flex items-center gap-2">
                     <i class="fa-solid fa-file-invoice text-xl"></i> Reporte Detallado de Inspección de Suelo
                 </h3>
                 <button type="button" onclick="cerrarModalDetalle()" class="text-white/80 hover:text-white text-2xl font-bold cursor-pointer outline-none">&times;</button>
             </div>
 
-            <div class="p-6 space-y-6 overflow-y-auto flex-grow scrollbar-thin text-xs overscroll-behavior-contain">
+            <!-- Contenido sin scroll interno conflictivo -->
+            <div class="p-6 space-y-6 text-xs bg-white">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div><span class="text-gray-400 block uppercase font-bold">Fecha</span><span id="md_fecha" class="font-bold text-gray-800 text-sm"></span></div>
                     <div><span class="text-gray-400 block uppercase font-bold">Sector / Nave</span><span id="md_sector" class="font-bold text-gray-800 text-sm"></span></div>
@@ -328,7 +330,6 @@
                     </div>
                 </div>
 
-                {{-- CONTAINER MÚLTIPLE PARA ANÁLISIS RÁPIDOS (EPS Y ECP DINÁMICOS DESDE TABLA RELACIONAL) --}}
                 <div class="border border-cyan-200 rounded-xl overflow-hidden">
                     <div class="bg-cyan-600 text-white px-3 py-2.5 font-bold flex justify-between items-center">
                         <span>Resultados: Análisis Rápidos Realizados en Campo</span>
@@ -339,7 +340,6 @@
                     </div>
                 </div>
 
-                {{-- DETALLE DE LABORATORIO --}}
                 <div id="md_box_laboratorio" class="border border-emerald-200 rounded-xl overflow-hidden hidden">
                     <div class="bg-emerald-600 text-white p-2.5 font-bold flex justify-between items-center">
                         <span><i class="fa-solid fa-microscope mr-1"></i> Desglose Completo: Análisis de Laboratorio</span>
@@ -362,11 +362,14 @@
                 </div>
             </div>
 
-            <div class="bg-gray-100 p-4 border-t border-gray-200 flex justify-end shrink-0">
+            <div class="bg-gray-100 p-4 border-t border-gray-200 flex justify-end shrink-0 sticky bottom-0 z-20">
                 <button type="button" onclick="cerrarModalDetalle()" class="px-5 py-2 bg-gray-700 hover:bg-gray-800 text-white font-bold rounded-lg text-xs transition cursor-pointer">Cerrar Inspección</button>
             </div>
+
         </div>
     </div>
+</div>
+   
 
     <!-- MODAL DE ELIMINACIÓN UNIFICADO -->
     <div id="modalGenericoEliminar" class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
@@ -424,13 +427,15 @@
         // 🛑 BLOQUEO ESTRICTO DEL GESTO TÁCTIL PARA EVITAR EL REFRESCO EN MÓVILES
         document.addEventListener("DOMContentLoaded", function() {
             const modalScrollable = document.querySelector('#modal_detalle_suelo .overflow-y-auto');
-            
+
             if (modalScrollable) {
                 let startY = 0;
 
                 modalScrollable.addEventListener('touchstart', function(e) {
                     startY = e.touches[0].clientY;
-                }, { passive: true });
+                }, {
+                    passive: true
+                });
 
                 modalScrollable.addEventListener('touchmove', function(e) {
                     let currentY = e.touches[0].clientY;
@@ -439,11 +444,13 @@
                     let height = modalScrollable.clientHeight;
 
                     if ((scrollTop === 0 && currentY > startY) || (scrollTop + height >= scrollHeight && currentY < startY)) {
-                        if(e.cancelable) {
+                        if (e.cancelable) {
                             e.preventDefault();
                         }
                     }
-                }, { passive: false });
+                }, {
+                    passive: false
+                });
             }
         });
 
@@ -554,13 +561,13 @@
             document.getElementById('md_temp').innerText = (boton.getAttribute('data-temperatura') || '—') + ' °C';
             document.getElementById('md_hum').innerText = (boton.getAttribute('data-humedad') || '—') + ' %';
             document.getElementById('md_dpv').innerText = boton.getAttribute('data-dpv') || '—';
-            
+
             // Radiación detallada con color en el número de forma segura
             const radNum = boton.getAttribute('data-radiacion_num') || '0';
             const radSem = boton.getAttribute('data-radiacion_semaforo') || 'VERDE';
             const spanRadNum = document.getElementById('md_radiacion_num');
             const spanRadSem = document.getElementById('md_radiacion_semaforo');
-            
+
             if (spanRadNum) {
                 spanRadNum.innerText = radNum + ' Lux';
                 spanRadNum.className = radSem === 'VERDE' ? 'text-emerald-600 font-bold' : (radSem === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
