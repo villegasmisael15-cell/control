@@ -12,13 +12,18 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
-            <span class="font-bold text-xl tracking-wider"><i class="fa-solid fa-leaf mr-2"></i>SISTEMA CONTROL</span>
-            <a href="{{ route('monitoreo.index') }}" class="text-sm bg-emerald-700 hover:bg-emerald-800 px-3 py-2 rounded-md transition font-medium">
-                <i class="fa-solid fa-arrow-left mr-1"></i> Volver a la Bitácora
-            </a>
-        </div>
-    </nav>
+    <div class="max-w-5xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+        <span class="font-bold text-base sm:text-xl tracking-wider truncate flex items-center min-w-0">
+            <i class="fa-solid fa-leaf mr-1.5 sm:mr-2 shrink-0"></i>
+            <span class="truncate">SISTEMA CONTROL</span>
+        </span>
+        <a href="{{ route('monitoreo.index') }}" class="text-xs sm:text-sm bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3 py-2 rounded-md transition font-medium shrink-0 whitespace-nowrap flex items-center gap-1">
+            <i class="fa-solid fa-arrow-left"></i> 
+            <span class="hidden xs:inline">Volver a la Bitácora</span>
+            <span class="inline xs:hidden">Volver</span>
+        </a>
+    </div>
+</nav>
 
     <main class="max-w-5xl mx-auto px-4 py-8 w-full flex-grow">
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
@@ -63,7 +68,7 @@
                             </div>
                         </div>
                         <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm flex items-center gap-3">
-                            <div class="p-2 bg-emerald-50 rounded-md text-emerald-600"><i class="fa-solid fa-提出 text-xs font-bold">M</i></div>
+                            <div class="p-2 bg-emerald-50 rounded-md text-emerald-600"><i class="fa-solid fa-m text-xs font-bold"></i></div>
                             <div>
                                 <span class="block text-[11px] font-bold text-gray-500 uppercase tracking-wide">Macetas / Gotero</span>
                                 <span class="text-sm font-bold text-gray-800">{{ $caracteristicas->macetas_por_gotero ?? 1 }}</span>
@@ -139,19 +144,20 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
+                    <!-- 💡 CORRECCIÓN DE DESBORDAMIENTO EN RADIACIÓN SOLAR -->
                     <div class="bg-amber-50/30 p-5 rounded-xl border border-amber-200 md:col-span-2 flex flex-col justify-between shadow-sm">
                         <div>
                             <h3 class="font-bold text-sm text-amber-800 border-b border-amber-200 pb-2 flex items-center gap-1.5">
                                 <i class="fa-solid fa-sun text-amber-500"></i> Radiación Solar Registrada
                             </h3>
-                            <div class="grid grid-cols-2 gap-4 mt-3 text-sm">
-                                <div class="flex justify-between items-center bg-white/60 p-2 rounded border border-amber-100">
-                                    <span class="text-gray-500">Hora de Captura:</span>
-                                    <span class="font-mono font-bold text-gray-800">{{ \Carbon\Carbon::parse($monitoreo->radiacion_hora)->format('g:i a') }}</span>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 text-sm">
+                                <div class="flex justify-between items-center bg-white/60 p-2.5 rounded border border-amber-100 overflow-hidden">
+                                    <span class="text-gray-500 shrink-0 mr-2">Hora de Captura:</span>
+                                    <span class="font-mono font-bold text-gray-800 truncate">{{ \Carbon\Carbon::parse($monitoreo->radiacion_hora)->format('g:i a') }}</span>
                                 </div>
-                                <div class="flex justify-between items-center bg-white/60 p-2 rounded border border-amber-100">
-                                    <span class="text-gray-500">Lectura Tomada:</span>
-                                    <span class="font-bold text-gray-800">{{ number_format($monitoreo->radiacion_lectura) }} Lux</span>
+                                <div class="flex justify-between items-center bg-white/60 p-2.5 rounded border border-amber-100 overflow-hidden">
+                                    <span class="text-gray-500 shrink-0 mr-2">Lectura Tomada:</span>
+                                    <span class="font-bold text-gray-800 truncate">{{ number_format($monitoreo->radiacion_lectura) }} Lux</span>
                                 </div>
                             </div>
                         </div>
@@ -169,7 +175,7 @@
                             </div>
                             <div class="sm:col-span-2 bg-white/80 p-3 rounded-lg border border-amber-100">
                                 <span class="block text-[11px] font-bold text-amber-900 uppercase mb-0.5">Acción Ejecutada en Invernadero:</span>
-                                <p class="text-xs text-gray-700 italic font-medium">{{ $monitoreo->radiacion_accion_tomada ?? 'Ninguna acción requerida.' }}</p>
+                                <p class="text-xs text-gray-700 italic font-medium break-words">{{ $monitoreo->radiacion_accion_tomada ?? 'Ninguna acción requerida.' }}</p>
                             </div>
                         </div>
                     </div>
@@ -208,16 +214,17 @@
                     </div>
                 </div>
 
-                <div class="flex justify-between items-center pt-4 border-t border-gray-100">
-                    <span class="text-xs text-gray-400">Inspección de parámetros históricos en modo de solo lectura.</span>
+                <!-- 💡 CORRECCIÓN DE BOTONES INFERIORES RESPONSIVOS -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-gray-100">
+                    <span class="text-xs text-gray-400 text-center sm:text-left">Inspección de parámetros históricos en modo de solo lectura.</span>
 
                     @can('es-administrador')
-                    <div class="flex gap-2">
-                        <a href="{{ route('monitoreo.excel', $monitoreo->id) }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow flex items-center gap-1.5">
+                    <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                        <a href="{{ route('monitoreo.excel', $monitoreo->id) }}" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow flex items-center gap-1.5 whitespace-nowrap">
                             <i class="fa-solid fa-file-excel"></i> Descargar Excel
                         </a>
 
-                        <a href="{{ route('monitoreo.edit', $monitoreo->id) }}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow flex items-center gap-1.5">
+                        <a href="{{ route('monitoreo.edit', $monitoreo->id) }}" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow flex items-center gap-1.5 whitespace-nowrap">
                             <i class="fa-solid fa-pen-to-square"></i> Editar Formulario
                         </a>
                     </div>

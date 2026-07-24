@@ -120,7 +120,6 @@
         <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
             <div class="p-5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
                 <span class="font-semibold text-gray-700 text-sm">Resumen de Resultados Evaluados</span>
-                <span class="text-xs text-gray-500">Haga clic en la fecha o en el icono de auditoría para ver la inspección completa</span>
             </div>
 
             <div class="overflow-x-auto">

@@ -14,39 +14,39 @@
 
     <!-- NAV TOTALMENTE RESPONSIVO -->
     <nav class="bg-emerald-600 text-white shadow-md">
-    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-        <!-- Logotipo compacto -->
-        <div class="flex items-center min-w-0">
-            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
-            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+        <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+            <!-- Logotipo compacto -->
+            <div class="flex items-center min-w-0">
+                <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+                <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+            </div>
+
+            <!-- Acciones con soporte para tus roles condicionales -->
+            <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[110px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                    <i class="fa-solid fa-user text-[10px]"></i>
+                    <span class="truncate">{{ auth()->user()->name }}</span>
+                </span>
+
+                @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                    <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
+                    <span class="hidden xs:inline">Volver al Panel</span>
+                    <span class="inline xs:hidden">Panel</span>
+                </a>
+                @endif
+
+                @if(auth()->user()->rol === 'usuario_rechazo')
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1.5 rounded-md transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap">
+                        <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Salir
+                    </button>
+                </form>
+                @endif
+            </div>
         </div>
-
-        <!-- Acciones con soporte para tus roles condicionales -->
-        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
-            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[110px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
-                <i class="fa-solid fa-user text-[10px]"></i> 
-                <span class="truncate">{{ auth()->user()->name }}</span>
-            </span>
-
-            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
-            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
-                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
-                <span class="hidden xs:inline">Volver al Panel</span>
-                <span class="inline xs:hidden">Panel</span>
-            </a>
-            @endif
-
-            @if(auth()->user()->rol === 'usuario_rechazo')
-            <form method="POST" action="{{ route('logout') }}" class="inline">
-                @csrf
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 py-1.5 rounded-md transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap">
-                    <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Salir
-                </button>
-            </form>
-            @endif
-        </div>
-    </div>
-</nav>
+    </nav>
 
     <main class="max-w-[95%] mx-auto px-2 sm:px-4 py-6 sm:py-8 w-full flex-grow">
         @if (session('status'))
@@ -316,10 +316,11 @@
                                             <i class="fa-solid fa-eye"></i>
                                         </a>
                                         @can('es-administrador')
-                                        <form action="{{ route('recepcion.destroyExportacion', $exportacion->id) }}" method="POST" id="form-delete-{{ $exportacion->id }}" class="inline">
+                                        <form action="{{ route('recepcion.destroyExportacion', $exportacion->id) }}" method="POST" id="form-delete-exportacion-{{ $exportacion->id }}" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" onclick="confirmarEliminacion({{ $exportacion->id }})" class="text-red-600 hover:text-red-800 p-1 cursor-pointer" title="Eliminar">
+                                            <!-- 💡 Cambiamos confirmarEliminacion por mostrarModalGenerico y ajustamos el ID del formulario -->
+                                            <button type="button" onclick="mostrarModalGenerico('form-delete-exportacion-{{ $exportacion->id }}')" class="text-red-600 hover:text-red-800 p-1 cursor-pointer" title="Eliminar">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
                                         </form>

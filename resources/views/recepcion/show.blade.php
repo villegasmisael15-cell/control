@@ -12,16 +12,18 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="{{ $tipo === 'exportacion' ? 'bg-blue-600' : 'bg-emerald-600' }} text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-4 flex items-center justify-between h-16">
-            <div class="flex items-center">
-                <i class="fa-solid {{ $tipo === 'exportacion' ? 'fa-plane-departure' : 'fa-leaf' }} text-2xl mr-2"></i>
-                <span class="font-bold text-xl tracking-wider">SISTEMA CONTROL</span>
-            </div>
-            <a href="{{ route('recepcion.index') }}" class="{{ $tipo === 'exportacion' ? 'bg-blue-700 hover:bg-blue-800' : 'bg-emerald-700 hover:bg-emerald-800' }} text-white font-bold px-4 py-2 rounded-lg text-sm transition flex items-center gap-2 shadow-sm">
-                <i class="fa-solid fa-arrow-left"></i> Volver a Recepción
-            </a>
+    <div class="max-w-[95%] mx-auto px-3 sm:px-4 flex items-center justify-between h-16 gap-2">
+        <div class="flex items-center min-w-0">
+            <i class="fa-solid {{ $tipo === 'exportacion' ? 'fa-plane-departure' : 'fa-leaf' }} text-lg sm:text-2xl mr-1.5 sm:mr-2 shrink-0"></i>
+            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
         </div>
-    </nav>
+        <a href="{{ route('recepcion.index') }}" class="{{ $tipo === 'exportacion' ? 'bg-blue-700 hover:bg-blue-800' : 'bg-emerald-700 hover:bg-emerald-800' }} text-white font-bold px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap">
+            <i class="fa-solid fa-arrow-left"></i> 
+            <span class="hidden xs:inline">Volver a Recepción</span>
+            <span class="inline xs:hidden">Volver</span>
+        </a>
+    </div>
+</nav>
 
     <main class="max-w-4xl mx-auto px-4 py-8 w-full flex-grow">
 
