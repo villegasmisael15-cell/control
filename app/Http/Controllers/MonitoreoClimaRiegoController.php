@@ -436,7 +436,7 @@ public function graficas(Request $request)
     /**
      * Función privada para disparar la notificación push a los Administradores
      */
-    private function enviarAlertaAdministradores($sector, $porcentajeDrenaje)
+  private function enviarAlertaAdministradores($sector, $porcentajeDrenaje)
     {
         // 1. Buscar a los administradores y al usuario ID 19 que tengan token FCM registrado
         $admins = User::where(function($query) {
@@ -495,7 +495,7 @@ public function graficas(Request $request)
                 }
                 $accessToken = $tokenData['access_token'];
 
-                // 5. Preparar la estructura de la notificación que llegará al celular
+                // 5. Preparar la estructura optimizada para la API v1 de Firebase con prioridad alta para Android
                 $mensaje = "El sector " . $sector . " registró un drenaje crítico de: " . $porcentajeDrenaje . "%";
 
                 $fcmPayload = [
@@ -504,6 +504,14 @@ public function graficas(Request $request)
                         'notification' => [
                             'title' => '⚠️ Alerta de Drenaje en Hidroponía',
                             'body' => $mensaje
+                        ],
+                        'android' => [
+                            'priority' => 'HIGH',
+                            'notification' => [
+                                'sound' => 'default',
+                                'default_sound' => true,
+                                'default_vibrate_timings' => true
+                            ]
                         ]
                     ]
                 ];
