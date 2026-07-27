@@ -438,11 +438,10 @@ public function graficas(Request $request)
      */
   private function enviarAlertaAdministradores($sector, $porcentajeDrenaje)
     {
-        // 1. Buscar a los administradores y al usuario ID 19 que tengan token FCM registrado
-        $admins = User::where(function($query) {
-            $query->where('rol', 'administrador')
-                  ->orWhere('id', 19);
-        })->whereNotNull('fcm_token')->get();
+        // 1. Buscar únicamente a los usuarios con rol de administrador que tengan token FCM registrado
+        $admins = User::where('rol', 'administrador')
+                      ->whereNotNull('fcm_token')
+                      ->get();
 
         $projectId = "unitasrubraalertas";
 
@@ -495,7 +494,7 @@ public function graficas(Request $request)
                 }
                 $accessToken = $tokenData['access_token'];
 
-                // 5. Preparar la estructura optimizada para la API v1 de Firebase con prioridad alta para Android
+                // 5. Preparar la estructura de la notificación
                 $mensaje = "El sector " . $sector . " registró un drenaje crítico de: " . $porcentajeDrenaje . "%";
 
                 $fcmPayload = [
@@ -530,7 +529,7 @@ public function graficas(Request $request)
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
                 
                 if ($httpCode !== 200) {
-                    \Illuminate\Support\Facades\Log::error("FCM Error HTTP $httpCode al enviar notificación al usuario ID {$admin->id}: " . $result);
+                    \Illuminate\Support\Facades\Log::error("FCM Error HTTP $httpCode al enviar notificación al administrador ID {$admin->id}: " . $result);
                 }
                 
                 curl_close($ch);
