@@ -451,6 +451,7 @@ public function graficas(Request $request)
                 // 2. Ruta física donde Laravel buscará el archivo de credenciales de Firebase
                 $jsonPath = storage_path('app/firebase-credentials.json');
                 if (!file_exists($jsonPath)) {
+                    \Illuminate\Support\Facades\Log::error("FCM Error: No se encontró el archivo firebase-credentials.json en storage/app/");
                     continue;
                 }
 
@@ -489,6 +490,7 @@ public function graficas(Request $request)
 
                 $tokenData = json_decode($response, true);
                 if (!isset($tokenData['access_token'])) {
+                    \Illuminate\Support\Facades\Log::error("FCM Error: No se pudo obtener el access_token de Google. Respuesta: " . $response);
                     continue;
                 }
                 $accessToken = $tokenData['access_token'];
@@ -516,10 +518,17 @@ public function graficas(Request $request)
                     'Authorization: Bearer ' . $accessToken
                 ]);
                 
-                curl_exec($ch);
+                $result = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                
+                if ($httpCode !== 200) {
+                    \Illuminate\Support\Facades\Log::error("FCM Error HTTP $httpCode al enviar notificación al usuario ID {$admin->id}: " . $result);
+                }
+                
                 curl_close($ch);
 
             } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("FCM Exception: " . $e->getMessage());
                 continue;
             }
         }
