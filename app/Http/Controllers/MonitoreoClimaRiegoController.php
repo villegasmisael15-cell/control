@@ -107,7 +107,7 @@ class MonitoreoClimaRiegoController extends Controller
         return view('monitoreo.create', compact('sectores'));
     }
 
- public function store(Request $request)
+   public function store(Request $request)
     {
         // 1. Identificamos al verdadero dueño del sector antes de validar
         $sectorBuscado = trim($request->input('sector'));
@@ -205,102 +205,7 @@ class MonitoreoClimaRiegoController extends Controller
         return redirect()->route('monitoreo.index')->with('status', '¡Registro guardado con éxito!');
     }
 
-    /**
-     * Función privada para disparar la notificación push a los Administradores
-     */
-   private function enviarAlertaAdministradores($sector, $porcentajeDrenaje)
-    {
-        $admins = User::where(function($query) {
-            $query->where('rol', 'administrador')
-                  ->orWhere('id', 19);
-        })->whereNotNull('fcm_token')->get();
-
-        $projectId = "unitasrubraalertas";
-
-        foreach ($admins as $admin) {
-            try {
-                // Generar token de acceso moderno mediante la cuenta de servicio local
-                $jsonPath = storage_path('app/firebase-credentials.json');
-                if (!file_exists($jsonPath)) {
-                    continue;
-                }
-
-                $jsonKey = json_decode(file_get_contents($jsonPath), true);
-                
-                // Cliente JWT simple para autenticar con Google sin librerías pesadas
-                $now = time();
-                $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
-                $payload = json_encode([
-                    'iss' => $jsonKey['client_email'],
-                    'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
-                    'aud' => $jsonKey['token_uri'],
-                    'iat' => $now,
-                    'exp' => $now + 3600
-                ]);
-
-                $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
-                $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
-                
-                $signature = '';
-                openssl_sign($base64UrlHeader . "." . $base64UrlPayload, $signature, $jsonKey['private_key'], OPENSSL_ALGO_SHA256);
-                $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-                
-                $jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
-
-                // Petición para obtener el Access Token
-                $ch = curl_init($jsonKey['token_uri']);
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_POST, true);
-                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
-                    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-                    'assertion' => $jwt
-                ]));
-                $response = curl_exec($ch);
-                curl_close($ch);
-
-                $tokenData = json_decode($response, true);
-                if (!isset($tokenData['access_token'])) {
-                    continue;
-                }
-                $accessToken = $tokenData['access_token'];
-
-                // Enviar la notificación push a la barra del celular (API v1 de Firebase)
-                $mensaje = "El sector " . $sector . " registró un drenaje crítico de: " . $porcentajeDrenaje . "%";
-
-                $fcmPayload = [
-                    'message' => [
-                        'token' => $admin->fcm_token,
-                        'notification' => [
-                            'title' => '⚠️ Alerta de Drenaje en Hidroponía',
-                            'body' => $mensaje
-                        ]
-                    ]
-                ];
-
-                $ch = curl_init('https://fcm.googleapis.com/v1/projects/' . $projectId . '/messages:send');
-                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
-                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmPayload));
-                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-                curl_setopt($ch, CURLOPT_HTTPHEADER, [
-                    'Content-Type: application/json',
-                    'Authorization: Bearer ' . $accessToken
-                ]);
-                
-                curl_exec($ch);
-                curl_close($ch);
-
-            } catch (\Exception $e) {
-                continue;
-            }
-        }
-    }
-
-
-
-
-
-
-   public function show($id)
+    public function show($id)
 {
     // 1. Buscar el registro técnico o lanzar 404 si no existe (con su operador precargado)
     $monitoreo = MonitoreoClimaRiego::with('user')->findOrFail($id);
@@ -321,6 +226,7 @@ class MonitoreoClimaRiegoController extends Controller
     // 4. Retornar la vista inyectando ambas variables de forma compacta
     return view('monitoreo.show', compact('monitoreo', 'caracteristicas'));
 }
+
     public function edit($id)
 {
     $monitoreo = MonitoreoClimaRiego::findOrFail($id);
@@ -393,6 +299,16 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_accion_tomada' => 'nullable|string',
         ]);
 
+        // Lógica de riego por macetas
+        $volRiego = $request->vol_riego_entrada;
+        if (!is_null($volRiego)) {
+            $caracteristica = \App\Models\SectorCaracteristica::where('sector', $request->sector)->first();
+            $macetas = $caracteristica ? $caracteristica->macetas_por_gotero : 1;
+            if ($macetas > 0) {
+                $volRiego = (int) round($volRiego / $macetas);
+            }
+        }
+
         // --- RE-CÁLCULOS AUTOMATIZADOS CON CONTROL DE NULOS ---
         $dpv = null;
         $estatus_general = 'SIN DATOS CLIMA';
@@ -405,8 +321,8 @@ class MonitoreoClimaRiegoController extends Controller
         }
 
         $porcentaje_drenaje = null;
-        if ($request->filled('vol_riego_entrada') && $request->filled('vol_drenaje_salida') && $request->vol_riego_entrada > 0) {
-            $porcentaje_drenaje = round(($request->vol_drenaje_salida / $request->vol_riego_entrada) * 100, 1);
+        if (!is_null($volRiego) && $request->filled('vol_drenaje_salida') && $volRiego > 0) {
+            $porcentaje_drenaje = round(($request->vol_drenaje_salida / $volRiego) * 100, 1);
         }
 
         $diferencia_ce = null;
@@ -431,7 +347,13 @@ class MonitoreoClimaRiegoController extends Controller
             'diferencia_ph' => $diferencia_ph,
             'porcentaje_caida_nocturna' => $porcentaje_caida_nocturna,
             'estatus_general' => $estatus_general,
+            'vol_riego_entrada' => $volRiego,
         ]));
+
+        // --- EVALUAR ALERTA DE DRENAJE TAMBIÉN AL ACTUALIZAR ---
+        if (!is_null($porcentaje_drenaje) && ($porcentaje_drenaje < 10 || $porcentaje_drenaje > 35)) {
+            $this->enviarAlertaAdministradores($request->sector, $porcentaje_drenaje);
+        }
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro actualizado con éxito!');
     }
@@ -467,6 +389,7 @@ public function exportarExcel($id)
 
     return Excel::download(new ReporteMonitoreoExport($monitoreo, $caracteristicas, $operadorDueno), $nombreArchivo);
 }
+
 public function graficas(Request $request)
 {
     $query = MonitoreoClimaRiego::orderBy('fecha', 'desc');
@@ -509,4 +432,96 @@ public function graficas(Request $request)
 
     return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux'));
 }
+
+    /**
+     * Función privada para disparar la notificación push a los Administradores
+     */
+    private function enviarAlertaAdministradores($sector, $porcentajeDrenaje)
+    {
+        // 1. Buscar a los administradores y al usuario ID 19 que tengan token FCM registrado
+        $admins = User::where(function($query) {
+            $query->where('rol', 'administrador')
+                  ->orWhere('id', 19);
+        })->whereNotNull('fcm_token')->get();
+
+        $projectId = "unitasrubraalertas";
+
+        foreach ($admins as $admin) {
+            try {
+                // 2. Ruta física donde Laravel buscará el archivo de credenciales de Firebase
+                $jsonPath = storage_path('app/firebase-credentials.json');
+                if (!file_exists($jsonPath)) {
+                    continue;
+                }
+
+                $jsonKey = json_decode(file_get_contents($jsonPath), true);
+                
+                // 3. Generar token de seguridad (JWT) para autenticarnos con Google
+                $now = time();
+                $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
+                $payload = json_encode([
+                    'iss' => $jsonKey['client_email'],
+                    'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+                    'aud' => $jsonKey['token_uri'],
+                    'iat' => $now,
+                    'exp' => $now + 3600
+                ]);
+
+                $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+                $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+                
+                $signature = '';
+                openssl_sign($base64UrlHeader . "." . $base64UrlPayload, $signature, $jsonKey['private_key'], OPENSSL_ALGO_SHA256);
+                $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+                
+                $jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+
+                // 4. Obtener el Access Token temporal de Google
+                $ch = curl_init($jsonKey['token_uri']);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+                    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                    'assertion' => $jwt
+                ]));
+                $response = curl_exec($ch);
+                curl_close($ch);
+
+                $tokenData = json_decode($response, true);
+                if (!isset($tokenData['access_token'])) {
+                    continue;
+                }
+                $accessToken = $tokenData['access_token'];
+
+                // 5. Preparar la estructura de la notificación que llegará al celular
+                $mensaje = "El sector " . $sector . " registró un drenaje crítico de: " . $porcentajeDrenaje . "%";
+
+                $fcmPayload = [
+                    'message' => [
+                        'token' => $admin->fcm_token,
+                        'notification' => [
+                            'title' => '⚠️ Alerta de Drenaje en Hidroponía',
+                            'body' => $mensaje
+                        ]
+                    ]
+                ];
+
+                // 6. Enviar la petición HTTP a los servidores de Firebase
+                $ch = curl_init('https://fcm.googleapis.com/v1/projects/' . $projectId . '/messages:send');
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmPayload));
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $accessToken
+                ]);
+                
+                curl_exec($ch);
+                curl_close($ch);
+
+            } catch (\Exception $e) {
+                continue;
+            }
+        }
+    }
 }
