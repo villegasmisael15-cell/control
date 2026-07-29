@@ -1,6 +1,3 @@
-Aquí tienes tu **`SueloMonitoreoController.php`** completo y actualizado. Ya incluye el método privado para disparar la notificación push mediante cURL y JWT (idéntico al que usa la hidroponía) y la validación automática al final del método `store` para que la alerta del tensiómetro se active si el valor ingresado es **menor a 5 o mayor a 25**.
-
-```php
 <?php
 
 namespace App\Http\Controllers;
@@ -361,5 +358,3 @@ class SueloMonitoreoController extends Controller
         }
     }
 }
-
-```
