@@ -40,5 +40,7 @@ class MonitoreoClimaRiego extends Model
         'radiacion_lectura',
         'radiacion_semaforo',
         'radiacion_accion_tomada',
+        'abejorros_flores',
+        'abejorros_semaforo',
     ];
 }

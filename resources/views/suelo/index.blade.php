@@ -133,7 +133,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table class="w-full text-left border-collapse min-w-[1050px]">
                     <thead>
                         <tr class="bg-gray-100 border-b border-gray-200 text-gray-700 uppercase tracking-wider text-[11px] font-bold">
                             <th class="py-3 px-4">Fecha</th>
@@ -142,6 +142,7 @@
                             <th class="py-3 px-4">DPV Clima</th>
                             <th class="py-3 px-4 bg-blue-50/50">Tensiómetro / Estado</th>
                             <th class="py-3 px-4 bg-orange-50/50">Radiación (Lux)</th>
+                            <th class="py-3 px-4 bg-yellow-50/50">Abejorros</th>
                             <th class="py-3 px-4 text-center">Estatus Clima</th>
                             <th class="py-3 px-4 text-center">Acciones</th>
                         </tr>
@@ -189,6 +190,23 @@
                                     {{ $row->radiacion_semaforo }}
                                 </span>
                             </td>
+
+                            {{-- COLUMNA DE ABEJORROS CON SEMÁFORO --}}
+                            <td class="py-3.5 px-4 bg-yellow-50/20">
+                                @if(!is_null($row->abejorros_flores))
+                                    <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
+                                    @if($row->abejorros_semaforo === 'VERDE')
+                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">Verde</span>
+                                    @elseif($row->abejorros_semaforo === 'AMARILLO')
+                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">Amarillo</span>
+                                    @elseif($row->abejorros_semaforo === 'ROJO')
+                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">Rojo</span>
+                                    @endif
+                                @else
+                                    <span class="text-xs text-gray-400">N/D</span>
+                                @endif
+                            </td>
+
                             <td class="py-3.5 px-4 text-center">
                                 <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $row->estatus_general === 'ÓPTIMO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $row->estatus_general }}
@@ -214,6 +232,8 @@
                                         data-radiacion_num="{{ number_format($row->radiacion_lectura) }}"
                                         data-radiacion_semaforo="{{ $row->radiacion_semaforo }}"
                                         data-radiacion_accion="{{ $row->radiacion_accion_tomada ?? 'Ninguna' }}"
+                                        data-abejorros_flores="{{ $row->abejorros_flores ?? '—' }}"
+                                        data-abejorros_semaforo="{{ $row->abejorros_semaforo ?? 'Sin evaluar' }}"
                                         data-rapido_cumplio="{{ strtoupper($row->analisis_rapido_cumplio) }}"
                                         data-tipo_lab="{{ $row->tipo_analisis_lab ?? 'ninguno' }}"
                                         data-analisis_rapidos="{{ json_encode($row->analisisRapidos) }}"
@@ -241,7 +261,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="py-10 text-center text-gray-500">
+                            <td colspan="9" class="py-10 text-center text-gray-500">
                                 <i class="fa-solid fa-folder-open text-4xl text-gray-300 mb-3 block"></i>
                                 No hay registros almacenados en suelo.
                             </td>
@@ -276,7 +296,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="border border-gray-200 rounded-xl overflow-hidden">
-                        <div class="bg-gray-100 p-2 font-bold text-gray-700 border-b border-gray-200">Conditions Ambientales</div>
+                        <div class="bg-gray-100 p-2 font-bold text-gray-700 border-b border-gray-200">Condiciones Ambientales</div>
                         <table class="w-full text-left font-medium divide-y divide-gray-100">
                             <tr class="divide-x divide-gray-100">
                                 <td class="p-2 text-gray-500">Temperatura</td>
@@ -327,6 +347,23 @@
                                 <td id="md_alerta_ce" class="p-2 font-bold text-red-700"></td>
                             </tr>
                         </table>
+                    </div>
+                </div>
+
+                {{-- APARTADO DE ABEJORROS EN EL MODAL DE SUELO --}}
+                <div class="bg-yellow-50/50 p-4 rounded-xl border border-yellow-200">
+                    <h4 class="font-bold text-yellow-800 border-b border-yellow-200 pb-1 mb-2 flex items-center gap-1.5">
+                        <i class="fa-solid fa-bug text-yellow-600"></i> Inspección de Abejorros
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="text-gray-400 block uppercase font-bold">Flores Visitadas</span>
+                            <span id="md_abejorros_flores" class="font-bold text-gray-800 text-sm"></span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block uppercase font-bold">Semáforo Evaluado</span>
+                            <span id="md_abejorros_semaforo" class="font-bold text-xs"></span>
+                        </div>
                     </div>
                 </div>
 
@@ -583,6 +620,21 @@
             document.getElementById('md_ce').innerText = boton.getAttribute('data-ce') || '—';
             document.getElementById('md_ph').innerText = boton.getAttribute('data-ph') || '—';
             document.getElementById('md_alerta_ce').innerText = boton.getAttribute('data-alerta_ce') || 'Ninguna';
+
+            // Abejorros en modal
+            document.getElementById('md_abejorros_flores').innerText = boton.getAttribute('data-abejorros_flores') || '—';
+            const abSem = boton.getAttribute('data-abejorros_semaforo');
+            const spanAbSem = document.getElementById('md_abejorros_semaforo');
+            spanAbSem.innerText = abSem;
+            if (abSem === 'VERDE') {
+                spanAbSem.className = "px-2 py-0.5 inline-flex text-xs font-bold rounded bg-emerald-100 text-emerald-800";
+            } else if (abSem === 'AMARILLO') {
+                spanAbSem.className = "px-2 py-0.5 inline-flex text-xs font-bold rounded bg-amber-100 text-amber-800";
+            } else if (abSem === 'ROJO') {
+                spanAbSem.className = "px-2 py-0.5 inline-flex text-xs font-bold rounded bg-red-100 text-red-800";
+            } else {
+                spanAbSem.className = "text-gray-500";
+            }
 
             const cumplio = boton.getAttribute('data-rapido_cumplio') || 'NO';
             document.getElementById('md_rapido_cumplio').innerText = 'CUMPLIÓ: ' + cumplio;

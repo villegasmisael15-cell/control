@@ -46,7 +46,7 @@
                     <i class="fa-solid fa-cloud-sun-rain text-emerald-600"></i>
                     Bitácora de Monitoreo Climático y Riego
                 </h1>
-                <p class="text-gray-600 text-sm mt-1">Historial optimizado con balances hídricos, químicos y estados predictivos por sector.</p>
+                <p class="text-gray-600 text-sm mt-1">Historial optimizado con balances hídricos, químicos, abejorros y estados predictivos por sector.</p>
             </div>
             <div>
                 <a href="{{ route('monitoreo.create') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded shadow">
@@ -123,7 +123,7 @@
             </div>
 
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse min-w-[950px]">
+                <table class="w-full text-left border-collapse min-w-[1050px]">
                     <thead>
                         <tr class="bg-gray-100 border-b border-gray-200 text-gray-700 uppercase tracking-wider text-[11px] font-bold">
                             <th class="py-3 px-4">Fecha</th>
@@ -135,6 +135,7 @@
                             <th class="py-3 px-4 bg-purple-50/50">Dif. pH</th>
                             <th class="py-3 px-4 bg-stone-50">% Caída Noct.</th>
                             <th class="py-3 px-4 bg-orange-50/50">Semáforo Rad.</th>
+                            <th class="py-3 px-4 bg-yellow-50/50">Abejorros</th>
                             <th class="py-3 px-4 text-center">Estatus Clima</th>
                             <th class="py-3 px-4 text-center">Acciones</th>
                         </tr>
@@ -170,6 +171,22 @@
                                 @endif
                             </td>
 
+                            {{-- COLUMNA DE ABEJORROS CON SEMÁFORO --}}
+                            <td class="py-3.5 px-4 bg-yellow-50/20">
+                                @if(!is_null($row->abejorros_flores))
+                                    <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
+                                    @if($row->abejorros_semaforo === 'VERDE')
+                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">Verde</span>
+                                    @elseif($row->abejorros_semaforo === 'AMARILLO')
+                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">Amarillo</span>
+                                    @elseif($row->abejorros_semaforo === 'ROJO')
+                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">Rojo</span>
+                                    @endif
+                                @else
+                                    <span class="text-xs text-gray-400">N/D</span>
+                                @endif
+                            </td>
+
                             <td class="py-3.5 px-4 text-center">
                                 <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $row->estatus_general === 'ÓPTIMO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $row->estatus_general }}
@@ -183,12 +200,10 @@
                                         <i class="fa-solid fa-magnifying-glass-chart text-sm"></i>
                                     </a>
 
-
                                     <a href="{{ route('monitoreo.edit', $row->id) }}" class="bg-blue-50 hover:bg-blue-100 text-blue-700 p-2 rounded-lg transition shadow-2xs border border-blue-200" title="Editar">
                                         <i class="fa-solid fa-pen-to-square text-sm"></i>
                                     </a>
 
-                                    
                                     @can('es-administrador')
                                     <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" id="delete-form-{{ $row->id }}" class="inline">
                                         @csrf
@@ -203,7 +218,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="11" class="py-10 text-center text-gray-500">
+                            <td colspan="12" class="py-10 text-center text-gray-500">
                                 <i class="fa-solid fa-folder-open text-4xl text-gray-300 mb-3 block"></i>
                                 No hay registros almacenados coincidiendo con el filtro.
                             </td>
@@ -216,7 +231,7 @@
 
     </main>
 
-    <!-- 🎨 MODAL PERSONALIZADO DE ELIMINACIÓN (Diseño Limpio) -->
+    <!-- 🎨 MODAL PERSONALIZADO DE ELIMINACIÓN -->
     <div id="modalEliminar" class="fixed inset-0 bg-black/50 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full p-6 text-center transform transition-all scale-95 opacity-0 duration-200" id="modalContenido">
             <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mx-auto mb-4 text-xl">

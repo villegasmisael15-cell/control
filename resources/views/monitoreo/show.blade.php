@@ -144,7 +144,7 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-                    <!-- 💡 CORRECCIÓN DE DESBORDAMIENTO EN RADIACIÓN SOLAR -->
+                    <!-- RADIACIÓN SOLAR -->
                     <div class="bg-amber-50/30 p-5 rounded-xl border border-amber-200 md:col-span-2 flex flex-col justify-between shadow-sm">
                         <div>
                             <h3 class="font-bold text-sm text-amber-800 border-b border-amber-200 pb-2 flex items-center gap-1.5">
@@ -201,6 +201,33 @@
                     </div>
                 </div>
 
+                <!-- NUEVO APARTADO: INSPECCIÓN DE ABEJORROS -->
+                <div class="bg-yellow-50/40 p-5 rounded-xl border border-yellow-200 shadow-sm">
+                    <h3 class="font-bold text-sm text-yellow-800 border-b border-yellow-200 pb-2 flex items-center gap-1.5 mb-3">
+                        <i class="fa-solid fa-bug text-yellow-600"></i> Inspección de Abejorros (Flores Visitadas)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                        <div class="flex justify-between items-center bg-white/60 p-2.5 rounded border border-yellow-100">
+                            <span class="text-gray-500 text-sm">Flores Visitadas Registradas:</span>
+                            <span class="font-bold text-gray-800 text-base">{{ $monitoreo->abejorros_flores ?? 'N/D' }}</span>
+                        </div>
+                        <div class="flex justify-between items-center bg-white/60 p-2.5 rounded border border-yellow-100">
+                            <span class="text-gray-500 text-sm">Semáforo Evaluado:</span>
+                            <div>
+                                @if($monitoreo->abejorros_semaforo === 'VERDE')
+                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-emerald-100 text-emerald-800 border border-emerald-200">VERDE (25 - 30)</span>
+                                @elseif($monitoreo->abejorros_semaforo === 'AMARILLO')
+                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-amber-100 text-amber-800 border border-amber-200">AMARILLO (20 - 24)</span>
+                                @elseif($monitoreo->abejorros_semaforo === 'ROJO')
+                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-red-100 text-red-800 border border-red-200">ROJO (< 19)</span>
+                                @else
+                                <span class="text-xs text-gray-400">Sin evaluar</span>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="w-full">
                     @php
                     $isOptimo = $monitoreo->estatus_general === 'ÓPTIMO';
@@ -214,7 +241,6 @@
                     </div>
                 </div>
 
-                <!-- 💡 CORRECCIÓN DE BOTONES INFERIORES RESPONSIVOS -->
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-gray-100">
                     <span class="text-xs text-gray-400 text-center sm:text-left">Inspección de parámetros históricos en modo de solo lectura.</span>
 

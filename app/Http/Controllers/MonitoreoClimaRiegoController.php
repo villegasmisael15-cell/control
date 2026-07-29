@@ -107,7 +107,7 @@ class MonitoreoClimaRiegoController extends Controller
         return view('monitoreo.create', compact('sectores'));
     }
 
-   public function store(Request $request)
+  public function store(Request $request)
     {
         // 1. Identificamos al verdadero dueño del sector antes de validar
         $sectorBuscado = trim($request->input('sector'));
@@ -141,6 +141,7 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_semaforo' => 'nullable|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
+            'abejorros_flores' => 'nullable|integer|min:0', // <-- NUEVA VALIDACIÓN
         ]);
 
         // Lógica de riego por macetas
@@ -184,6 +185,20 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
+        // --- CÁLCULO SEMÁFORO DE ABEJORROS ---
+        // 25-30 verde, 20-24 amarillo, menos de 19 rojo
+        $abejorrosSemaforo = null;
+        if ($request->filled('abejorros_flores')) {
+            $flores = (int) $request->abejorros_flores;
+            if ($flores >= 25 && $flores <= 30) {
+                $abejorrosSemaforo = 'VERDE';
+            } elseif ($flores >= 20 && $flores <= 24) {
+                $abejorrosSemaforo = 'AMARILLO';
+            } else {
+                $abejorrosSemaforo = 'ROJO';
+            }
+        }
+
         // 4. Guardar los datos del monitoreo
         $datosAGuardar = array_merge($request->all(), [
             'dpv' => $dpv,
@@ -193,6 +208,8 @@ class MonitoreoClimaRiegoController extends Controller
             'porcentaje_caida_nocturna' => $porcentaje_caida_nocturna,
             'estatus_general' => $estatus_general,
             'vol_riego_entrada' => $volRiego,
+            'abejorros_flores' => $request->abejorros_flores,     // <-- NUEVO
+            'abejorros_semaforo' => $abejorrosSemaforo,           // <-- NUEVO
         ]);
 
         MonitoreoClimaRiego::create($datosAGuardar);
@@ -212,7 +229,6 @@ class MonitoreoClimaRiegoController extends Controller
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro guardado con éxito!');
     }
-
 
     public function show($id)
 {
@@ -306,6 +322,7 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_lectura' => 'required|integer|min:0',
             'radiacion_semaforo' => 'required|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
+            'abejorros_flores' => 'nullable|integer|min:0', // <-- NUEVA VALIDACIÓN
         ]);
 
         // Lógica de riego por macetas
@@ -349,6 +366,19 @@ class MonitoreoClimaRiegoController extends Controller
             $porcentaje_caida_nocturna = round((($request->peso_tarde_anterior - $request->peso_manana) / $request->peso_tarde_anterior) * 100, 1);
         }
 
+        // --- CÁLCULO SEMÁFORO DE ABEJORROS ---
+        $abejorrosSemaforo = null;
+        if ($request->filled('abejorros_flores')) {
+            $flores = (int) $request->abejorros_flores;
+            if ($flores >= 25 && $flores <= 30) {
+                $abejorrosSemaforo = 'VERDE';
+            } elseif ($flores >= 20 && $flores <= 24) {
+                $abejorrosSemaforo = 'AMARILLO';
+            } else {
+                $abejorrosSemaforo = 'ROJO';
+            }
+        }
+
         $monitoreo->update(array_merge($request->all(), [
             'dpv' => $dpv,
             'porcentaje_drenaje' => $porcentaje_drenaje,
@@ -357,6 +387,8 @@ class MonitoreoClimaRiegoController extends Controller
             'porcentaje_caida_nocturna' => $porcentaje_caida_nocturna,
             'estatus_general' => $estatus_general,
             'vol_riego_entrada' => $volRiego,
+            'abejorros_flores' => $request->abejorros_flores,     // <-- NUEVO
+            'abejorros_semaforo' => $abejorrosSemaforo,           // <-- NUEVO
         ]));
 
         // --- EVALUAR ALERTA DE DRENAJE AL ACTUALIZAR ---
@@ -374,7 +406,6 @@ class MonitoreoClimaRiegoController extends Controller
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro actualizado con éxito!');
     }
-
     public function destroy($id)
     {
         if (auth()->user()->rol !== 'administrador') {

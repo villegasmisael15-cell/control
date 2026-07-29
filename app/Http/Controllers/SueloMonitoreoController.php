@@ -102,7 +102,7 @@ class SueloMonitoreoController extends Controller
         return view('suelo.create', compact('sectores'));
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
     {
         // 1. Identificamos dinámicamente quién es el verdadero dueño del sector enviado
         $sectorBuscado = trim($request->input('sector'));
@@ -133,6 +133,7 @@ class SueloMonitoreoController extends Controller
             'radiacion_semaforo' => 'required|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
+            'abejorros_flores' => 'nullable|integer|min:0', // <-- NUEVA VALIDACIÓN
 
             // Alertas condicionales de CE
             'alerta_opcion'           => 'nullable|array',
@@ -192,11 +193,26 @@ class SueloMonitoreoController extends Controller
             $alertaCeOpcion = implode(', ', $request->alerta_opcion);
         }
 
+        // --- CÁLCULO SEMÁFORO DE ABEJORROS ---
+        $abejorrosSemaforo = null;
+        if ($request->filled('abejorros_flores')) {
+            $flores = (int) $request->abejorros_flores;
+            if ($flores >= 25 && $flores <= 30) {
+                $abejorrosSemaforo = 'VERDE';
+            } elseif ($flores >= 20 && $flores <= 24) {
+                $abejorrosSemaforo = 'AMARILLO';
+            } else {
+                $abejorrosSemaforo = 'ROJO';
+            }
+        }
+
         // --- INSERCIÓN EN TABLA MADRE (`suelo_monitoreos`) ---
         $datosAGuardar = array_merge($request->all(), [
-            'dpv'              => $dpv,
-            'estatus_general'  => $estatus_general,
-            'alerta_ce_opcion' => $alertaCeOpcion,
+            'dpv'                => $dpv,
+            'estatus_general'    => $estatus_general,
+            'alerta_ce_opcion'   => $alertaCeOpcion,
+            'abejorros_flores'   => $request->abejorros_flores,   // <-- NUEVO
+            'abejorros_semaforo' => $abejorrosSemaforo,         // <-- NUEVO
         ]);
 
         $monitoreo = SueloMonitoreo::create($datosAGuardar);

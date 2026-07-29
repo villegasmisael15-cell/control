@@ -116,7 +116,7 @@
 
                     <div class="bg-amber-50/30 p-4 rounded-xl border border-amber-200 space-y-4 md:col-span-2 flex flex-col justify-between">
                         <div>
-                            <h3 class="font-bold text-sm text-amber-880 border-b border-amber-200 pb-1">
+                            <h3 class="font-bold text-sm text-amber-800 border-b border-amber-200 pb-1">
                                 <i class="fa-solid fa-sun text-amber-500 mr-1"></i> Radiación Solar
                             </h3>
                             <div class="mt-3">
@@ -146,6 +146,23 @@
                         </div>
                     </div>
 
+                </div>
+
+                <!-- NUEVO APARTADO: ABEJORROS (FLORES VISITADAS) EN SUELO -->
+                <div class="bg-yellow-50/50 p-4 rounded-xl border border-yellow-200 space-y-4">
+                    <h3 class="font-bold text-sm text-yellow-800 border-b border-yellow-200 pb-1">
+                        <i class="fa-solid fa-bug text-yellow-600 mr-1"></i> Abejorros (Flores Visitadas)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Flores Visitadas</label>
+                            <input type="number" id="abejorros_flores" name="abejorros_flores" min="0" placeholder="Ej. 26" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Semáforo Abejorros (Auto)</label>
+                            <input type="text" id="abejorros_semaforo_view" value="Esperando datos..." disabled class="w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center">
+                        </div>
+                    </div>
                 </div>
 
                 {{-- APARTADO: ANÁLISIS RÁPIDO --}}
@@ -236,7 +253,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
 
                 {{-- APARTADO: ANÁLISIS DE LABORATORIO --}}
@@ -245,7 +261,6 @@
                         <i class="fa-solid fa-microscope text-emerald-600"></i> Análisis de Laboratorio
                     </h3>
                     
-                    <!-- NUEVO: TIPO DE ANÁLISIS -->
                     <div>
                         <label class="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Tipo de Análisis:</label>
                         <div class="flex flex-wrap gap-4">
@@ -322,8 +337,7 @@
     </main>
 
   <script>
-    // Inputs generales del clima y suelo
-    const inputs = ['temperatura', 'humedad', 'radiacion_lectura', 'lectura_tensiometro', 'ce'];
+    const inputs = ['temperatura', 'humedad', 'radiacion_lectura', 'lectura_tensiometro', 'ce', 'abejorros_flores'];
 
     inputs.forEach(id => {
         document.getElementById(id).addEventListener('input', calcularValores);
@@ -332,13 +346,9 @@
     document.getElementById('chk_eps').addEventListener('change', alternarFilasAnalisis);
     document.getElementById('chk_ecp').addEventListener('change', alternarFilasAnalisis);
 
-    // Inputs de Análisis Rápido (EPS y ECP) y Laboratorio para activar los semáforos
     const inputsSemaforos = [
-        // EPS Rápido
         'eps_rapido_no3', 'eps_rapido_k', 'eps_rapido_ca', 'eps_rapido_na', 'eps_rapido_p', 'eps_rapido_ph', 'eps_rapido_ce',
-        // ECP Rápido
         'ecp_rapido_no3', 'ecp_rapido_k', 'ecp_rapido_ca', 'ecp_rapido_na', 'ecp_rapido_p', 'ecp_rapido_ph', 'ecp_rapido_ce',
-        // Laboratorio
         'lab_mo', 'lab_p_bray', 'lab_k', 'lab_mg', 'lab_na', 'lab_fe', 'lab_zn', 'lab_mn', 'lab_cu', 'lab_b', 'lab_s', 'lab_n_no3'
     ];
 
@@ -349,7 +359,6 @@
         }
     });
 
-    // También escuchar cuando cambie el tipo de análisis de laboratorio
     document.querySelectorAll('input[name="tipo_analisis_lab"]').forEach(radio => {
         radio.addEventListener('change', evaluarSemaforosDinamicos);
     });
@@ -360,6 +369,7 @@
         const lux = parseFloat(document.getElementById('radiacion_lectura').value);
         const tensio = parseFloat(document.getElementById('lectura_tensiometro').value);
         const ceValor = parseFloat(document.getElementById('ce').value);
+        const abejorros = parseFloat(document.getElementById('abejorros_flores').value);
 
         const divAlertaCe = document.getElementById('alerta_ce');
         const divAnalisisRapido = document.getElementById('seccion_analisis_rapido');
@@ -473,6 +483,24 @@
             rSemaforoHidden.value = "";
             rAccionTomada.value = "";
         }
+
+        // 4. Semáforo Abejorros (25-30 verde, 20-24 amarillo, <19 rojo)
+        const aSemaforoView = document.getElementById('abejorros_semaforo_view');
+        if (!isNaN(abejorros)) {
+            if (abejorros >= 25 && abejorros <= 30) {
+                aSemaforoView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                aSemaforoView.value = "VERDE (25 - 30 flores)";
+            } else if (abejorros >= 20 && abejorros <= 24) {
+                aSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                aSemaforoView.value = "AMARILLO (20 - 24 flores)";
+            } else {
+                aSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                aSemaforoView.value = "ROJO (Menor a 19 flores)";
+            }
+        } else {
+            aSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+            aSemaforoView.value = "Esperando datos...";
+        }
     }
 
     function evaluarCumplimiento() {
@@ -506,7 +534,6 @@
         }
     }
 
-    // Función encargada de evaluar y renderizar los semáforos dinámicos en los campos
     function evaluarSemaforosDinamicos() {
         const bajo = ['bg-red-50', 'border-red-400', 'focus:ring-red-500', 'text-red-900'];
         const optimo = ['bg-green-50', 'border-green-400', 'focus:ring-green-500', 'text-green-900'];
@@ -522,7 +549,6 @@
             
             el.classList.remove(...limpiar);
 
-            // 💡 SI SE INDICA FORZAR GRIS (Caso Sodio en Fertilidad), NO COMPARA RANGOS
             if (forzarGris) {
                 return; 
             }
@@ -536,9 +562,6 @@
             }
         }
 
-        // ==========================================
-        // 1. EVALUAR REGISTRO SECCIÓN EPS (RÁPIDO)
-        // ==========================================
         const epsNo3 = parseFloat(document.getElementsByName('eps_rapido_no3')[0]?.value);
         aplicarColor('eps_rapido_no3', epsNo3, 150, 250); 
 
@@ -560,9 +583,6 @@
         const epsCe = parseFloat(document.getElementsByName('eps_rapido_ce')[0]?.value);
         aplicarColor('eps_rapido_ce', epsCe, 2.0, 3.5); 
 
-        // ==========================================
-        // 2. EVALUAR REGISTRO SECCIÓN ECP (RÁPIDO)
-        // ==========================================
         const ecpNo3 = parseFloat(document.getElementsByName('ecp_rapido_no3')[0]?.value);
         aplicarColor('ecp_rapido_no3', ecpNo3, 500, 800); 
 
@@ -584,9 +604,6 @@
         const ecpCe = parseFloat(document.getElementsByName('ecp_rapido_ce')[0]?.value);
         aplicarColor('ecp_rapido_ce', ecpCe, 8.0, 12.0); 
 
-        // ==========================================
-        // 3. EVALUAR SECCIÓN LABORATORIO (DINÁMICO)
-        // ==========================================
         const tipoLab = document.querySelector('input[name="tipo_analisis_lab"]:checked')?.value;
 
         if (tipoLab === 'fertilidad') {
@@ -602,7 +619,6 @@
             const labMg = parseFloat(document.getElementsByName('lab_mg')[0]?.value);
             aplicarColor('lab_mg', labMg, 250, 450); 
 
-            // 💡 SOLUCIÓN OPERATIVA: Forzamos el estado neutral gris para el Na en Fertilidad
             const labNa = parseFloat(document.getElementsByName('lab_na')[0]?.value);
             aplicarColor('lab_na', labNa, 0, 0, true); 
 

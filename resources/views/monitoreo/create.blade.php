@@ -186,6 +186,23 @@
 
                 </div>
 
+                <!-- NUEVO APARTADO: ABEJORROS (FLORES VISITADAS) -->
+                <div class="bg-yellow-50/50 p-4 rounded-xl border border-yellow-200 space-y-4">
+                    <h3 class="font-bold text-sm text-yellow-800 border-b border-yellow-200 pb-1">
+                        <i class="fa-solid fa-bug text-yellow-600 mr-1"></i> Abejorros (Flores Visitadas)
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
+                        <div>
+                            <label class="block text-xs font-medium text-gray-600 mb-1">Flores Visitadas</label>
+                            <input type="number" id="abejorros_flores" name="abejorros_flores" min="0" placeholder="Ej. 26" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-yellow-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-500 mb-1">Semáforo Abejorros (Auto)</label>
+                            <input type="text" id="abejorros_semaforo_view" value="Esperando datos..." disabled class="w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="w-full mt-6">
                     <div id="estatus_box" class="bg-gray-100 rounded-xl border border-gray-300 p-6 flex flex-col justify-center items-center transition duration-300">
                         <span class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Estatus Predictivo General</span>
@@ -207,7 +224,7 @@
         const inputs = [
             'temperatura', 'humedad', 'vol_riego_entrada', 'vol_drenaje_salida',
             'ce_entrada', 'ce_calida', 'ph_entrada', 'ph_salida',
-            'peso_tarde_anterior', 'peso_manana', 'radiacion_lectura'
+            'peso_tarde_anterior', 'peso_manana', 'radiacion_lectura', 'abejorros_flores'
         ];
 
         // Escuchamos también el cambio de sector para recalcular inmediatamente
@@ -229,6 +246,7 @@
             const pTarde = parseFloat(document.getElementById('peso_tarde_anterior').value);
             const pManana = parseFloat(document.getElementById('peso_manana').value);
             const lux = parseFloat(document.getElementById('radiacion_lectura').value);
+            const abejorros = parseFloat(document.getElementById('abejorros_flores').value);
 
             // Obtener las macetas del sector seleccionado dinámicamente
             const sectorSelect = document.getElementById('sector');
@@ -325,6 +343,24 @@
                 rSemaforoView.value = "Esperando datos...";
                 rSemaforoHidden.value = "";
                 rAccionTomada.value = "";
+            }
+
+            // 6. Semáforo Abejorros (25-30 verde, 20-24 amarillo, <19 rojo)
+            const aSemaforoView = document.getElementById('abejorros_semaforo_view');
+            if (!isNaN(abejorros)) {
+                if (abejorros >= 25 && abejorros <= 30) {
+                    aSemaforoView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    aSemaforoView.value = "VERDE (25 - 30 flores)";
+                } else if (abejorros >= 20 && abejorros <= 24) {
+                    aSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    aSemaforoView.value = "AMARILLO (20 - 24 flores)";
+                } else {
+                    aSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    aSemaforoView.value = "ROJO (Menor a 19 flores)";
+                }
+            } else {
+                aSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                aSemaforoView.value = "Esperando datos...";
             }
         }
     </script>

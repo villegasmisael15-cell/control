@@ -56,9 +56,9 @@ class SueloMonitoreo extends Model
         'lab_b',
         'lab_s',
         'lab_n_no3',
-        
-        // 💡 Identificador del Tipo de Laboratorio (Fertilidad / Pasta Saturada)
         'tipo_analisis_lab',
+        'abejorros_flores',
+        'abejorros_semaforo',
     ];
 
     /**
