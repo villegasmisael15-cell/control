@@ -1,3 +1,6 @@
+Aquí tienes tu **`SueloMonitoreoController.php`** completo y actualizado. Ya incluye el método privado para disparar la notificación push mediante cURL y JWT (idéntico al que usa la hidroponía) y la validación automática al final del método `store` para que la alerta del tensiómetro se active si el valor ingresado es **menor a 5 o mayor a 25**.
+
+```php
 <?php
 
 namespace App\Http\Controllers;
@@ -201,7 +204,7 @@ class SueloMonitoreoController extends Controller
 
         $monitoreo = SueloMonitoreo::create($datosAGuardar);
 
-        // --- NUEVO: INSERCIÓN EN TABLA HIJA RELACIONAL (`suelo_analisis_rapidos`) ---
+        // --- INSERCIÓN EN TABLA HIJA RELACIONAL (`suelo_analisis_rapidos`) ---
 
         // Fila EPS
         if ($request->filled('eps_rapido_no3') || $request->filled('eps_rapido_ce')) {
@@ -233,21 +236,130 @@ class SueloMonitoreoController extends Controller
             ]);
         }
 
+        // --- EVALUAR ALERTA DE TENSIÓMETRO (Menor a 5 o Mayor a 25) ---
+        if ($request->filled('lectura_tensiometro')) {
+            $valTensiometro = $request->lectura_tensiometro;
+            if ($valTensiometro < 5 || $valTensiometro > 25) {
+                $this->enviarAlertaAdministradores($request->sector, $valTensiometro, 'tensiometro');
+            }
+        }
+
         return redirect()->route('suelo.index')->with('status', '¡Monitoreo de Suelo y Análisis guardados con éxito!');
     }
 
     public function destroy($id)
-{
-    // 1. Buscar el monitoreo principal o lanzar error 404 si no existe
-    $monitoreo = SueloMonitoreo::findOrFail($id);
+    {
+        // 1. Buscar el monitoreo principal o lanzar error 404 si no existe
+        $monitoreo = SueloMonitoreo::findOrFail($id);
 
-    // 2. Eliminar primero los análisis rápidos asociados en la tabla hija
-    SueloAnalisisRapido::where('suelo_monitoreo_id', $monitoreo->id)->delete();
+        // 2. Eliminar primero los análisis rápidos asociados en la tabla hija
+        SueloAnalisisRapido::where('suelo_monitoreo_id', $monitoreo->id)->delete();
 
-    // 3. Eliminar el registro de monitoreo general
-    $monitoreo->delete();
+        // 3. Eliminar el registro de monitoreo general
+        $monitoreo->delete();
 
-    // 4. Redireccionar de vuelta con un mensaje de estado
-    return redirect()->route('suelo.index')->with('status', '¡El registro de monitoreo y sus análisis asociados fueron eliminados correctamente!');
+        // 4. Redireccionar de vuelta con un mensaje de estado
+        return redirect()->route('suelo.index')->with('status', '¡El registro de monitoreo y sus análisis asociados fueron eliminados correctamente!');
+    }
+
+    /**
+     * Función privada para disparar la notificación push a los Administradores
+     */
+    private function enviarAlertaAdministradores($sector, $valor, $tipo = 'tensiometro')
+    {
+        $admins = User::where('rol', 'administrador')
+                      ->whereNotNull('fcm_token')
+                      ->get();
+
+        $projectId = "unitasrubraalertas";
+
+        if ($tipo === 'tensiometro') {
+            $titulo = '⚠️ Alerta de Tensiómetro en Suelo';
+            $mensaje = "El sector " . $sector . " registró un nivel de tensiómetro crítico: " . $valor;
+        } else {
+            $titulo = '⚠️ Alerta en Suelo';
+            $mensaje = "El sector " . $sector . " registró un valor crítico de: " . $valor;
+        }
+
+        foreach ($admins as $admin) {
+            try {
+                $jsonPath = storage_path('app/firebase-credentials.json');
+                if (!file_exists($jsonPath)) {
+                    continue;
+                }
+
+                $jsonKey = json_decode(file_get_contents($jsonPath), true);
+                
+                $now = time();
+                $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
+                $payload = json_encode([
+                    'iss' => $jsonKey['client_email'],
+                    'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+                    'aud' => $jsonKey['token_uri'],
+                    'iat' => $now,
+                    'exp' => $now + 3600
+                ]);
+
+                $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+                $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+                
+                $signature = '';
+                openssl_sign($base64UrlHeader . "." . $base64UrlPayload, $signature, $jsonKey['private_key'], OPENSSL_ALGO_SHA256);
+                $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+                
+                $jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
+
+                $ch = curl_init($jsonKey['token_uri']);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_POST, true);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+                    'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                    'assertion' => $jwt
+                ]));
+                $response = curl_exec($ch);
+                curl_close($ch);
+
+                $tokenData = json_decode($response, true);
+                if (!isset($tokenData['access_token'])) {
+                    continue;
+                }
+                $accessToken = $tokenData['access_token'];
+
+                $fcmPayload = [
+                    'message' => [
+                        'token' => $admin->fcm_token,
+                        'notification' => [
+                            'title' => $titulo,
+                            'body' => $mensaje
+                        ],
+                        'android' => [
+                            'priority' => 'HIGH',
+                            'notification' => [
+                                'sound' => 'default',
+                                'default_sound' => true,
+                                'default_vibrate_timings' => true
+                            ]
+                        ]
+                    ]
+                ];
+
+                $ch = curl_init('https://fcm.googleapis.com/v1/projects/' . $projectId . '/messages:send');
+                curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "POST");
+                curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($fcmPayload));
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json',
+                    'Authorization: Bearer ' . $accessToken
+                ]);
+                
+                curl_exec($ch);
+                curl_close($ch);
+
+            } catch (\Exception $e) {
+                continue;
+            }
+        }
+    }
 }
-}
+
+```
