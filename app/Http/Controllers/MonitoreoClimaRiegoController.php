@@ -199,11 +199,20 @@ class MonitoreoClimaRiegoController extends Controller
 
         // --- 5. EVALUAR ALERTA DE DRENAJE (Menor al 10% o Mayor al 35%) ---
         if (!is_null($porcentaje_drenaje) && ($porcentaje_drenaje < 10 || $porcentaje_drenaje > 35)) {
-            $this->enviarAlertaAdministradores($request->sector, $porcentaje_drenaje);
+            $this->enviarAlertaAdministradores($request->sector, $porcentaje_drenaje, 'drenaje');
+        }
+
+        // --- 6. EVALUAR ALERTA DE TEMPERATURA (Mayor a 35 o Menor a 4) ---
+        if ($request->filled('temperatura')) {
+            $tempVal = $request->temperatura;
+            if ($tempVal > 35 || $tempVal < 4) {
+                $this->enviarAlertaAdministradores($request->sector, $tempVal, 'temperatura');
+            }
         }
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro guardado con éxito!');
     }
+
 
     public function show($id)
 {
@@ -266,7 +275,7 @@ class MonitoreoClimaRiegoController extends Controller
     return view('monitoreo.edit', compact('monitoreo', 'sectores', 'sectoresAsignados'));
 }
 
-   public function update(Request $request, $id)
+ public function update(Request $request, $id)
     {
         $monitoreo = MonitoreoClimaRiego::findOrFail($id);
 
@@ -350,9 +359,17 @@ class MonitoreoClimaRiegoController extends Controller
             'vol_riego_entrada' => $volRiego,
         ]));
 
-        // --- EVALUAR ALERTA DE DRENAJE TAMBIÉN AL ACTUALIZAR ---
+        // --- EVALUAR ALERTA DE DRENAJE AL ACTUALIZAR ---
         if (!is_null($porcentaje_drenaje) && ($porcentaje_drenaje < 10 || $porcentaje_drenaje > 35)) {
-            $this->enviarAlertaAdministradores($request->sector, $porcentaje_drenaje);
+            $this->enviarAlertaAdministradores($request->sector, $porcentaje_drenaje, 'drenaje');
+        }
+
+        // --- EVALUAR ALERTA DE TEMPERATURA AL ACTUALIZAR ---
+        if ($request->filled('temperatura')) {
+            $tempVal = $request->temperatura;
+            if ($tempVal > 35 || $tempVal < 4) {
+                $this->enviarAlertaAdministradores($request->sector, $tempVal, 'temperatura');
+            }
         }
 
         return redirect()->route('monitoreo.index')->with('status', '¡Registro actualizado con éxito!');
@@ -436,7 +453,7 @@ public function graficas(Request $request)
     /**
      * Función privada para disparar la notificación push a los Administradores
      */
-  private function enviarAlertaAdministradores($sector, $porcentajeDrenaje)
+private function enviarAlertaAdministradores($sector, $valor, $tipo = 'drenaje')
     {
         // 1. Buscar únicamente a los usuarios con rol de administrador que tengan token FCM registrado
         $admins = User::where('rol', 'administrador')
@@ -444,6 +461,15 @@ public function graficas(Request $request)
                       ->get();
 
         $projectId = "unitasrubraalertas";
+
+        // Definir el título y el mensaje según el tipo de alerta
+        if ($tipo === 'temperatura') {
+            $titulo = '⚠️ Alerta de Temperatura Crítica';
+            $mensaje = "El sector " . $sector . " registró una temperatura fuera de rango: " . $valor . "°C";
+        } else {
+            $titulo = '⚠️ Alerta de Drenaje en Hidroponía';
+            $mensaje = "El sector " . $sector . " registró un drenaje crítico de: " . $valor . "%";
+        }
 
         foreach ($admins as $admin) {
             try {
@@ -495,13 +521,11 @@ public function graficas(Request $request)
                 $accessToken = $tokenData['access_token'];
 
                 // 5. Preparar la estructura de la notificación
-                $mensaje = "El sector " . $sector . " registró un drenaje crítico de: " . $porcentajeDrenaje . "%";
-
                 $fcmPayload = [
                     'message' => [
                         'token' => $admin->fcm_token,
                         'notification' => [
-                            'title' => '⚠️ Alerta de Drenaje en Hidroponía',
+                            'title' => $titulo,
                             'body' => $mensaje
                         ],
                         'android' => [
