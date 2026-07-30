@@ -26,9 +26,9 @@ class SueloMonitoreoController extends Controller
                 $termino = $request->input('buscar_termino');
                 $query->where(function ($q) use ($termino) {
                     $q->where('sector', 'LIKE', '%' . $termino . '%')
-                      ->orWhereHas('user', function ($subQuery) use ($termino) {
-                          $subQuery->where('name', 'LIKE', '%' . $termino . '%');
-                      });
+                        ->orWhereHas('user', function ($subQuery) use ($termino) {
+                            $subQuery->where('name', 'LIKE', '%' . $termino . '%');
+                        });
                 });
             }
         }
@@ -67,7 +67,7 @@ class SueloMonitoreoController extends Controller
         }
 
         // Mapeamos los resultados para buscar al dueño real del sector
-        $monitoreos = $query->get()->map(function($monitoreo) {
+        $monitoreos = $query->get()->map(function ($monitoreo) {
             $dueno = User::where('sectores', 'LIKE', '%' . trim($monitoreo->sector) . '%')->first();
             $monitoreo->dueno_sector = $dueno ? $dueno->name : 'Sin asignar / General';
             return $monitoreo;
@@ -102,13 +102,13 @@ class SueloMonitoreoController extends Controller
         return view('suelo.create', compact('sectores'));
     }
 
-   public function store(Request $request)
+    public function store(Request $request)
     {
         // 1. Identificamos dinámicamente quién es el verdadero dueño del sector enviado
         $sectorBuscado = trim($request->input('sector'));
-        
+
         $duenoSector = User::where('sectores', 'LIKE', '%' . $sectorBuscado . '%')->first();
-        
+
         // Si por alguna razón extraña no encontramos un dueño asignado, usamos el ID logueado como respaldo de seguridad
         $idDuenoReal = $duenoSector ? $duenoSector->id : auth()->id();
 
@@ -127,14 +127,13 @@ class SueloMonitoreoController extends Controller
             'tensiometro_estatus' => 'nullable|string|max:100',
             'ce' => 'nullable|numeric',
             'ph' => 'nullable|numeric',
-            
+
             'radiacion_hora' => 'required',
-            'radiacion_lectura' => 'required|integer|min:0',
-            'radiacion_semaforo' => 'required|string|max:255',
+            'radiacion_lectura' => 'nullable|integer|min:0',
+            'radiacion_semaforo' => 'nullable|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
-            'abejorros_flores' => 'nullable|integer|min:0', // <-- NUEVA VALIDACIÓN
-
+            'abejorros_flores' => 'nullable|integer|min:0',
             // Alertas condicionales de CE
             'alerta_opcion'           => 'nullable|array',
             'alerta_opcion.*'         => 'string|in:EPS,ECP',
@@ -281,8 +280,8 @@ class SueloMonitoreoController extends Controller
     private function enviarAlertaAdministradores($sector, $valor, $tipo = 'tensiometro')
     {
         $admins = User::where('rol', 'administrador')
-                      ->whereNotNull('fcm_token')
-                      ->get();
+            ->whereNotNull('fcm_token')
+            ->get();
 
         $projectId = "unitasrubraalertas";
 
@@ -302,7 +301,7 @@ class SueloMonitoreoController extends Controller
                 }
 
                 $jsonKey = json_decode(file_get_contents($jsonPath), true);
-                
+
                 $now = time();
                 $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
                 $payload = json_encode([
@@ -315,11 +314,11 @@ class SueloMonitoreoController extends Controller
 
                 $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
                 $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
-                
+
                 $signature = '';
                 openssl_sign($base64UrlHeader . "." . $base64UrlPayload, $signature, $jsonKey['private_key'], OPENSSL_ALGO_SHA256);
                 $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-                
+
                 $jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
 
                 $ch = curl_init($jsonKey['token_uri']);
@@ -364,10 +363,9 @@ class SueloMonitoreoController extends Controller
                     'Content-Type: application/json',
                     'Authorization: Bearer ' . $accessToken
                 ]);
-                
+
                 curl_exec($ch);
                 curl_close($ch);
-
             } catch (\Exception $e) {
                 continue;
             }

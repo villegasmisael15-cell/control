@@ -132,7 +132,7 @@
                             <div class="mt-3">
                                 <div>
                                     <label class="block text-xs font-medium text-gray-600 mb-1">Lectura (Lux)</label>
-                                    <input type="number" id="radiacion_lectura" name="radiacion_lectura" value="{{ $monitoreo->radiacion_lectura }}" min="0" required placeholder="Ej. 45000" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500">
+                                    <input type="number" id="radiacion_lectura" name="radiacion_lectura" value="{{ $monitoreo->radiacion_lectura }}" min="0" placeholder="Ej. 45000" class="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500">
                                 </div>
                             </div>
                         </div>

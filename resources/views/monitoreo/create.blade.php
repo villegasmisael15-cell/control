@@ -340,7 +340,7 @@
                 }
             } else {
                 rSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                rSemaforoView.value = "Esperando datos...";
+                rSemaforoView.value = "Sin registro";
                 rSemaforoHidden.value = "";
                 rAccionTomada.value = "";
             }
@@ -360,7 +360,7 @@
                 }
             } else {
                 aSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                aSemaforoView.value = "Esperando datos...";
+                aSemaforoView.value = "Sin registro";
             }
         }
     </script>

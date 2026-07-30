@@ -260,21 +260,21 @@
                     <h3 class="font-bold text-base text-emerald-900 border-b border-emerald-200 pb-2 flex items-center gap-1.5">
                         <i class="fa-solid fa-microscope text-emerald-600"></i> Análisis de Laboratorio
                     </h3>
-                    
+
                     <div>
                         <label class="block text-xs font-bold text-emerald-800 uppercase tracking-wider mb-2">Tipo de Análisis:</label>
                         <div class="flex flex-wrap gap-4">
                             <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-700 font-medium">
-                                <input type="radio" name="tipo_analisis_lab" value="fertilidad" class="text-emerald-600 focus:ring-emerald-500" checked> 
+                                <input type="radio" name="tipo_analisis_lab" value="fertilidad" class="text-emerald-600 focus:ring-emerald-500" checked>
                                 Fertilidad
                             </label>
                             <label class="flex items-center gap-1.5 cursor-pointer text-sm text-gray-700 font-medium">
-                                <input type="radio" name="tipo_analisis_lab" value="pasta_saturada" class="text-emerald-600 focus:ring-emerald-500"> 
+                                <input type="radio" name="tipo_analisis_lab" value="pasta_saturada" class="text-emerald-600 focus:ring-emerald-500">
                                 Pasta Saturada
                             </label>
                         </div>
                     </div>
-                    
+
                     <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
                         <div>
                             <label class="block text-[11px] font-bold text-gray-600 mb-0.5">MO</label>
@@ -336,346 +336,343 @@
         </div>
     </main>
 
-  <script>
-    const inputs = ['temperatura', 'humedad', 'radiacion_lectura', 'lectura_tensiometro', 'ce', 'abejorros_flores'];
+    <script>
+        const inputs = ['temperatura', 'humedad', 'radiacion_lectura', 'lectura_tensiometro', 'ce', 'abejorros_flores'];
 
-    inputs.forEach(id => {
-        document.getElementById(id).addEventListener('input', calcularValores);
-    });
+        inputs.forEach(id => {
+            document.getElementById(id).addEventListener('input', calcularValores);
+        });
 
-    document.getElementById('chk_eps').addEventListener('change', alternarFilasAnalisis);
-    document.getElementById('chk_ecp').addEventListener('change', alternarFilasAnalisis);
+        document.getElementById('chk_eps').addEventListener('change', alternarFilasAnalisis);
+        document.getElementById('chk_ecp').addEventListener('change', alternarFilasAnalisis);
 
-    const inputsSemaforos = [
-        'eps_rapido_no3', 'eps_rapido_k', 'eps_rapido_ca', 'eps_rapido_na', 'eps_rapido_p', 'eps_rapido_ph', 'eps_rapido_ce',
-        'ecp_rapido_no3', 'ecp_rapido_k', 'ecp_rapido_ca', 'ecp_rapido_na', 'ecp_rapido_p', 'ecp_rapido_ph', 'ecp_rapido_ce',
-        'lab_mo', 'lab_p_bray', 'lab_k', 'lab_mg', 'lab_na', 'lab_fe', 'lab_zn', 'lab_mn', 'lab_cu', 'lab_b', 'lab_s', 'lab_n_no3'
-    ];
+        const inputsSemaforos = [
+            'eps_rapido_no3', 'eps_rapido_k', 'eps_rapido_ca', 'eps_rapido_na', 'eps_rapido_p', 'eps_rapido_ph', 'eps_rapido_ce',
+            'ecp_rapido_no3', 'ecp_rapido_k', 'ecp_rapido_ca', 'ecp_rapido_na', 'ecp_rapido_p', 'ecp_rapido_ph', 'ecp_rapido_ce',
+            'lab_mo', 'lab_p_bray', 'lab_k', 'lab_mg', 'lab_na', 'lab_fe', 'lab_zn', 'lab_mn', 'lab_cu', 'lab_b', 'lab_s', 'lab_n_no3'
+        ];
 
-    inputsSemaforos.forEach(name => {
-        const el = document.getElementsByName(name)[0];
-        if(el) {
-            el.addEventListener('input', evaluarSemaforosDinamicos);
-        }
-    });
-
-    document.querySelectorAll('input[name="tipo_analisis_lab"]').forEach(radio => {
-        radio.addEventListener('change', evaluarSemaforosDinamicos);
-    });
-
-    function calcularValores() {
-        const temp = parseFloat(document.getElementById('temperatura').value);
-        const hum = parseFloat(document.getElementById('humedad').value);
-        const lux = parseFloat(document.getElementById('radiacion_lectura').value);
-        const tensio = parseFloat(document.getElementById('lectura_tensiometro').value);
-        const ceValor = parseFloat(document.getElementById('ce').value);
-        const abejorros = parseFloat(document.getElementById('abejorros_flores').value);
-
-        const divAlertaCe = document.getElementById('alerta_ce');
-        const divAnalisisRapido = document.getElementById('seccion_analisis_rapido');
-        const divSeccionLab = document.getElementById('seccion_laboratorio');
-        const selectCumplio = document.getElementById('analisis_rapido_cumplio');
-
-        if (!isNaN(ceValor) && ceValor > 3.0) {
-            divAlertaCe.classList.remove('hidden');
-            divAnalisisRapido.classList.remove('hidden');
-            alternarFilasAnalisis();
-            if (selectCumplio.value === 'no') {
-                divSeccionLab.classList.remove('hidden');
+        inputsSemaforos.forEach(name => {
+            const el = document.getElementsByName(name)[0];
+            if (el) {
+                el.addEventListener('input', evaluarSemaforosDinamicos);
             }
-        } else {
-            divAlertaCe.classList.add('hidden');
-            divAnalisisRapido.classList.add('hidden');
-            divSeccionLab.classList.add('hidden');
-        }
+        });
 
-        // 1. Cálculo DPV
-        const eBox = document.getElementById('estatus_box');
-        const eText = document.getElementById('estatus_text');
+        document.querySelectorAll('input[name="tipo_analisis_lab"]').forEach(radio => {
+            radio.addEventListener('change', evaluarSemaforosDinamicos);
+        });
 
-        if (!isNaN(temp) && !isNaN(hum)) {
-            const es = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
-            const dpv = parseFloat((es * (1 - (hum / 100))).toFixed(2));
-            document.getElementById('dpv_view').value = dpv;
+        function calcularValores() {
+            const temp = parseFloat(document.getElementById('temperatura').value);
+            const hum = parseFloat(document.getElementById('humedad').value);
+            const lux = parseFloat(document.getElementById('radiacion_lectura').value);
+            const tensio = parseFloat(document.getElementById('lectura_tensiometro').value);
+            const ceValor = parseFloat(document.getElementById('ce').value);
+            const abejorros = parseFloat(document.getElementById('abejorros_flores').value);
 
-            if (dpv >= 0.8 && dpv <= 1.4) {
-                eBox.className = "bg-emerald-100 rounded-xl border border-emerald-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
-                eText.className = "text-2xl font-black text-emerald-800";
-                eText.innerText = "ÓPTIMO";
+            const divAlertaCe = document.getElementById('alerta_ce');
+            const divAnalisisRapido = document.getElementById('seccion_analisis_rapido');
+            const divSeccionLab = document.getElementById('seccion_laboratorio');
+            const selectCumplio = document.getElementById('analisis_rapido_cumplio');
+
+            if (!isNaN(ceValor) && ceValor > 3.0) {
+                divAlertaCe.classList.remove('hidden');
+                divAnalisisRapido.classList.remove('hidden');
+                alternarFilasAnalisis();
+                if (selectCumplio.value === 'no') {
+                    divSeccionLab.classList.remove('hidden');
+                }
             } else {
-                eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
-                eText.className = "text-2xl font-black text-red-800";
-                eText.innerText = "REVISAR CLIMA";
+                divAlertaCe.classList.add('hidden');
+                divAnalisisRapido.classList.add('hidden');
+                divSeccionLab.classList.add('hidden');
             }
-        } else {
-            document.getElementById('dpv_view').value = "";
-            eBox.className = "bg-gray-100 rounded-xl border border-gray-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
-            eText.className = "text-2xl font-black text-gray-400";
-            eText.innerText = "—";
-        }
 
-        // 2. Tensiómetro
-        const tAlertaView = document.getElementById('tensiometro_alerta_view');
-        const tEstatusHidden = document.getElementById('tensiometro_estatus');
-        
-        if (!isNaN(tensio)) {
-            if (tensio < 5) {
-                tAlertaView.className = "w-full bg-blue-100 border border-blue-300 text-blue-800 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center shadow-sm";
-                tAlertaView.value = "💧 SUELO SATURADO (NO REGAR)";
-                tEstatusHidden.value = "SUELO SATURADO";
-            } 
-            else if (tensio >= 5 && tensio <= 20) {
-                tAlertaView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center shadow-sm";
-                tAlertaView.value = "✅ HUMEDAD ADECUADA";
-                tEstatusHidden.value = "HUMEDAD ADECUADA";
-            } 
-            else if (tensio > 20 && tensio <= 30) {
-                tAlertaView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center shadow-sm";
-                tAlertaView.value = "⚠️ SOLICITAR RIEGO";
-                tEstatusHidden.value = "SOLICITAR RIEGO";
-            } 
-            else if (tensio > 30) {
-                tAlertaView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-1.5 text-xs font-black text-center animate-pulse shadow-sm";
-                tAlertaView.value = "🚨 CRÍTICO: SUELO SECO (URGENTE)";
-                tEstatusHidden.value = "SUELO SECO CRÍTICO";
-            }
-        } else {
-            tAlertaView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center";
-            tAlertaView.value = "Esperando lectura...";
-            tEstatusHidden.value = "";
-        }
+            // 1. Cálculo DPV
+            const eBox = document.getElementById('estatus_box');
+            const eText = document.getElementById('estatus_text');
 
-        // 3. Radiación
-        const rSemaforoView = document.getElementById('radiacion_semaforo_view');
-        const rSemaforoHidden = document.getElementById('radiacion_semaforo');
-        const rAccionTomada = document.getElementsByName('radiacion_accion_tomada')[0];
+            if (!isNaN(temp) && !isNaN(hum)) {
+                const es = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
+                const dpv = parseFloat((es * (1 - (hum / 100))).toFixed(2));
+                document.getElementById('dpv_view').value = dpv;
 
-        if (!isNaN(lux)) {
-            if (lux < 15000) {
-                rSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                rSemaforoView.value = "ROJO (Insuficiente)";
-                rSemaforoHidden.value = "ROJO";
-                rAccionTomada.value = "Espaciar riego, evitar saturación";
-            } else if (lux >= 15000 && lux <= 34000) {
-                rSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                rSemaforoView.value = "AMARILLO (Baja/Moderada)";
-                rSemaforoHidden.value = "AMARILLO";
-                rAccionTomada.value = "Mantenimiento vegetativo";
-            } else if (lux >= 35000 && lux <= 65000) {
-                rSemaforoView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                rSemaforoView.value = "VERDE (Óptima)";
-                rSemaforoHidden.value = "VERDE";
-                rAccionTomada.value = "Riego normal, máxima fotosíntesis";
-            } else if (lux >= 66000 && lux <= 80000) {
-                rSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                rSemaforoView.value = "AMARILLO (Alta/Alerta)";
-                rSemaforoHidden.value = "AMARILLO";
-                rAccionTomada.value = "Monitorear T/VPD";
+                if (dpv >= 0.8 && dpv <= 1.4) {
+                    eBox.className = "bg-emerald-100 rounded-xl border border-emerald-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
+                    eText.className = "text-2xl font-black text-emerald-800";
+                    eText.innerText = "ÓPTIMO";
+                } else {
+                    eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
+                    eText.className = "text-2xl font-black text-red-800";
+                    eText.innerText = "REVISAR CLIMA";
+                }
             } else {
-                rSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                rSemaforoView.value = "ROJO (Excesiva/Crítica)";
-                rSemaforoHidden.value = "ROJO";
-                rAccionTomada.value = "Activar malla sombra, nebulización";
+                document.getElementById('dpv_view').value = "";
+                eBox.className = "bg-gray-100 rounded-xl border border-gray-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
+                eText.className = "text-2xl font-black text-gray-400";
+                eText.innerText = "—";
             }
-        } else {
-            rSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-            rSemaforoView.value = "Esperando datos...";
-            rSemaforoHidden.value = "";
-            rAccionTomada.value = "";
-        }
 
-        // 4. Semáforo Abejorros (25-30 verde, 20-24 amarillo, <19 rojo)
-        const aSemaforoView = document.getElementById('abejorros_semaforo_view');
-        if (!isNaN(abejorros)) {
-            if (abejorros >= 25 && abejorros <= 30) {
-                aSemaforoView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                aSemaforoView.value = "VERDE (25 - 30 flores)";
-            } else if (abejorros >= 20 && abejorros <= 24) {
-                aSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                aSemaforoView.value = "AMARILLO (20 - 24 flores)";
+            // 2. Tensiómetro
+            const tAlertaView = document.getElementById('tensiometro_alerta_view');
+            const tEstatusHidden = document.getElementById('tensiometro_estatus');
+
+            if (!isNaN(tensio)) {
+                if (tensio < 5) {
+                    tAlertaView.className = "w-full bg-blue-100 border border-blue-300 text-blue-800 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center shadow-sm";
+                    tAlertaView.value = "💧 SUELO SATURADO (NO REGAR)";
+                    tEstatusHidden.value = "SUELO SATURADO";
+                } else if (tensio >= 5 && tensio <= 20) {
+                    tAlertaView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center shadow-sm";
+                    tAlertaView.value = "✅ HUMEDAD ADECUADA";
+                    tEstatusHidden.value = "HUMEDAD ADECUADA";
+                } else if (tensio > 20 && tensio <= 30) {
+                    tAlertaView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center shadow-sm";
+                    tAlertaView.value = "⚠️ SOLICITAR RIEGO";
+                    tEstatusHidden.value = "SOLICITAR RIEGO";
+                } else if (tensio > 30) {
+                    tAlertaView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-1.5 text-xs font-black text-center animate-pulse shadow-sm";
+                    tAlertaView.value = "🚨 CRÍTICO: SUELO SECO (URGENTE)";
+                    tEstatusHidden.value = "SUELO SECO CRÍTICO";
+                }
             } else {
-                aSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                aSemaforoView.value = "ROJO (Menor a 19 flores)";
-            }
-        } else {
-            aSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-            aSemaforoView.value = "Esperando datos...";
-        }
-    }
-
-    function evaluarCumplimiento() {
-        const seleccion = document.getElementById('analisis_rapido_cumplio').value;
-        const seccionLab = document.getElementById('seccion_laboratorio');
-        
-        if (seleccion === 'no') {
-            seccionLab.classList.remove('hidden');
-        } else {
-            seccionLab.classList.add('hidden');
-        }
-    }
-
-    function alternarFilasAnalisis() {
-        const epsChecked = document.getElementById('chk_eps').checked;
-        const ecpChecked = document.getElementById('chk_ecp').checked;
-
-        const filaEps = document.getElementById('fila_analisis_eps');
-        const filaEcp = document.getElementById('fila_analisis_ecp');
-
-        if (epsChecked) {
-            filaEps.classList.remove('hidden');
-        } else {
-            filaEps.classList.add('hidden');
-        }
-
-        if (ecpChecked) {
-            filaEcp.classList.remove('hidden');
-        } else {
-            filaEcp.classList.add('hidden');
-        }
-    }
-
-    function evaluarSemaforosDinamicos() {
-        const bajo = ['bg-red-50', 'border-red-400', 'focus:ring-red-500', 'text-red-900'];
-        const optimo = ['bg-green-50', 'border-green-400', 'focus:ring-green-500', 'text-green-900'];
-        const alto = ['bg-amber-50', 'border-amber-400', 'focus:ring-amber-500', 'text-amber-900'];
-        const limpiar = ['bg-white', 'border-gray-300', 'focus:border-cyan-500', 'focus:border-emerald-500', 'bg-red-50', 'border-red-400', 'bg-green-50', 'border-green-400', 'bg-amber-50', 'border-amber-400', 'text-red-900', 'text-green-900', 'text-amber-900'];
-
-        function aplicarColor(inputName, valor, minOptimo, maxOptimo, forzarGris = false) {
-            const el = document.getElementsByName(inputName)[0];
-            if (!el || el.value === "") {
-                if(el) el.classList.remove(...limpiar);
-                return;
-            }
-            
-            el.classList.remove(...limpiar);
-
-            if (forzarGris) {
-                return; 
+                tAlertaView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-1.5 text-xs font-bold text-center";
+                tAlertaView.value = "Esperando lectura...";
+                tEstatusHidden.value = "";
             }
 
-            if (valor < minOptimo) {
-                el.classList.add(...bajo);
-            } else if (valor >= minOptimo && valor <= maxOptimo) {
-                el.classList.add(...optimo);
+            // 3. Radiación
+            const rSemaforoView = document.getElementById('radiacion_semaforo_view');
+            const rSemaforoHidden = document.getElementById('radiacion_semaforo');
+            const rAccionTomada = document.getElementsByName('radiacion_accion_tomada')[0];
+
+            if (!isNaN(lux)) {
+                if (lux < 15000) {
+                    rSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    rSemaforoView.value = "ROJO (Insuficiente)";
+                    rSemaforoHidden.value = "ROJO";
+                    rAccionTomada.value = "Espaciar riego, evitar saturación";
+                } else if (lux >= 15000 && lux <= 34000) {
+                    rSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    rSemaforoView.value = "AMARILLO (Baja/Moderada)";
+                    rSemaforoHidden.value = "AMARILLO";
+                    rAccionTomada.value = "Mantenimiento vegetativo";
+                } else if (lux >= 35000 && lux <= 65000) {
+                    rSemaforoView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    rSemaforoView.value = "VERDE (Óptima)";
+                    rSemaforoHidden.value = "VERDE";
+                    rAccionTomada.value = "Riego normal, máxima fotosíntesis";
+                } else if (lux >= 66000 && lux <= 80000) {
+                    rSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    rSemaforoView.value = "AMARILLO (Alta/Alerta)";
+                    rSemaforoHidden.value = "AMARILLO";
+                    rAccionTomada.value = "Monitorear T/VPD";
+                } else {
+                    rSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    rSemaforoView.value = "ROJO (Excesiva/Crítica)";
+                    rSemaforoHidden.value = "ROJO";
+                    rAccionTomada.value = "Activar malla sombra, nebulización";
+                }
             } else {
-                el.classList.add(...alto);
+                rSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                rSemaforoView.value = "Sin registro";
+                rSemaforoHidden.value = "";
+                rAccionTomada.value = "";
+            }
+
+            // 4. Semáforo Abejorros (25-30 verde, 20-24 amarillo, <19 rojo)
+            const aSemaforoView = document.getElementById('abejorros_semaforo_view');
+            if (!isNaN(abejorros)) {
+                if (abejorros >= 25 && abejorros <= 30) {
+                    aSemaforoView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    aSemaforoView.value = "VERDE (25 - 30 flores)";
+                } else if (abejorros >= 20 && abejorros <= 24) {
+                    aSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    aSemaforoView.value = "AMARILLO (20 - 24 flores)";
+                } else {
+                    aSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                    aSemaforoView.value = "ROJO (Menor a 19 flores)";
+                }
+            } else {
+                aSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
+                aSemaforoView.value = "Sin registro";
             }
         }
 
-        const epsNo3 = parseFloat(document.getElementsByName('eps_rapido_no3')[0]?.value);
-        aplicarColor('eps_rapido_no3', epsNo3, 150, 250); 
+        function evaluarCumplimiento() {
+            const seleccion = document.getElementById('analisis_rapido_cumplio').value;
+            const seccionLab = document.getElementById('seccion_laboratorio');
 
-        const epsK = parseFloat(document.getElementsByName('eps_rapido_k')[0]?.value);
-        aplicarColor('eps_rapido_k', epsK, 117, 234); 
-
-        const epsCa = parseFloat(document.getElementsByName('eps_rapido_ca')[0]?.value);
-        aplicarColor('eps_rapido_ca', epsCa, 120, 200); 
-
-        const epsNa = parseFloat(document.getElementsByName('eps_rapido_na')[0]?.value);
-        aplicarColor('eps_rapido_na', epsNa, 0, 60); 
-
-        const epsP = parseFloat(document.getElementsByName('eps_rapido_p')[0]?.value);
-        aplicarColor('eps_rapido_p', epsP, 15, 30); 
-
-        const epsPh = parseFloat(document.getElementsByName('eps_rapido_ph')[0]?.value);
-        aplicarColor('eps_rapido_ph', epsPh, 5.5, 6.5); 
-
-        const epsCe = parseFloat(document.getElementsByName('eps_rapido_ce')[0]?.value);
-        aplicarColor('eps_rapido_ce', epsCe, 2.0, 3.5); 
-
-        const ecpNo3 = parseFloat(document.getElementsByName('ecp_rapido_no3')[0]?.value);
-        aplicarColor('ecp_rapido_no3', ecpNo3, 500, 800); 
-
-        const ecpK = parseFloat(document.getElementsByName('ecp_rapido_k')[0]?.value);
-        aplicarColor('ecp_rapido_k', ecpK, 3500, 5000); 
-
-        const ecpCa = parseFloat(document.getElementsByName('ecp_rapido_ca')[0]?.value);
-        aplicarColor('ecp_rapido_ca', ecpCa, 200, 450); 
-
-        const ecpNa = parseFloat(document.getElementsByName('ecp_rapido_na')[0]?.value);
-        aplicarColor('ecp_rapido_na', ecpNa, 0, 100); 
-
-        const ecpP = parseFloat(document.getElementsByName('ecp_rapido_p')[0]?.value);
-        aplicarColor('ecp_rapido_p', ecpP, 200, 400); 
-
-        const ecpPh = parseFloat(document.getElementsByName('ecp_rapido_ph')[0]?.value);
-        aplicarColor('ecp_rapido_ph', ecpPh, 5.5, 6.2); 
-
-        const ecpCe = parseFloat(document.getElementsByName('ecp_rapido_ce')[0]?.value);
-        aplicarColor('ecp_rapido_ce', ecpCe, 8.0, 12.0); 
-
-        const tipoLab = document.querySelector('input[name="tipo_analisis_lab"]:checked')?.value;
-
-        if (tipoLab === 'fertilidad') {
-            const labNo3 = parseFloat(document.getElementsByName('lab_n_no3')[0]?.value);
-            aplicarColor('lab_n_no3', labNo3, 25, 45); 
-
-            const labP = parseFloat(document.getElementsByName('lab_p_bray')[0]?.value);
-            aplicarColor('lab_p_bray', labP, 25, 45); 
-
-            const labK = parseFloat(document.getElementsByName('lab_k')[0]?.value);
-            aplicarColor('lab_k', labK, 180, 300); 
-
-            const labMg = parseFloat(document.getElementsByName('lab_mg')[0]?.value);
-            aplicarColor('lab_mg', labMg, 250, 450); 
-
-            const labNa = parseFloat(document.getElementsByName('lab_na')[0]?.value);
-            aplicarColor('lab_na', labNa, 0, 0, true); 
-
-            const labFe = parseFloat(document.getElementsByName('lab_fe')[0]?.value);
-            aplicarColor('lab_fe', labFe, 5.0, 15.0); 
-
-            const labZn = parseFloat(document.getElementsByName('lab_zn')[0]?.value);
-            aplicarColor('lab_zn', labZn, 1.5, 3.5); 
-
-            const labMn = parseFloat(document.getElementsByName('lab_mn')[0]?.value);
-            aplicarColor('lab_mn', labMn, 2.0, 10.0); 
-
-            const labCu = parseFloat(document.getElementsByName('lab_cu')[0]?.value);
-            aplicarColor('lab_cu', labCu, 0.4, 1.5); 
-
-            const labB = parseFloat(document.getElementsByName('lab_b')[0]?.value);
-            aplicarColor('lab_b', labB, 0.6, 1.2); 
-
-            const labS = parseFloat(document.getElementsByName('lab_s')[0]?.value);
-            aplicarColor('lab_s', labS, 15, 35); 
-
-        } else if (tipoLab === 'pasta_saturada') {
-            const labNo3 = parseFloat(document.getElementsByName('lab_n_no3')[0]?.value);
-            aplicarColor('lab_n_no3', labNo3, 150, 250); 
-
-            const labP = parseFloat(document.getElementsByName('lab_p_bray')[0]?.value);
-            aplicarColor('lab_p_bray', labP, 15, 30); 
-
-            const labK = parseFloat(document.getElementsByName('lab_k')[0]?.value);
-            aplicarColor('lab_k', labK, 150, 250); 
-
-            const labMg = parseFloat(document.getElementsByName('lab_mg')[0]?.value);
-            aplicarColor('lab_mg', labMg, 36, 60); 
-
-            const labNa = parseFloat(document.getElementsByName('lab_na')[0]?.value);
-            aplicarColor('lab_na', labNa, 0, 60); 
-
-            const labFe = parseFloat(document.getElementsByName('lab_fe')[0]?.value);
-            aplicarColor('lab_fe', labFe, 0, 0, true); 
-
-            const labZn = parseFloat(document.getElementsByName('lab_zn')[0]?.value);
-            aplicarColor('lab_zn', labZn, 0, 0, true);
-
-            const labMn = parseFloat(document.getElementsByName('lab_mn')[0]?.value);
-            aplicarColor('lab_mn', labMn, 0, 0, true);
-
-            const labCu = parseFloat(document.getElementsByName('lab_cu')[0]?.value);
-            aplicarColor('lab_cu', labCu, 0, 0, true);
-
-            const labB = parseFloat(document.getElementsByName('lab_b')[0]?.value);
-            aplicarColor('lab_b', labB, 0, 0, true);
-
-            const labS = parseFloat(document.getElementsByName('lab_s')[0]?.value);
-            aplicarColor('lab_s', labS, 192, 480); 
+            if (seleccion === 'no') {
+                seccionLab.classList.remove('hidden');
+            } else {
+                seccionLab.classList.add('hidden');
+            }
         }
-    }
-</script>
+
+        function alternarFilasAnalisis() {
+            const epsChecked = document.getElementById('chk_eps').checked;
+            const ecpChecked = document.getElementById('chk_ecp').checked;
+
+            const filaEps = document.getElementById('fila_analisis_eps');
+            const filaEcp = document.getElementById('fila_analisis_ecp');
+
+            if (epsChecked) {
+                filaEps.classList.remove('hidden');
+            } else {
+                filaEps.classList.add('hidden');
+            }
+
+            if (ecpChecked) {
+                filaEcp.classList.remove('hidden');
+            } else {
+                filaEcp.classList.add('hidden');
+            }
+        }
+
+        function evaluarSemaforosDinamicos() {
+            const bajo = ['bg-red-50', 'border-red-400', 'focus:ring-red-500', 'text-red-900'];
+            const optimo = ['bg-green-50', 'border-green-400', 'focus:ring-green-500', 'text-green-900'];
+            const alto = ['bg-amber-50', 'border-amber-400', 'focus:ring-amber-500', 'text-amber-900'];
+            const limpiar = ['bg-white', 'border-gray-300', 'focus:border-cyan-500', 'focus:border-emerald-500', 'bg-red-50', 'border-red-400', 'bg-green-50', 'border-green-400', 'bg-amber-50', 'border-amber-400', 'text-red-900', 'text-green-900', 'text-amber-900'];
+
+            function aplicarColor(inputName, valor, minOptimo, maxOptimo, forzarGris = false) {
+                const el = document.getElementsByName(inputName)[0];
+                if (!el || el.value === "") {
+                    if (el) el.classList.remove(...limpiar);
+                    return;
+                }
+
+                el.classList.remove(...limpiar);
+
+                if (forzarGris) {
+                    return;
+                }
+
+                if (valor < minOptimo) {
+                    el.classList.add(...bajo);
+                } else if (valor >= minOptimo && valor <= maxOptimo) {
+                    el.classList.add(...optimo);
+                } else {
+                    el.classList.add(...alto);
+                }
+            }
+
+            const epsNo3 = parseFloat(document.getElementsByName('eps_rapido_no3')[0]?.value);
+            aplicarColor('eps_rapido_no3', epsNo3, 150, 250);
+
+            const epsK = parseFloat(document.getElementsByName('eps_rapido_k')[0]?.value);
+            aplicarColor('eps_rapido_k', epsK, 117, 234);
+
+            const epsCa = parseFloat(document.getElementsByName('eps_rapido_ca')[0]?.value);
+            aplicarColor('eps_rapido_ca', epsCa, 120, 200);
+
+            const epsNa = parseFloat(document.getElementsByName('eps_rapido_na')[0]?.value);
+            aplicarColor('eps_rapido_na', epsNa, 0, 60);
+
+            const epsP = parseFloat(document.getElementsByName('eps_rapido_p')[0]?.value);
+            aplicarColor('eps_rapido_p', epsP, 15, 30);
+
+            const epsPh = parseFloat(document.getElementsByName('eps_rapido_ph')[0]?.value);
+            aplicarColor('eps_rapido_ph', epsPh, 5.5, 6.5);
+
+            const epsCe = parseFloat(document.getElementsByName('eps_rapido_ce')[0]?.value);
+            aplicarColor('eps_rapido_ce', epsCe, 2.0, 3.5);
+
+            const ecpNo3 = parseFloat(document.getElementsByName('ecp_rapido_no3')[0]?.value);
+            aplicarColor('ecp_rapido_no3', ecpNo3, 500, 800);
+
+            const ecpK = parseFloat(document.getElementsByName('ecp_rapido_k')[0]?.value);
+            aplicarColor('ecp_rapido_k', ecpK, 3500, 5000);
+
+            const ecpCa = parseFloat(document.getElementsByName('ecp_rapido_ca')[0]?.value);
+            aplicarColor('ecp_rapido_ca', ecpCa, 200, 450);
+
+            const ecpNa = parseFloat(document.getElementsByName('ecp_rapido_na')[0]?.value);
+            aplicarColor('ecp_rapido_na', ecpNa, 0, 100);
+
+            const ecpP = parseFloat(document.getElementsByName('ecp_rapido_p')[0]?.value);
+            aplicarColor('ecp_rapido_p', ecpP, 200, 400);
+
+            const ecpPh = parseFloat(document.getElementsByName('ecp_rapido_ph')[0]?.value);
+            aplicarColor('ecp_rapido_ph', ecpPh, 5.5, 6.2);
+
+            const ecpCe = parseFloat(document.getElementsByName('ecp_rapido_ce')[0]?.value);
+            aplicarColor('ecp_rapido_ce', ecpCe, 8.0, 12.0);
+
+            const tipoLab = document.querySelector('input[name="tipo_analisis_lab"]:checked')?.value;
+
+            if (tipoLab === 'fertilidad') {
+                const labNo3 = parseFloat(document.getElementsByName('lab_n_no3')[0]?.value);
+                aplicarColor('lab_n_no3', labNo3, 25, 45);
+
+                const labP = parseFloat(document.getElementsByName('lab_p_bray')[0]?.value);
+                aplicarColor('lab_p_bray', labP, 25, 45);
+
+                const labK = parseFloat(document.getElementsByName('lab_k')[0]?.value);
+                aplicarColor('lab_k', labK, 180, 300);
+
+                const labMg = parseFloat(document.getElementsByName('lab_mg')[0]?.value);
+                aplicarColor('lab_mg', labMg, 250, 450);
+
+                const labNa = parseFloat(document.getElementsByName('lab_na')[0]?.value);
+                aplicarColor('lab_na', labNa, 0, 0, true);
+
+                const labFe = parseFloat(document.getElementsByName('lab_fe')[0]?.value);
+                aplicarColor('lab_fe', labFe, 5.0, 15.0);
+
+                const labZn = parseFloat(document.getElementsByName('lab_zn')[0]?.value);
+                aplicarColor('lab_zn', labZn, 1.5, 3.5);
+
+                const labMn = parseFloat(document.getElementsByName('lab_mn')[0]?.value);
+                aplicarColor('lab_mn', labMn, 2.0, 10.0);
+
+                const labCu = parseFloat(document.getElementsByName('lab_cu')[0]?.value);
+                aplicarColor('lab_cu', labCu, 0.4, 1.5);
+
+                const labB = parseFloat(document.getElementsByName('lab_b')[0]?.value);
+                aplicarColor('lab_b', labB, 0.6, 1.2);
+
+                const labS = parseFloat(document.getElementsByName('lab_s')[0]?.value);
+                aplicarColor('lab_s', labS, 15, 35);
+
+            } else if (tipoLab === 'pasta_saturada') {
+                const labNo3 = parseFloat(document.getElementsByName('lab_n_no3')[0]?.value);
+                aplicarColor('lab_n_no3', labNo3, 150, 250);
+
+                const labP = parseFloat(document.getElementsByName('lab_p_bray')[0]?.value);
+                aplicarColor('lab_p_bray', labP, 15, 30);
+
+                const labK = parseFloat(document.getElementsByName('lab_k')[0]?.value);
+                aplicarColor('lab_k', labK, 150, 250);
+
+                const labMg = parseFloat(document.getElementsByName('lab_mg')[0]?.value);
+                aplicarColor('lab_mg', labMg, 36, 60);
+
+                const labNa = parseFloat(document.getElementsByName('lab_na')[0]?.value);
+                aplicarColor('lab_na', labNa, 0, 60);
+
+                const labFe = parseFloat(document.getElementsByName('lab_fe')[0]?.value);
+                aplicarColor('lab_fe', labFe, 0, 0, true);
+
+                const labZn = parseFloat(document.getElementsByName('lab_zn')[0]?.value);
+                aplicarColor('lab_zn', labZn, 0, 0, true);
+
+                const labMn = parseFloat(document.getElementsByName('lab_mn')[0]?.value);
+                aplicarColor('lab_mn', labMn, 0, 0, true);
+
+                const labCu = parseFloat(document.getElementsByName('lab_cu')[0]?.value);
+                aplicarColor('lab_cu', labCu, 0, 0, true);
+
+                const labB = parseFloat(document.getElementsByName('lab_b')[0]?.value);
+                aplicarColor('lab_b', labB, 0, 0, true);
+
+                const labS = parseFloat(document.getElementsByName('lab_s')[0]?.value);
+                aplicarColor('lab_s', labS, 192, 480);
+            }
+        }
+    </script>
 </body>
 
 </html>

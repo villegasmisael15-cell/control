@@ -11,71 +11,71 @@ use Maatwebsite\Excel\Facades\Excel;
 
 class MonitoreoClimaRiegoController extends Controller
 {
-   public function index(Request $request)
-{
-    // 1. Inicializar la consulta base con Eager Loading
-    $query = MonitoreoClimaRiego::with('user')->orderBy('fecha', 'desc');
+    public function index(Request $request)
+    {
+        // 1. Inicializar la consulta base con Eager Loading
+        $query = MonitoreoClimaRiego::with('user')->orderBy('fecha', 'desc');
 
-    // 2. RESTRICCIÓN POR ROL / FILTROS DE BÚSQUEDA ADICIONALES
-    if (auth()->user()->rol !== 'administrador') {
-        $sectoresTexto = auth()->user()->sectores;
-        $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
-        $query->whereIn('sector', $sectoresAsignados);
-    } else {
-        // --- BLOQUE EXCLUSIVO DE ADMINISTRADOR: BUSCADOR UNIFICADO ---
-        if ($request->filled('buscar_termino')) {
-            $termino = $request->input('buscar_termino');
-            
-            // Agrupamos con una función callback para evitar romper otros filtros como fechas
-            $query->where(function ($q) use ($termino) {
-                // Coincidencia directa por el nombre del sector
-                $q->where('sector', 'LIKE', '%' . $termino . '%')
-                  // O coincidencia a través de la relación con el operador
-                  ->orWhereHas('user', function ($subQuery) use ($termino) {
-                      $subQuery->where('name', 'LIKE', '%' . $termino . '%');
-                  });
-            });
-        }
-    }
-
-    // 3. PROCESAR FILTROS DINÁMICOS (Semana / Mes)
-    $semana = $request->input('semana');
-    $mes = $request->input('mes');
-
-    if ($request->filled('semana') && $request->filled('mes')) {
-        if ($request->session()->get('ultimo_filtro') === 'mes') {
-            $mes = null;
-            $request->merge(['mes' => null]);
+        // 2. RESTRICCIÓN POR ROL / FILTROS DE BÚSQUEDA ADICIONALES
+        if (auth()->user()->rol !== 'administrador') {
+            $sectoresTexto = auth()->user()->sectores;
+            $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+            $query->whereIn('sector', $sectoresAsignados);
         } else {
-            $semana = null;
-            $request->merge(['semana' => null]);
+            // --- BLOQUE EXCLUSIVO DE ADMINISTRADOR: BUSCADOR UNIFICADO ---
+            if ($request->filled('buscar_termino')) {
+                $termino = $request->input('buscar_termino');
+
+                // Agrupamos con una función callback para evitar romper otros filtros como fechas
+                $query->where(function ($q) use ($termino) {
+                    // Coincidencia directa por el nombre del sector
+                    $q->where('sector', 'LIKE', '%' . $termino . '%')
+                        // O coincidencia a través de la relación con el operador
+                        ->orWhereHas('user', function ($subQuery) use ($termino) {
+                            $subQuery->where('name', 'LIKE', '%' . $termino . '%');
+                        });
+                });
+            }
         }
+
+        // 3. PROCESAR FILTROS DINÁMICOS (Semana / Mes)
+        $semana = $request->input('semana');
+        $mes = $request->input('mes');
+
+        if ($request->filled('semana') && $request->filled('mes')) {
+            if ($request->session()->get('ultimo_filtro') === 'mes') {
+                $mes = null;
+                $request->merge(['mes' => null]);
+            } else {
+                $semana = null;
+                $request->merge(['semana' => null]);
+            }
+        }
+
+        if (!empty($semana)) {
+            $request->session()->put('ultimo_filtro', 'semana');
+            [$year, $week] = explode('-W', $semana);
+            $inicioSemana = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->startOfWeek();
+            $finSemana = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->endOfWeek();
+            $query->whereBetween('fecha', [$inicioSemana, $finSemana]);
+        }
+
+        if (!empty($mes)) {
+            $request->session()->put('ultimo_filtro', 'mes');
+            $inicioMes = \Illuminate\Support\Carbon::parse($mes)->startOfMonth();
+            $finMes = \Illuminate\Support\Carbon::parse($mes)->endOfMonth();
+            $query->whereBetween('fecha', [$inicioMes, $finMes]);
+        }
+
+        if (empty($semana) && empty($mes)) {
+            $request->session()->forget('ultimo_filtro');
+        }
+
+        // 4. Obtener los registros finales ya filtrados
+        $monitoreos = $query->get();
+
+        return view('monitoreo.index', compact('monitoreos'));
     }
-
-    if (!empty($semana)) {
-        $request->session()->put('ultimo_filtro', 'semana');
-        [$year, $week] = explode('-W', $semana);
-        $inicioSemana = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->startOfWeek();
-        $finSemana = \Illuminate\Support\Carbon::now()->setISODate($year, $week)->endOfWeek();
-        $query->whereBetween('fecha', [$inicioSemana, $finSemana]);
-    }
-
-    if (!empty($mes)) {
-        $request->session()->put('ultimo_filtro', 'mes');
-        $inicioMes = \Illuminate\Support\Carbon::parse($mes)->startOfMonth();
-        $finMes = \Illuminate\Support\Carbon::parse($mes)->endOfMonth();
-        $query->whereBetween('fecha', [$inicioMes, $finMes]);
-    }
-
-    if (empty($semana) && empty($mes)) {
-        $request->session()->forget('ultimo_filtro');
-    }
-
-    // 4. Obtener los registros finales ya filtrados
-    $monitoreos = $query->get();
-
-    return view('monitoreo.index', compact('monitoreos'));
-}
 
     public function create()
     {
@@ -107,13 +107,13 @@ class MonitoreoClimaRiegoController extends Controller
         return view('monitoreo.create', compact('sectores'));
     }
 
-  public function store(Request $request)
+    public function store(Request $request)
     {
         // 1. Identificamos al verdadero dueño del sector antes de validar
         $sectorBuscado = trim($request->input('sector'));
-        
+
         $duenoSector = User::where('sectores', 'LIKE', '%' . $sectorBuscado . '%')->first();
-        
+
         // Si no encuentra al operador, usa el usuario logueado como respaldo
         $idDuenoReal = $duenoSector ? $duenoSector->id : auth()->id();
 
@@ -141,7 +141,7 @@ class MonitoreoClimaRiegoController extends Controller
             'radiacion_semaforo' => 'nullable|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
             'user_id' => 'required|exists:users,id',
-            'abejorros_flores' => 'nullable|integer|min:0', // <-- NUEVA VALIDACIÓN
+            'abejorros_flores' => 'nullable|integer|min:0',
         ]);
 
         // Lógica de riego por macetas
@@ -231,67 +231,67 @@ class MonitoreoClimaRiegoController extends Controller
     }
 
     public function show($id)
-{
-    // 1. Buscar el registro técnico o lanzar 404 si no existe (con su operador precargado)
-    $monitoreo = MonitoreoClimaRiego::with('user')->findOrFail($id);
+    {
+        // 1. Buscar el registro técnico o lanzar 404 si no existe (con su operador precargado)
+        $monitoreo = MonitoreoClimaRiego::with('user')->findOrFail($id);
 
-    // 2. RESTRICCIÓN DE SEGURIDAD: Si es operador, verificar que el registro pertenezca a sus sectores
-    if (auth()->user()->rol !== 'administrador') {
-        $sectoresTexto = auth()->user()->sectores;
-        $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+        // 2. RESTRICCIÓN DE SEGURIDAD: Si es operador, verificar que el registro pertenezca a sus sectores
+        if (auth()->user()->rol !== 'administrador') {
+            $sectoresTexto = auth()->user()->sectores;
+            $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
 
-        if (!in_array($monitoreo->sector, $sectoresAsignados)) {
-            abort(403, 'No tienes permiso para ver este registro.');
-        }
-    }
-
-    // 3. IMPLEMENTACIÓN DE CARACTERÍSTICAS: Obtener los datos fijos del sector consultado
-    $caracteristicas = \App\Models\SectorCaracteristica::where('sector', $monitoreo->sector)->first();
-
-    // 4. Retornar la vista inyectando ambas variables de forma compacta
-    return view('monitoreo.show', compact('monitoreo', 'caracteristicas'));
-}
-
-    public function edit($id)
-{
-    $monitoreo = MonitoreoClimaRiego::findOrFail($id);
-
-    // Verificación de seguridad para operadores
-    if (auth()->user()->rol !== 'administrador') {
-        $sectoresTexto = auth()->user()->sectores;
-        $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
-
-        // Si el sector del registro no le pertenece al operador, bloqueamos el acceso
-        if (!in_array($monitoreo->sector, $sectoresAsignados)) {
-            abort(403, 'No tienes permiso para editar este registro.');
-        }
-        
-        // Si es operador, solo le mostramos sus propios sectores asignados en el select
-        $sectores = $sectoresAsignados;
-    } else {
-        // Si es administrador, obtiene todos los sectores como antes
-        $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
-        $sectoresUnicos = [];
-        foreach ($todosLosSectoresTexto as $cadena) {
-            $partes = explode(',', $cadena);
-            foreach ($partes as $sector) {
-                $sectorLimpio = trim($sector);
-                if (!empty($sectorLimpio)) {
-                    $sectoresUnicos[] = $sectorLimpio;
-                }
+            if (!in_array($monitoreo->sector, $sectoresAsignados)) {
+                abort(403, 'No tienes permiso para ver este registro.');
             }
         }
-        $sectores = array_unique($sectoresUnicos);
-        sort($sectores);
+
+        // 3. IMPLEMENTACIÓN DE CARACTERÍSTICAS: Obtener los datos fijos del sector consultado
+        $caracteristicas = \App\Models\SectorCaracteristica::where('sector', $monitoreo->sector)->first();
+
+        // 4. Retornar la vista inyectando ambas variables de forma compacta
+        return view('monitoreo.show', compact('monitoreo', 'caracteristicas'));
     }
 
-    $sectoresAsignados = $sectores;
+    public function edit($id)
+    {
+        $monitoreo = MonitoreoClimaRiego::findOrFail($id);
 
-    // Retornamos enviando ambas variables por seguridad
-    return view('monitoreo.edit', compact('monitoreo', 'sectores', 'sectoresAsignados'));
-}
+        // Verificación de seguridad para operadores
+        if (auth()->user()->rol !== 'administrador') {
+            $sectoresTexto = auth()->user()->sectores;
+            $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
 
- public function update(Request $request, $id)
+            // Si el sector del registro no le pertenece al operador, bloqueamos el acceso
+            if (!in_array($monitoreo->sector, $sectoresAsignados)) {
+                abort(403, 'No tienes permiso para editar este registro.');
+            }
+
+            // Si es operador, solo le mostramos sus propios sectores asignados en el select
+            $sectores = $sectoresAsignados;
+        } else {
+            // Si es administrador, obtiene todos los sectores como antes
+            $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
+            $sectoresUnicos = [];
+            foreach ($todosLosSectoresTexto as $cadena) {
+                $partes = explode(',', $cadena);
+                foreach ($partes as $sector) {
+                    $sectorLimpio = trim($sector);
+                    if (!empty($sectorLimpio)) {
+                        $sectoresUnicos[] = $sectorLimpio;
+                    }
+                }
+            }
+            $sectores = array_unique($sectoresUnicos);
+            sort($sectores);
+        }
+
+        $sectoresAsignados = $sectores;
+
+        // Retornamos enviando ambas variables por seguridad
+        return view('monitoreo.edit', compact('monitoreo', 'sectores', 'sectoresAsignados'));
+    }
+
+    public function update(Request $request, $id)
     {
         $monitoreo = MonitoreoClimaRiego::findOrFail($id);
 
@@ -319,10 +319,10 @@ class MonitoreoClimaRiegoController extends Controller
             'ph_salida' => 'nullable|numeric',
             'peso_tarde_anterior' => 'nullable|numeric',
             'peso_manana' => 'nullable|numeric',
-            'radiacion_lectura' => 'required|integer|min:0',
-            'radiacion_semaforo' => 'required|string|max:255',
+            'radiacion_lectura' => 'nullable|integer|min:0',
+            'radiacion_semaforo' => 'nullable|string|max:255',
             'radiacion_accion_tomada' => 'nullable|string',
-            'abejorros_flores' => 'nullable|integer|min:0', // <-- NUEVA VALIDACIÓN
+            'abejorros_flores' => 'nullable|integer|min:0',
         ]);
 
         // Lógica de riego por macetas
@@ -418,78 +418,78 @@ class MonitoreoClimaRiegoController extends Controller
         return redirect()->route('monitoreo.index')->with('status', 'El registro ha sido eliminado.');
     }
 
-public function exportarExcel($id)
-{
-    if (auth()->user()->rol !== 'administrador') {
-        abort(403, 'Acción no autorizada.');
-    }
-
-    $monitoreo = MonitoreoClimaRiego::findOrFail($id);
-    $caracteristicas = \App\Models\SectorCaracteristica::where('sector', $monitoreo->sector)->first();
-
-    $operador = \App\Models\User::where('sectores', 'LIKE', '%' . $monitoreo->sector . '%')
-                                ->where('rol', '!=', 'administrador')
-                                ->first();
-
-    $operadorDueno = $operador ? $operador->name : 'Sin operador asignado';
-
-    $nombreArchivo = "Reporte_Sector_" . str_replace(' ', '_', $monitoreo->sector) . "_ID_" . $monitoreo->id . ".xlsx";
-
-    return Excel::download(new ReporteMonitoreoExport($monitoreo, $caracteristicas, $operadorDueno), $nombreArchivo);
-}
-
-public function graficas(Request $request)
-{
-    $query = MonitoreoClimaRiego::orderBy('fecha', 'desc');
-
-    // 1. RESTRICCIÓN O FILTRADO POR SECTOR
-    if (auth()->user()->rol !== 'administrador') {
-        // El operador solo puede ver sus sectores asignados
-        $sectoresTexto = auth()->user()->sectores;
-        $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
-        $query->whereIn('sector', $sectoresAsignados);
-    } else {
-        // El administrador filtra por el sector que elija en el select dinámico
-        if ($request->filled('buscar_sector')) {
-            $query->where('sector', $request->input('buscar_sector'));
+    public function exportarExcel($id)
+    {
+        if (auth()->user()->rol !== 'administrador') {
+            abort(403, 'Acción no autorizada.');
         }
+
+        $monitoreo = MonitoreoClimaRiego::findOrFail($id);
+        $caracteristicas = \App\Models\SectorCaracteristica::where('sector', $monitoreo->sector)->first();
+
+        $operador = \App\Models\User::where('sectores', 'LIKE', '%' . $monitoreo->sector . '%')
+            ->where('rol', '!=', 'administrador')
+            ->first();
+
+        $operadorDueno = $operador ? $operador->name : 'Sin operador asignado';
+
+        $nombreArchivo = "Reporte_Sector_" . str_replace(' ', '_', $monitoreo->sector) . "_ID_" . $monitoreo->id . ".xlsx";
+
+        return Excel::download(new ReporteMonitoreoExport($monitoreo, $caracteristicas, $operadorDueno), $nombreArchivo);
     }
 
-    // 2. FILTRO POR MES
-    $mes = $request->input('mes');
-    if ($request->filled('mes')) {
-        $inicioMes = \Illuminate\Support\Carbon::parse($mes)->startOfMonth();
-        $finMes = \Illuminate\Support\Carbon::parse($mes)->endOfMonth();
-        $query->whereBetween('fecha', [$inicioMes, $finMes]);
-        
-        $historicoReciente = $query->get();
-    } else {
-        // Comportamiento por defecto: Muestra los últimos 15 registros del sector seleccionado
-        $historicoReciente = $query->take(15)->get();
+    public function graficas(Request $request)
+    {
+        $query = MonitoreoClimaRiego::orderBy('fecha', 'desc');
+
+        // 1. RESTRICCIÓN O FILTRADO POR SECTOR
+        if (auth()->user()->rol !== 'administrador') {
+            // El operador solo puede ver sus sectores asignados
+            $sectoresTexto = auth()->user()->sectores;
+            $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+            $query->whereIn('sector', $sectoresAsignados);
+        } else {
+            // El administrador filtra por el sector que elija en el select dinámico
+            if ($request->filled('buscar_sector')) {
+                $query->where('sector', $request->input('buscar_sector'));
+            }
+        }
+
+        // 2. FILTRO POR MES
+        $mes = $request->input('mes');
+        if ($request->filled('mes')) {
+            $inicioMes = \Illuminate\Support\Carbon::parse($mes)->startOfMonth();
+            $finMes = \Illuminate\Support\Carbon::parse($mes)->endOfMonth();
+            $query->whereBetween('fecha', [$inicioMes, $finMes]);
+
+            $historicoReciente = $query->get();
+        } else {
+            // Comportamiento por defecto: Muestra los últimos 15 registros del sector seleccionado
+            $historicoReciente = $query->take(15)->get();
+        }
+
+        // Invertir la colección para mantener el orden cronológico de izquierda a derecha
+        $historico = $historicoReciente->reverse();
+
+        // 3. Mapeo y formateo estricto a tipos primitivos de JavaScript
+        $fechas   = $historico->pluck('fecha')->map(fn($f) => \Carbon\Carbon::parse($f)->format('d/m'))->toArray();
+        $dpv      = $historico->pluck('dpv')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+        $drenaje  = $historico->pluck('porcentaje_drenaje')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+        $difCe    = $historico->pluck('diferencia_ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+        $lux      = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+
+        return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux'));
     }
-
-    // Invertir la colección para mantener el orden cronológico de izquierda a derecha
-    $historico = $historicoReciente->reverse();
-
-    // 3. Mapeo y formateo estricto a tipos primitivos de JavaScript
-    $fechas   = $historico->pluck('fecha')->map(fn($f) => \Carbon\Carbon::parse($f)->format('d/m'))->toArray();
-    $dpv      = $historico->pluck('dpv')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-    $drenaje  = $historico->pluck('porcentaje_drenaje')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-    $difCe    = $historico->pluck('diferencia_ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-    $lux      = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-
-    return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux'));
-}
 
     /**
      * Función privada para disparar la notificación push a los Administradores
      */
-private function enviarAlertaAdministradores($sector, $valor, $tipo = 'drenaje')
+    private function enviarAlertaAdministradores($sector, $valor, $tipo = 'drenaje')
     {
         // 1. Buscar únicamente a los usuarios con rol de administrador que tengan token FCM registrado
         $admins = User::where('rol', 'administrador')
-                      ->whereNotNull('fcm_token')
-                      ->get();
+            ->whereNotNull('fcm_token')
+            ->get();
 
         $projectId = "unitasrubraalertas";
 
@@ -512,7 +512,7 @@ private function enviarAlertaAdministradores($sector, $valor, $tipo = 'drenaje')
                 }
 
                 $jsonKey = json_decode(file_get_contents($jsonPath), true);
-                
+
                 // 3. Generar token de seguridad (JWT) para autenticarnos con Google
                 $now = time();
                 $header = json_encode(['alg' => 'RS256', 'typ' => 'JWT']);
@@ -526,11 +526,11 @@ private function enviarAlertaAdministradores($sector, $valor, $tipo = 'drenaje')
 
                 $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
                 $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
-                
+
                 $signature = '';
                 openssl_sign($base64UrlHeader . "." . $base64UrlPayload, $signature, $jsonKey['private_key'], OPENSSL_ALGO_SHA256);
                 $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
-                
+
                 $jwt = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
 
                 // 4. Obtener el Access Token temporal de Google
@@ -579,16 +579,15 @@ private function enviarAlertaAdministradores($sector, $valor, $tipo = 'drenaje')
                     'Content-Type: application/json',
                     'Authorization: Bearer ' . $accessToken
                 ]);
-                
+
                 $result = curl_exec($ch);
                 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-                
+
                 if ($httpCode !== 200) {
                     \Illuminate\Support\Facades\Log::error("FCM Error HTTP $httpCode al enviar notificación al administrador ID {$admin->id}: " . $result);
                 }
-                
-                curl_close($ch);
 
+                curl_close($ch);
             } catch (\Exception $e) {
                 \Illuminate\Support\Facades\Log::error("FCM Exception: " . $e->getMessage());
                 continue;
