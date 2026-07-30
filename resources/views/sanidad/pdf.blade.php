@@ -47,7 +47,7 @@
 
     <!-- 1. AGROQUÍMICOS -->
     <h3>1. Manejo de Agroquímicos</h3>
-    @if($bitacora->agroquimicos->isNotEmpty())
+    @if($bitacora->agroquimicos && $bitacora->agroquimicos->isNotEmpty())
         @php 
             $primerArq = $bitacora->agroquimicos->first(); 
             $agroquimicosAgrupados = $bitacora->agroquimicos->groupBy(function($item) {
@@ -93,12 +93,12 @@
             </table>
         @endforeach
     @else
-        <p style="color: #6b7280; font-style: italic;">Sin aplicaciones de agroquímicos registradas.</p>
+        <p style="color: #6b7280; font-style: italic;">Sin aplicaciones de agroquímicos registradas en esta bitácora.</p>
     @endif
 
     <!-- 2. FERTILIZANTES -->
     <h3>2. Manejo de Fertilizantes</h3>
-    @if($bitacora->fertilizantes->isNotEmpty())
+    @if($bitacora->fertilizantes && $bitacora->fertilizantes->isNotEmpty())
         @php 
             $primerFert = $bitacora->fertilizantes->first();
             $tipoSolucionGeneral = $primerFert->tipo_solucion ?? ($primerFert->getAttributes()['tipo_solucion'] ?? null);

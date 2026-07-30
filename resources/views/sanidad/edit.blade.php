@@ -108,12 +108,12 @@
                     </div>
                 </div>
 
-                <!-- SUBFORMULARIO 2: SECCIÓN FERTILIZANTES -->
+                <!-- SUBFORMULARIO 2: SECCIÓN FERTILIZANTES (AHORA OPCIONAL) -->
                 <div class="space-y-6 pt-4 border-t border-gray-100">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-2">
                         <h3 class="font-bold text-base text-gray-700 flex items-center gap-1.5">
                             <i class="fa-solid fa-flask-vial text-emerald-600"></i>
-                            2. Sección: Manejo de Fertilizantes
+                            2. Sección: Manejo de Fertilizantes (Opcional)
                         </h3>
                         <button type="button" onclick="agregarNuevoTanque()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-sm cursor-pointer">
                             <i class="fa-solid fa-folder-plus mr-1"></i> Agregar Tanque
@@ -292,51 +292,47 @@
             verLockeoAgroBloques();
         }
 
-        function agregarProductoToAgro(idAgro, prod = '', dosis = '', unidad = 'mL', is = '', obs = '') {
+      function agregarProductoToAgro(idAgro) {
             const tbody = document.getElementById(`cuerpo_productos_agro_${idAgro}`);
             const nuevaFila = document.createElement('tr');
             nuevaFila.className = "hover:bg-stone-50/40 fila-producto-subdetalle";
             
-            const esUnidadEstandar = ['mL', 'L', 'g', 'kg'].includes(unidad);
-            const selectVal = esUnidadEstandar ? unidad : 'OTRO';
-            const hiddenClass = esUnidadEstandar ? 'hidden' : '';
-
             nuevaFila.innerHTML = `
                 <td class="p-2 border border-stone-100">
-                    <input type="text" name="producto_${idAgro}[]" value="${prod}" placeholder="Ej: Confidor" required class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
+                    <input type="text" name="producto_${idAgro}[]" placeholder="Ej: Confidor" required class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
                 </td>
                 <td class="p-2 border border-stone-100">
                     <div class="flex flex-col gap-1">
                         <div class="flex gap-1">
-                            <input type="number" step="0.01" name="dosis_${idAgro}[]" value="${dosis}" required placeholder="Cant." class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
+                            <input type="number" step="0.01" name="dosis_${idAgro}[]" required placeholder="Cant." class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
                             <select onchange="evaluarUnidadManual(this)" class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500 bg-white selector-unidad-base">
-                                <option value="mL" ${selectVal === 'mL' ? 'selected' : ''}>mL</option>
-                                <option value="L" ${selectVal === 'L' ? 'selected' : ''}>L</option>
-                                <option value="g" ${selectVal === 'g' ? 'selected' : ''}>g</option>
-                                <option value="kg" ${selectVal === 'kg' ? 'selected' : ''}>kg</option>
-                                <option value="OTRO" ${selectVal === 'OTRO' ? 'selected' : ''}>Otro...</option>
+                                <option value="mL">mL</option>
+                                <option value="L">L</option>
+                                <option value="g">g</option>
+                                <option value="kg">kg</option>
+                                <option value="OTRO">Otro...</option>
                             </select>
                         </div>
-                        <input type="text" name="unidad_dosis_${idAgro}[]" value="${unidad}" placeholder="Escriba la unidad..." class="w-full border border-emerald-400 bg-emerald-50/50 rounded p-1 text-xs focus:outline-emerald-500 ${hiddenClass} campo-unidad-manual">
+                        <input type="text" name="unidad_dosis_${idAgro}[]" value="mL" placeholder="Escriba la unidad..." class="w-full border border-emerald-400 bg-emerald-50/50 rounded p-1 text-xs focus:outline-emerald-500 hidden campo-unidad-manual">
                     </div>
                 </td>
                 <td class="p-2 border border-stone-100 text-center">
-                    <input type="number" name="is_intervalo_seguridad_${idAgro}[]" value="${is}" placeholder="0" class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500 text-center">
+                    <input type="text" inputmode="numeric" name="is_intervalo_seguridad_${idAgro}[]" placeholder="0" class="w-16 sm:w-full min-w-[50px] mx-auto border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500 text-center bg-white font-bold">
                 </td>
                 <td class="p-2 border border-stone-100">
-                    <input type="text" name="agroquimicos_observaciones_${idAgro}[]" value="${obs}" placeholder="..." class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
+                    <input type="text" name="agroquimicos_observaciones_${idAgro}[]" placeholder="..." class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
                 </td>
                 <td class="p-2 border border-stone-100 text-center">
                     <button type="button" onclick="eliminarProductoFila(this, ${idAgro})" class="text-red-500 hover:text-red-700 font-bold text-base cursor-pointer btn-quitar-producto-fila">&times;</button>
                 </td>
             `;
+            
             tbody.appendChild(nuevaFila);
             verLockeoProductosAgro(idAgro);
         }
 
         function eliminarProductoFila(boton, idAgro) {
-            const fila = boton.closest('tr');
-            fila.remove();
+            boton.closest('tr').remove();
             verLockeoProductosAgro(idAgro);
         }
 
@@ -348,7 +344,7 @@
         function verLockeoProductosAgro(idAgro) {
             const tbody = document.getElementById(`cuerpo_productos_agro_${idAgro}`);
             const filas = tbody.querySelectorAll('.fila-producto-subdetalle');
-            filas.forEach((f, idx) => {
+            filas.forEach(f => {
                 const btn = f.querySelector('.btn-quitar-producto-fila');
                 btn.disabled = (filas.length === 1);
                 btn.classList.toggle('opacity-30', filas.length === 1);
@@ -364,6 +360,7 @@
             });
         }
 
+        // --- FERTILIZANTES (YA SIN REQUIRIR OBLIGATORIEDAD) ---
         function agregarNuevoTanque(nombreTanque = '', tipoSolucion = 'SOLUCION MADRE') {
             contadorTanques++;
             const raiz = document.getElementById('raiz-tanques-fertilizantes');
@@ -378,11 +375,11 @@
                     <div class="flex flex-wrap items-center gap-3 w-full sm:w-2/3">
                         <div class="flex items-center gap-1.5 w-full sm:w-1/2">
                             <span class="text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Identificador:</span>
-                            <input type="text" name="tanque_${contadorTanques}" value="${nombreTanque}" placeholder="Ej: Tanque A" required class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold text-emerald-800 focus:outline-emerald-500 bg-white">
+                            <input type="text" name="tanque_${contadorTanques}" value="${nombreTanque}" placeholder="Ej: Tanque A (Opcional)" class="w-full border border-gray-300 rounded px-2 py-1 text-xs font-bold text-emerald-800 focus:outline-emerald-500 bg-white">
                         </div>
                         <div class="flex items-center gap-1.5 w-full sm:w-1/2">
                             <span class="text-xs font-bold text-gray-500 uppercase whitespace-nowrap">Tipo Solución:</span>
-                            <select name="tipo_solucion_${contadorTanques}" required class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-emerald-500 bg-white font-medium text-emerald-800">
+                            <select name="tipo_solucion_${contadorTanques}" class="w-full border border-gray-300 rounded px-2 py-1 text-xs focus:outline-emerald-500 bg-white font-medium text-emerald-800">
                                 <option value="SOLUCION MADRE" ${tipoSolucion === 'SOLUCION MADRE' ? 'selected' : ''}>Solución Madre</option>
                                 <option value="SOLUCION DIARIA" ${tipoSolucion === 'SOLUCION DIARIA' ? 'selected' : ''}>Solución Diaria</option>
                             </select>
@@ -425,12 +422,12 @@
 
             nuevaFilaAccion.innerHTML = `
                 <td class="p-2 border border-stone-100">
-                    <input type="text" name="accion_texto_${idTanque}[]" value="${accion}" placeholder="Ej: Aplicar en el segundo riego..." required class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
+                    <input type="text" name="accion_texto_${idTanque}[]" value="${accion}" placeholder="Ej: Aplicar en segundo riego..." class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
                 </td>
                 <td class="p-2 border border-stone-100">
                     <div class="flex flex-col gap-1">
                         <div class="flex gap-1">
-                            <input type="number" step="0.01" name="cantidad_${idTanque}[]" value="${cantidad}" required placeholder="Cant." class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
+                            <input type="number" step="0.01" name="cantidad_${idTanque}[]" value="${cantidad}" placeholder="Cant." class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
                             <select onchange="evaluarUnidadManual(this)" class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500 bg-white selector-unidad-base">
                                 <option value="g" ${selectVal === 'g' ? 'selected' : ''}>g</option>
                                 <option value="kg" ${selectVal === 'kg' ? 'selected' : ''}>kg</option>
@@ -479,14 +476,13 @@
             });
         }
 
-        // Precarga de datos existentes al cargar la vista de edición
         document.addEventListener("DOMContentLoaded", function() {
             const operadorSelect = document.getElementById('operador_id');
             if(operadorSelect.value !== "") {
                 filtrarSectoresPorOperador(sectorActual);
             }
 
-            // Precargar Agroquímicos existentes agrupados
+            // Precargar Agroquímicos existentes
             if (agroquimicosExistentes.length > 0) {
                 const gruposAgro = {};
                 agroquimicosExistentes.forEach(item => {
@@ -501,9 +497,7 @@
                     const idActual = contadorAgroquimicos;
                     grupo.forEach((prod, index) => {
                         if(index === 0) {
-                            // Reemplazar la primera fila vacía que crea por defecto
-                            const tbody = document.getElementById(`cuerpo_productos_agro_${idActual}`);
-                            tbody.innerHTML = '';
+                            document.getElementById(`cuerpo_productos_agro_${idActual}`).innerHTML = '';
                         }
                         agregarProductoToAgro(idActual, prod.producto, prod.dosis, prod.unidad_dosis, prod.is_intervalo_seguridad, prod.observaciones);
                     });
@@ -512,7 +506,7 @@
                 agregarNuevoBloqueAgroquimico();
             }
 
-            // Precargar Fertilizantes existentes por tanque
+            // Precargar Fertilizantes existentes (si los hay)
             const nombresTanques = Object.keys(fertilizantesExistentes);
             if (nombresTanques.length > 0) {
                 nombresTanques.forEach(nombreTanque => {
@@ -521,17 +515,13 @@
                     agregarNuevoTanque(nombreTanque, tipoSol);
                     const idTanqueActual = contadorTanques;
                     
-                    // Limpiar la fila vacía inicial
-                    const tbodyTanque = document.getElementById(`cuerpo_acciones_tanque_${idTanqueActual}`);
-                    tbodyTanque.innerHTML = '';
-
+                    document.getElementById(`cuerpo_acciones_tanque_${idTanqueActual}`).innerHTML = '';
                     acciones.forEach(acc => {
                         agregarAccionATanque(idTanqueActual, acc.accion, acc.cantidad, acc.unidad_cantidad);
                     });
                 });
-            } else {
-                agregarNuevoTanque();
             }
+            // Nota: Ya no se añade un tanque por defecto obligatorio si no existen registros previos.
         });
     </script>
 </body>

@@ -136,13 +136,13 @@ class SanidadNutricionBitacoraController extends Controller
                 ->withErrors(['error' => 'Acceso denegado. No tiene permisos para guardar registros.']);
         }
 
-        // 1. Validación general adaptada a la nueva estructura de bloques
+        // 1. Validación general adaptada (tanques_indices pasa a ser nullable)
         $request->validate([
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
             'operador_id' => 'required|exists:users,id',
             'agro_indices' => 'required|array',
-            'tanques_indices' => 'required|array',
+            'tanques_indices' => 'nullable|array',
             'variedad_sector' => 'nullable|string|max:255',
             'numero_plantas_sector' => 'nullable|integer',
             'fecha_trasplante_sector' => 'nullable|date',
@@ -182,32 +182,34 @@ class SanidadNutricionBitacoraController extends Controller
                         'variedad'               => $request->variedad_sector,
                         'numero_plantas'         => $request->numero_plantas_sector,
                         'fecha_trasplante'       => $request->fecha_trasplante_sector,
-                        'solucion_madre'         => null, // Ya se maneja en fertilizantes
+                        'solucion_madre'         => null,
                         'solucion_diaria'        => null,
                         'observaciones'          => $obsValores[$pIdx] ?? null,
                     ]);
                 }
             }
 
-            // 4. Procesar bloques de Tanques y Fertilizantes (con Tipo de Solución por tanque)
-            foreach ($request->tanques_indices as $tIdx) {
-                $nombreTanque  = $request->input("tanque_{$tIdx}");
-                $tipoSolucion  = $request->input("tipo_solucion_{$tIdx}"); // SOLUCION MADRE o SOLUCION DIARIA
-                $acciones      = $request->input("accion_texto_{$tIdx}", []);
-                $cantidades    = $request->input("cantidad_{$tIdx}", []);
-                $unidadesFilt  = $request->input("unidad_cantidad_{$tIdx}", []);
+            // 4. Procesar bloques de Tanques y Fertilizantes (Solo si existen)
+            if ($request->filled('tanques_indices') && is_array($request->tanques_indices)) {
+                foreach ($request->tanques_indices as $tIdx) {
+                    $nombreTanque  = $request->input("tanque_{$tIdx}");
+                    $tipoSolucion  = $request->input("tipo_solucion_{$tIdx}");
+                    $acciones      = $request->input("accion_texto_{$tIdx}", []);
+                    $cantidades    = $request->input("cantidad_{$tIdx}", []);
+                    $unidadesFilt  = $request->input("unidad_cantidad_{$tIdx}", []);
 
-                foreach ($acciones as $aIdx => $accionTexto) {
-                    ManejoFertilizante::create([
-                        'bitacora_id'        => $bitacora->id,
-                        'tanque'             => $nombreTanque,
-                        'tipo_solucion'      => $tipoSolucion, // Guardamos el tipo de solución por tanque
-                        'accion'             => $accionTexto,
-                        'cantidad'           => $cantidades[$aIdx] ?? 0,
-                        'unidad_cantidad'    => $unidadesFilt[$aIdx] ?? 'g',
-                        'labores_culturales' => $request->labores_culturales ?? null,
-                        'observaciones'      => $request->fertilizantes_observaciones ?? null,
-                    ]);
+                    foreach ($acciones as $aIdx => $accionTexto) {
+                        ManejoFertilizante::create([
+                            'bitacora_id'        => $bitacora->id,
+                            'tanque'             => $nombreTanque,
+                            'tipo_solucion'      => $tipoSolucion,
+                            'accion'             => $accionTexto,
+                            'cantidad'           => $cantidades[$aIdx] ?? 0,
+                            'unidad_cantidad'    => $unidadesFilt[$aIdx] ?? 'g',
+                            'labores_culturales' => $request->labores_culturales ?? null,
+                            'observaciones'      => $request->fertilizantes_observaciones ?? null,
+                        ]);
+                    }
                 }
             }
 
@@ -282,7 +284,7 @@ class SanidadNutricionBitacoraController extends Controller
             'sector' => 'required|string|max:255',
             'operador_id' => 'required|exists:users,id',
             'agro_indices' => 'required|array',
-            'tanques_indices' => 'required|array',
+            'tanques_indices' => 'nullable|array',
             'variedad_sector' => 'nullable|string|max:255',
             'numero_plantas_sector' => 'nullable|integer',
             'fecha_trasplante_sector' => 'nullable|date',
@@ -333,25 +335,27 @@ class SanidadNutricionBitacoraController extends Controller
                 }
             }
 
-            // 4. Reinsertar bloques de Tanques y Fertilizantes
-            foreach ($request->tanques_indices as $tIdx) {
-                $nombreTanque  = $request->input("tanque_{$tIdx}");
-                $tipoSolucion  = $request->input("tipo_solucion_{$tIdx}");
-                $acciones      = $request->input("accion_texto_{$tIdx}", []);
-                $cantidades    = $request->input("cantidad_{$tIdx}", []);
-                $unidadesFilt  = $request->input("unidad_cantidad_{$tIdx}", []);
+            // 4. Reinsertar bloques de Tanques y Fertilizantes (Solo si existen)
+            if ($request->filled('tanques_indices') && is_array($request->tanques_indices)) {
+                foreach ($request->tanques_indices as $tIdx) {
+                    $nombreTanque  = $request->input("tanque_{$tIdx}");
+                    $tipoSolucion  = $request->input("tipo_solucion_{$tIdx}");
+                    $acciones      = $request->input("accion_texto_{$tIdx}", []);
+                    $cantidades    = $request->input("cantidad_{$tIdx}", []);
+                    $unidadesFilt  = $request->input("unidad_cantidad_{$tIdx}", []);
 
-                foreach ($acciones as $aIdx => $accionTexto) {
-                    ManejoFertilizante::create([
-                        'bitacora_id'        => $bitacora->id,
-                        'tanque'             => $nombreTanque,
-                        'tipo_solucion'      => $tipoSolucion,
-                        'accion'             => $accionTexto,
-                        'cantidad'           => $cantidades[$aIdx] ?? 0,
-                        'unidad_cantidad'    => $unidadesFilt[$aIdx] ?? 'g',
-                        'labores_culturales' => $request->labores_culturales ?? null,
-                        'observaciones'      => $request->fertilizantes_observaciones ?? null,
-                    ]);
+                    foreach ($acciones as $aIdx => $accionTexto) {
+                        ManejoFertilizante::create([
+                            'bitacora_id'        => $bitacora->id,
+                            'tanque'             => $nombreTanque,
+                            'tipo_solucion'      => $tipoSolucion,
+                            'accion'             => $accionTexto,
+                            'cantidad'           => $cantidades[$aIdx] ?? 0,
+                            'unidad_cantidad'    => $unidadesFilt[$aIdx] ?? 'g',
+                            'labores_culturales' => $request->labores_culturales ?? null,
+                            'observaciones'      => $request->fertilizantes_observaciones ?? null,
+                        ]);
+                    }
                 }
             }
 
@@ -367,34 +371,25 @@ class SanidadNutricionBitacoraController extends Controller
     
 
     public function destroy($id)
-{
-    // 1. Buscamos la bitácora principal
-    $bitacora = SanidadNutricionBitacora::findOrFail($id);
+    {
+        $bitacora = SanidadNutricionBitacora::findOrFail($id);
 
-    // 2. Si tus relaciones en el modelo maestro (sanidad_nutricion_bitacoras) 
-    // están configuradas con onDelete('cascade'), puedes borrar directamente:
-    $bitacora->agroquimicos()->delete();
-    $bitacora->fertilizantes()->delete();
+        $bitacora->agroquimicos()->delete();
+        $bitacora->fertilizantes()->delete();
 
-    // 3. Eliminamos el registro maestro
-    $bitacora->delete();
+        $bitacora->delete();
 
-    // 4. Redireccionamos con mensaje de éxito
-    return redirect()->route('sanidad.index')->with('status', '¡La bitácora de sanidad y nutrición fue eliminada permanentemente!');
-}
+        return redirect()->route('sanidad.index')->with('status', '¡La bitácora de sanidad y nutrición fue eliminada permanentemente!');
+    }
 
   public function pdf($id)
     {
-        // Usamos tu modelo real: SanidadNutricionBitacora
         $bitacora = SanidadNutricionBitacora::with(['operador', 'agroquimicos', 'fertilizantes'])->findOrFail($id);
 
-        // Cargamos la vista de PDF
         $pdf = Pdf::loadView('sanidad.pdf', compact('bitacora'));
 
-        // Formato de hoja Carta vertical
         $pdf->setPaper('letter', 'portrait');
 
-        // Retornamos el PDF para visualizarse en el navegador
         return $pdf->stream('Bitacora-Sanidad-Sector-' . $bitacora->sector . '-' . $bitacora->fecha . '.pdf');
     }
 }
