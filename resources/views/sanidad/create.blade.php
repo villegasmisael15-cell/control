@@ -66,7 +66,7 @@
                     <!-- Si es Dueño o Admin, puede filtrar/ver los operadores de sus sectores -->
                     <div>
                         <label class="block text-sm font-bold text-gray-700 uppercase mb-1">1. Operador Responsable:</label>
-                        <select name="operador_id" id="operador_id" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-white" required onchange="filtrarSectoresPorOperador()">
+                        <select name="operador_id" id="operador_id" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-white" required onchange="filtrarSectoresPorDueño()">
                             <option value="">Seleccione el operador...</option>
                             @foreach($operadores as $op)
                             <option value="{{ $op->id }}" data-sectores='{!! json_encode($op->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}' {{ old('operador_id') == $op->id ? 'selected' : '' }}>{{ $op->name }}</option>
@@ -213,7 +213,7 @@
             return `${partes[2]}/${partes[1]}/${partes[0]}`;
         }
 
-        function filtrarSectoresPorOperador() {
+        function filtrarSectoresPorDueño() {
             const selectOperador = document.getElementById('operador_id');
             const selectSector = document.getElementById('sector');
             if (!selectOperador || !selectSector) return;
@@ -269,10 +269,29 @@
             }
         }
 
-        function cambiarDatosPorSector() {
-            const sectorSeleccionado = document.getElementById('sector').value.trim();
+      function cambiarDatosPorSector() {
+            const selectSector = document.getElementById('sector');
+            const sectorSeleccionado = selectSector.options[selectSector.selectedIndex].text.trim();
+            // O si prefieres buscar por el value puro: const sectorSeleccionado = selectSector.value.trim();
             
-            if (sectorSeleccionado === "" || !mapaSectoresData.hasOwnProperty(sectorSeleccionado)) {
+            // Verificamos si existe en el mapa (probando tanto el nombre completo del option como el value)
+            let data = null;
+            if (mapaSectoresData.hasOwnProperty(selectSector.value.trim())) {
+                data = mapaSectoresData[selectSector.value.trim()];
+            } else if (mapaSectoresData.hasOwnProperty(sectorSeleccionado)) {
+                data = mapaSectoresData[sectorSeleccionado];
+            } else {
+                // Intento flexible buscando coincidencia parcial si el texto incluye el invernadero
+                const valorLimpio = selectSector.value.trim();
+                for (let clave in mapaSectoresData) {
+                    if (clave.includes(valorLimpio) || valorLimpio.includes(clave)) {
+                        data = mapaSectoresData[clave];
+                        break;
+                    }
+                }
+            }
+
+            if (!data) {
                 document.getElementById('txt-variedad').textContent = "—";
                 document.getElementById('txt-plantas').textContent = "—";
                 document.getElementById('txt-trasplante').textContent = "—";
@@ -281,8 +300,6 @@
                 document.getElementById('hidden-plantas').value = "";
                 document.getElementById('hidden-trasplante').value = "";
             } else {
-                const data = mapaSectoresData[sectorSeleccionado];
-                
                 document.getElementById('txt-variedad').textContent = data.variedad || "—";
                 document.getElementById('txt-plantas').textContent = formatearNumero(data.numero_plantas);
                 document.getElementById('txt-trasplante').textContent = formatearFecha(data.fecha_trasplante);
@@ -292,7 +309,6 @@
                 document.getElementById('hidden-trasplante').value = data.fecha_trasplante || "";
             }
         }
-
         function agregarNuevoBloqueAgroquimico() {
             contadorAgroquimicos++;
             const raiz = document.getElementById('raiz-bloques-agroquimicos');
@@ -559,7 +575,7 @@
         document.addEventListener("DOMContentLoaded", function() {
             const elOperador = document.getElementById('operador_id');
             if(elOperador && elOperador.tagName === 'SELECT' && elOperador.value !== "") {
-                filtrarSectoresPorOperador();
+                filtrarSectoresPorDueño();
             }
             agregarNuevoBloqueAgroquimico();
         });

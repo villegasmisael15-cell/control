@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\SectorCaracteristica;
 use App\Models\SanidadNutricionBitacora;
 use App\Models\ManejoAgroquimico;
 use App\Models\ManejoFertilizante;
@@ -85,59 +85,43 @@ class SanidadNutricionBitacoraController extends Controller
         return view('sanidad.index', compact('bitacoras'));
     }
 
-    public function create()
+   public function create()
     {
         $user = auth()->user();
-        if ($user->rol !== 'administrador' && $user->rol !== 'dueno') {
+        if ($user->rol !== 'administrador' && $user->rol !== 'dueno' && $user->rol !== 'admin_general') {
             return redirect()->route('sanidad.index')
                 ->withErrors(['error' => 'Acceso denegado. No tiene permisos para asignar bitácoras.']);
         }
 
-        // 1. Obtener operadores (dueños o encargados) para el mapeo en el selector inicial
+        // 1. Obtener usuarios dueños o administradores con sus sectores y características cargadas
         $operadores = User::where('rol', 'dueno')
             ->orWhere('rol', 'administrador')
-            ->select('id', 'name', 'sectores')
+            ->orWhere('rol', 'admin_general')
+            ->with('sectorCaracteristicas')
             ->orderBy('name', 'asc')
             ->get();
 
-        // 2. Obtener lista de sectores según los permisos del rol
-        if ($user->rol === 'administrador') {
-            $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
-            $sectoresUnicos = [];
-            foreach ($todosLosSectoresTexto as $cadena) {
-                $partes = explode(',', $cadena);
-                foreach ($partes as $sector) {
-                    $sectorLimpio = trim($sector);
-                    if (!empty($sectorLimpio)) {
-                        $sectoresUnicos[] = $sectorLimpio;
-                    }
-                }
-            }
-            $listaSectores = array_unique($sectoresUnicos);
-        } else {
-            $sectoresTexto = $user->sectores;
-            $listaSectores = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
-        }
-
-        // 3. ESTRUCTURA COMPLETA: Mapea variedad, fecha de trasplante y número de plantas por sector
+        // 2. Construir un mapa robusto indexado por sector, id y combinación completa
+        $todasCaracteristicas = SectorCaracteristica::all();
         $sectoresConVariedad = [];
-        foreach ($listaSectores as $sectorName) {
-            $caracteristica = DB::table('sector_caracteristicas')
-                ->where('sector', $sectorName)
-                ->first();
 
-            $sectoresConVariedad[$sectorName] = [
-                'variedad'         => $caracteristica ? $caracteristica->variedad : '',
-                'fecha_trasplante' => $caracteristica ? $caracteristica->fecha_trasplante : '',
-                'numero_plantas'   => $caracteristica ? $caracteristica->numero_plantas : ''
+        foreach ($todasCaracteristicas as $carac) {
+            $info = [
+                'invernadero'      => $carac->invernadero,
+                'sector'           => $carac->sector,
+                'variedad'         => $carac->variedad ?? '',
+                'fecha_trasplante' => $carac->fecha_trasplante ?? '',
+                'numero_plantas'   => $carac->numero_plantas ?? ''
             ];
+            
+            // Indexamos de varias formas para blindar la búsqueda en JS
+            $sectoresConVariedad[$carac->sector] = $info;
+            $sectoresConVariedad[$carac->id] = $info;
+            $sectoresConVariedad[$carac->invernadero . ' — ' . $carac->sector] = $info;
         }
-
-        ksort($sectoresConVariedad);
 
         return view('sanidad.create', compact('operadores', 'sectoresConVariedad'));
     }
-
     public function store(Request $request)
     {
         $user = auth()->user();
