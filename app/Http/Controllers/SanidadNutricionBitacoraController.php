@@ -15,26 +15,36 @@ class SanidadNutricionBitacoraController extends Controller
 {
     public function index(Request $request)
     {
-        // 1. Carga la bitácora con sus relaciones y ordena de forma cronológica descendente
-       $query = SanidadNutricionBitacora::with(['operador', 'agroquimicos', 'fertilizantes'])
-        ->orderBy('fecha', 'desc');
+        $user = auth()->user();
 
-        // 2. Control de accesos por Rol
-        if (auth()->user()->rol !== 'administrador') {
-            $sectoresTexto = auth()->user()->sectores;
+        // 1. Carga la bitácora con sus relaciones y ordena de forma cronológica descendente
+        $query = SanidadNutricionBitacora::with(['operador', 'agroquimicos', 'fertilizantes'])
+            ->orderBy('fecha', 'desc');
+
+        // 2. Control de accesos por Rol (Dueño o Administrador)
+        if ($user->rol === 'dueno') {
+            // Obtenemos los sectores que le pertenecen a este dueño desde la tabla sector_caracteristicas
+            $sectoresDueño = DB::table('sector_caracteristicas')
+                ->where('user_id', $user->id)
+                ->pluck('sector')
+                ->toArray();
+
+            $query->whereIn('sector', $sectoresDueño);
+        } elseif ($user->rol !== 'administrador') {
+            $sectoresTexto = $user->sectores;
             $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
             $query->whereIn('sector', $sectoresAsignados);
-        } else {
-            // Buscador unificado para el Administrador
-            if ($request->filled('buscar_termino')) {
-                $termino = $request->input('buscar_termino');
-                $query->where(function ($q) use ($termino) {
-                    $q->where('sector', 'LIKE', '%' . $termino . '%')
-                      ->orWhereHas('user', function ($subQuery) use ($termino) {
-                          $subQuery->where('name', 'LIKE', '%' . $termino . '%');
-                      });
-                });
-            }
+        }
+
+        // Buscador unificado para el Administrador / Dueño
+        if ($request->filled('buscar_termino')) {
+            $termino = $request->input('buscar_termino');
+            $query->where(function ($q) use ($termino) {
+                $q->where('sector', 'LIKE', '%' . $termino . '%')
+                  ->orWhereHas('operador', function ($subQuery) use ($termino) {
+                      $subQuery->where('name', 'LIKE', '%' . $termino . '%');
+                  });
+            });
         }
 
         // 3. Filtros temporales (Semana / Mes)
@@ -77,19 +87,20 @@ class SanidadNutricionBitacoraController extends Controller
 
     public function create()
     {
-        if (auth()->user()->rol !== 'administrador') {
-            return redirect()->route('sanidad.index')
-                ->withErrors(['error' => 'Acceso denegado. Solo el administrador puede asignar bitácoras.']);
-        }
         $user = auth()->user();
+        if ($user->rol !== 'administrador' && $user->rol !== 'dueno') {
+            return redirect()->route('sanidad.index')
+                ->withErrors(['error' => 'Acceso denegado. No tiene permisos para asignar bitácoras.']);
+        }
 
-        // 1. Obtener todos los operadores para el mapeo en el selector inicial
-        $operadores = User::where('rol', 'operador')
+        // 1. Obtener operadores (dueños o encargados) para el mapeo en el selector inicial
+        $operadores = User::where('rol', 'dueno')
+            ->orWhere('rol', 'administrador')
             ->select('id', 'name', 'sectores')
             ->orderBy('name', 'asc')
             ->get();
 
-        // 2. Obtener lista de sectores crudos según los permisos del rol
+        // 2. Obtener lista de sectores según los permisos del rol
         if ($user->rol === 'administrador') {
             $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
             $sectoresUnicos = [];
@@ -122,21 +133,19 @@ class SanidadNutricionBitacoraController extends Controller
             ];
         }
 
-        // Ordenamos alfabéticamente por sector
         ksort($sectoresConVariedad);
 
-        // 4. Mandamos las colecciones completas a la vista
         return view('sanidad.create', compact('operadores', 'sectoresConVariedad'));
     }
 
     public function store(Request $request)
     {
-        if (auth()->user()->rol !== 'administrador') {
+        $user = auth()->user();
+        if ($user->rol !== 'administrador' && $user->rol !== 'dueno') {
             return redirect()->route('sanidad.index')
                 ->withErrors(['error' => 'Acceso denegado. No tiene permisos para guardar registros.']);
         }
 
-        // 1. Validación general adaptada (tanques_indices pasa a ser nullable)
         $request->validate([
             'fecha' => 'required|date',
             'sector' => 'required|string|max:255',
@@ -153,14 +162,12 @@ class SanidadNutricionBitacoraController extends Controller
         DB::beginTransaction();
 
         try {
-            // 2. Crear el Registro Maestro
             $bitacora = SanidadNutricionBitacora::create([
                 'fecha' => $request->fecha,
                 'sector' => $request->sector,
                 'operador_id' => $request->operador_id,
             ]);
 
-            // 3. Procesar bloques dinámicos de Agroquímicos
             foreach ($request->agro_indices as $agId) {
                 $fAplicacion = $request->input("fecha_aplicacion_{$agId}");
                 $tAplicacion = $request->input("aplicacion_{$agId}");
@@ -189,7 +196,6 @@ class SanidadNutricionBitacoraController extends Controller
                 }
             }
 
-            // 4. Procesar bloques de Tanques y Fertilizantes (Solo si existen)
             if ($request->filled('tanques_indices') && is_array($request->tanques_indices)) {
                 foreach ($request->tanques_indices as $tIdx) {
                     $nombreTanque  = $request->input("tanque_{$tIdx}");
@@ -223,24 +229,22 @@ class SanidadNutricionBitacoraController extends Controller
         }
     }
 
-
     public function edit($id)
     {
-        if (auth()->user()->rol !== 'administrador') {
+        $user = auth()->user();
+        if ($user->rol !== 'administrador' && $user->rol !== 'dueno') {
             return redirect()->route('sanidad.index')
-                ->withErrors(['error' => 'Acceso denegado. Solo el administrador puede editar bitácoras.']);
+                ->withErrors(['error' => 'Acceso denegado. No tiene permisos para editar bitácoras.']);
         }
 
         $bitacora = SanidadNutricionBitacora::with(['agroquimicos', 'fertilizantes'])->findOrFail($id);
-        $user = auth()->user();
 
-        // 1. Obtener operadores
-        $operadores = User::where('rol', 'operador')
+        $operadores = User::where('rol', 'dueno')
+            ->orWhere('rol', 'administrador')
             ->select('id', 'name', 'sectores')
             ->orderBy('name', 'asc')
             ->get();
 
-        // 2. Obtener lista de sectores
         $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
         $sectoresUnicos = [];
         foreach ($todosLosSectoresTexto as $cadena) {
@@ -254,7 +258,6 @@ class SanidadNutricionBitacoraController extends Controller
         }
         $listaSectores = array_unique($sectoresUnicos);
 
-        // 3. Mapear características por sector
         $sectoresConVariedad = [];
         foreach ($listaSectores as $sectorName) {
             $caracteristica = DB::table('sector_caracteristicas')
@@ -274,7 +277,8 @@ class SanidadNutricionBitacoraController extends Controller
 
     public function update(Request $request, $id)
     {
-        if (auth()->user()->rol !== 'administrador') {
+        $user = auth()->user();
+        if ($user->rol !== 'administrador' && $user->rol !== 'dueno') {
             return redirect()->route('sanidad.index')
                 ->withErrors(['error' => 'Acceso denegado. No tiene permisos para modificar registros.']);
         }
@@ -297,18 +301,15 @@ class SanidadNutricionBitacoraController extends Controller
         try {
             $bitacora = SanidadNutricionBitacora::findOrFail($id);
 
-            // 1. Actualizar Maestro
             $bitacora->update([
                 'fecha' => $request->fecha,
                 'sector' => $request->sector,
                 'operador_id' => $request->operador_id,
             ]);
 
-            // 2. Limpiar detalles anteriores para reemplazar con los nuevos editados
             $bitacora->agroquimicos()->delete();
             $bitacora->fertilizantes()->delete();
 
-            // 3. Reinsertar bloques de Agroquímicos
             foreach ($request->agro_indices as $agId) {
                 $fAplicacion = $request->input("fecha_aplicacion_{$agId}");
                 $tAplicacion = $request->input("aplicacion_{$agId}");
@@ -335,7 +336,6 @@ class SanidadNutricionBitacoraController extends Controller
                 }
             }
 
-            // 4. Reinsertar bloques de Tanques y Fertilizantes (Solo si existen)
             if ($request->filled('tanques_indices') && is_array($request->tanques_indices)) {
                 foreach ($request->tanques_indices as $tIdx) {
                     $nombreTanque  = $request->input("tanque_{$tIdx}");
@@ -368,7 +368,6 @@ class SanidadNutricionBitacoraController extends Controller
             return redirect()->back()->withInput()->withErrors(['error' => 'Error al actualizar el registro: ' . $e->getMessage()]);
         }
     }
-    
 
     public function destroy($id)
     {
@@ -382,7 +381,7 @@ class SanidadNutricionBitacoraController extends Controller
         return redirect()->route('sanidad.index')->with('status', '¡La bitácora de sanidad y nutrición fue eliminada permanentemente!');
     }
 
-  public function pdf($id)
+    public function pdf($id)
     {
         $bitacora = SanidadNutricionBitacora::with(['operador', 'agroquimicos', 'fertilizantes'])->findOrFail($id);
 

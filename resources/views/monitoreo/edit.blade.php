@@ -37,16 +37,20 @@
                         <input type="date" name="fecha" value="{{ $monitoreo->fecha }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500">
                     </div>
                     <div>
-                        <label for="sector" class="block text-sm font-semibold text-gray-700 mb-1">Sector</label>
+                        <label for="sector" class="block text-sm font-semibold text-gray-700 mb-1">Invernadero y Sector</label>
                         <div class="relative">
-                            <select name="sector" id="sector" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-emerald-500 cursor-pointer appearance-none">
+                            <select name="sector" id="sector" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-white focus:outline-emerald-500 cursor-pointer appearance-none" onchange="actualizarInvernadero(this)">
                                 <option value="">-- Selecciona tu sector asignado --</option>
-                                @foreach($sectoresAsignados as $sector)
-                                <option value="{{ $sector }}" {{ old('sector', $monitoreo->sector) === $sector ? 'selected' : '' }}>
-                                    {{ $sector }}
-                                </option>
+                                @foreach($sectores as $item)
+                                    <option value="{{ $item->sector }}" 
+                                            data-invernadero="{{ $item->invernadero }}"
+                                            {{ (old('sector', $monitoreo->sector) === $item->sector && old('invernadero', $monitoreo->invernadero) === $item->invernadero) ? 'selected' : '' }}>
+                                        {{ $item->invernadero }} — {{ $item->sector }}
+                                    </option>
                                 @endforeach
                             </select>
+                            <!-- Campo oculto para enviar el invernadero seleccionado -->
+                            <input type="hidden" name="invernadero" id="invernadero_hidden" value="{{ old('invernadero', $monitoreo->invernadero) }}">
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                                 <i class="fa-solid fa-chevron-down text-xs"></i>
                             </div>
@@ -99,7 +103,7 @@
                             </div>
                             <div>
                                 <label class="block text-[11px] font-medium text-gray-600 mb-0.5">CE Sal</label>
-                                <input type="number" step="0.01" id="ce_calida" name="ce_salida" value="{{ $monitoreo->ce_salida }}" required class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                <input type="number" step="0.01" id="ce_salida" name="ce_salida" value="{{ $monitoreo->ce_salida }}" required class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm">
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
@@ -217,7 +221,7 @@
     <script>
         const inputs = [
             'temperatura', 'humedad', 'vol_riego_entrada', 'vol_drenaje_salida',
-            'ce_entrada', 'ce_calida', 'ph_entrada', 'ph_salida',
+            'ce_entrada', 'ce_salida', 'ph_entrada', 'ph_salida',
             'peso_tarde_anterior', 'peso_manana', 'radiacion_lectura', 'abejorros_flores'
         ];
 
@@ -225,7 +229,6 @@
             document.getElementById(id).addEventListener('input', calcularValores);
         });
 
-        // Ejecutar al cargar para pintar colores iniciales si ya hay datos
         window.addEventListener('DOMContentLoaded', () => {
             calcularValores();
         });
@@ -236,7 +239,7 @@
             const volEnt = parseFloat(document.getElementById('vol_riego_entrada').value);
             const volSal = parseFloat(document.getElementById('vol_drenaje_salida').value);
             const ceEnt = parseFloat(document.getElementById('ce_entrada').value);
-            const ceSal = parseFloat(document.getElementById('ce_calida').value);
+            const ceSal = parseFloat(document.getElementById('ce_salida').value);
             const phEnt = parseFloat(document.getElementById('ph_entrada').value);
             const phSal = parseFloat(document.getElementById('ph_salida').value);
             const pTarde = parseFloat(document.getElementById('peso_tarde_anterior').value);
@@ -246,7 +249,6 @@
 
             let dpv = null;
 
-            // 1. DPV
             if (!isNaN(temp) && !isNaN(hum)) {
                 const es = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
                 dpv = parseFloat((es * (1 - (hum / 100))).toFixed(2));
@@ -265,14 +267,12 @@
                 }
             }
 
-            // 2. % Drenaje
             if (!isNaN(volEnt) && !isNaN(volSal) && volEnt > 0) {
                 document.getElementById('porcentaje_drenaje_view').value = ((volSal / volEnt) * 100).toFixed(1) + "%";
             } else {
                 document.getElementById('porcentaje_drenaje_view').value = "0%";
             }
 
-            // 3. Diferencias Químicas
             if (!isNaN(ceEnt) && !isNaN(ceSal)) {
                 document.getElementById('diferencia_ce_view').value = (ceSal - ceEnt).toFixed(2);
             }
@@ -280,14 +280,12 @@
                 document.getElementById('diferencia_ph_view').value = (phSal - phEnt).toFixed(2);
             }
 
-            // 4. % Caída Nocturna
             if (!isNaN(pTarde) && !isNaN(pManana) && pTarde > 0) {
                 document.getElementById('porcentaje_caida_nocturna_view').value = (((pTarde - pManana) / pTarde) * 100).toFixed(1) + "%";
             } else {
                 document.getElementById('porcentaje_caida_nocturna_view').value = "0%";
             }
 
-            // 5. Semáforo de Radiación y Acción Recomendada
             const rSemaforoView = document.getElementById('radiacion_semaforo_view');
             const rSemaforoHidden = document.getElementById('radiacion_semaforo');
             const rAccionTomada = document.getElementsByName('radiacion_accion_tomada')[0];
@@ -326,7 +324,6 @@
                 rAccionTomada.value = "";
             }
 
-            // 6. Semáforo Abejorros (25-30 verde, 20-24 amarillo, <19 rojo)
             const aSemaforoView = document.getElementById('abejorros_semaforo_view');
             if (!isNaN(abejorros)) {
                 if (abejorros >= 25 && abejorros <= 30) {
@@ -343,6 +340,12 @@
                 aSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
                 aSemaforoView.value = "Esperando datos...";
             }
+        }
+
+        function actualizarInvernadero(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const invernadero = selectedOption.getAttribute('data-invernadero') || '';
+            document.getElementById('invernadero_hidden').value = invernadero;
         }
     </script>
 </body>

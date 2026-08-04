@@ -7,6 +7,8 @@ use App\Models\SueloAnalisisRapido;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use App\Models\SectorCaracteristica;
+use App\Models\OperadorSector;
 
 class SueloMonitoreoController extends Controller
 {
@@ -14,14 +16,10 @@ class SueloMonitoreoController extends Controller
     {
         // 1. Consulta base ordenando de forma cronológica descendente
         $query = SueloMonitoreo::with('user')->orderBy('fecha', 'desc');
+        $user = auth()->user();
 
         // 2. Control de accesos por Rol
-        if (auth()->user()->rol !== 'administrador') {
-            $sectoresTexto = auth()->user()->sectores;
-            $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
-            $query->whereIn('sector', $sectoresAsignados);
-        } else {
-            // Buscador unificado para el Administrator
+        if (in_array($user->rol, ['administrador', 'admin_general'])) {
             if ($request->filled('buscar_termino')) {
                 $termino = $request->input('buscar_termino');
                 $query->where(function ($q) use ($termino) {
@@ -31,6 +29,24 @@ class SueloMonitoreoController extends Controller
                         });
                 });
             }
+        } elseif ($user->rol === 'dueno') {
+            $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
+                ->pluck('sector')
+                ->map(fn($item) => trim($item))
+                ->toArray();
+
+            $query->whereIn('sector', $sectoresDueño);
+        } elseif ($user->rol === 'operador') {
+            $sectoresOperador = OperadorSector::where('user_id', $user->id)
+                ->pluck('sector')
+                ->map(fn($item) => trim($item))
+                ->toArray();
+
+            $query->whereIn('sector', $sectoresOperador);
+        } else {
+            $sectoresTexto = $user->sectores ?? '';
+            $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+            $query->whereIn('sector', $sectoresAsignados);
         }
 
         // 3. Filtros temporales (Semana / Mes)
@@ -68,7 +84,11 @@ class SueloMonitoreoController extends Controller
 
         // Mapeamos los resultados para buscar al dueño real del sector
         $monitoreos = $query->get()->map(function ($monitoreo) {
-            $dueno = User::where('sectores', 'LIKE', '%' . trim($monitoreo->sector) . '%')->first();
+            $caracteristica = SectorCaracteristica::where('sector', trim($monitoreo->sector))->first();
+            $dueno = $caracteristica ? User::find($caracteristica->user_id) : null;
+            if (!$dueno && $monitoreo->user) {
+                $dueno = $monitoreo->user;
+            }
             $monitoreo->dueno_sector = $dueno ? $dueno->name : 'Sin asignar / General';
             return $monitoreo;
         });
@@ -80,23 +100,28 @@ class SueloMonitoreoController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->rol === 'administrador') {
-            $todosLosSectoresTexto = User::whereNotNull('sectores')->pluck('sectores')->toArray();
-            $sectoresUnicos = [];
-            foreach ($todosLosSectoresTexto as $cadena) {
-                $partes = explode(',', $cadena);
-                foreach ($partes as $sector) {
-                    $sectorLimpio = trim($sector);
-                    if (!empty($sectorLimpio)) {
-                        $sectoresUnicos[] = $sectorLimpio;
-                    }
+        if (in_array($user->rol, ['administrador', 'admin_general'])) {
+            $sectores = SectorCaracteristica::all();
+        } elseif ($user->rol === 'dueno') {
+            $sectores = SectorCaracteristica::where('user_id', $user->id)->get();
+        } else {
+            // Operador: Carga exclusivamente los sectores e invernaderos elegidos en OperadorSector
+            $asignaciones = OperadorSector::where('user_id', $user->id)->get();
+            $sectores = collect();
+            foreach ($asignaciones as $asig) {
+                $encontrado = SectorCaracteristica::where('user_id', $asig->dueno_id)
+                    ->where('invernadero', trim($asig->invernadero))
+                    ->where('sector', trim($asig->sector))
+                    ->first();
+                if ($encontrado) {
+                    $sectores->push($encontrado);
                 }
             }
-            $sectores = array_unique($sectoresUnicos);
-            sort($sectores);
-        } else {
-            $sectoresTexto = $user->sectores;
-            $sectores = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+            if ($sectores->isEmpty()) {
+                $sectoresTexto = $user->sectores ?? '';
+                $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+                $sectores = SectorCaracteristica::whereIn('sector', $sectoresAsignados)->get();
+            }
         }
 
         return view('suelo.create', compact('sectores'));
@@ -104,13 +129,50 @@ class SueloMonitoreoController extends Controller
 
     public function store(Request $request)
     {
-        // 1. Identificamos dinámicamente quién es el verdadero dueño del sector enviado
+        $user = auth()->user();
         $sectorBuscado = trim($request->input('sector'));
+        $invernaderoBuscado = trim($request->input('invernadero'));
 
-        $duenoSector = User::where('sectores', 'LIKE', '%' . $sectorBuscado . '%')->first();
+        // VALIDACIÓN ESTRICTA PARA OPERADOR
+        if ($user->rol === 'operador') {
+            $tienePermiso = OperadorSector::where('user_id', $user->id)
+                ->where('sector', $sectorBuscado)
+                ->exists();
 
-        // Si por alguna razón extraña no encontramos un dueño asignado, usamos el ID logueado como respaldo de seguridad
-        $idDuenoReal = $duenoSector ? $duenoSector->id : auth()->id();
+            if (!$tienePermiso) {
+                $sectoresTexto = $user->sectores ?? '';
+                $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+                if (!in_array($sectorBuscado, $sectoresAsignados)) {
+                    abort(403, 'No tienes permiso para registrar en este sector.');
+                }
+            }
+        }
+
+        // 1. Identificamos dinámicamente quién es el VERDADERO DUEÑO del sector enviado
+        $caracteristicaSector = SectorCaracteristica::where('sector', $sectorBuscado)
+            ->when(!empty($invernaderoBuscado), function($q) use ($invernaderoBuscado) {
+                return $q->where('invernadero', $invernaderoBuscado);
+            })
+            ->first();
+
+        $idDuenoReal = null;
+        if ($caracteristicaSector && User::where('id', $caracteristicaSector->user_id)->exists()) {
+            $idDuenoReal = $caracteristicaSector->user_id;
+        }
+
+        // Si es operador, buscamos el dueno_id directamente en la asignación de OperadorSector como respaldo infalible
+        if (!$idDuenoReal && $user->rol === 'operador') {
+            $asignacionOperador = OperadorSector::where('user_id', $user->id)
+                ->where('sector', $sectorBuscado)
+                ->first();
+            if ($asignacionOperador) {
+                $idDuenoReal = $asignacionOperador->dueno_id;
+            }
+        }
+
+        if (!$idDuenoReal) {
+            $idDuenoReal = $user->id;
+        }
 
         // 2. Forzamos la hora actual y el ID del DUEÑO REAL del sector en el request antes de validar
         $request->merge([
@@ -210,8 +272,8 @@ class SueloMonitoreoController extends Controller
             'dpv'                => $dpv,
             'estatus_general'    => $estatus_general,
             'alerta_ce_opcion'   => $alertaCeOpcion,
-            'abejorros_flores'   => $request->abejorros_flores,   // <-- NUEVO
-            'abejorros_semaforo' => $abejorrosSemaforo,         // <-- NUEVO
+            'abejorros_flores'   => $request->abejorros_flores,
+            'abejorros_semaforo' => $abejorrosSemaforo,
         ]);
 
         $monitoreo = SueloMonitoreo::create($datosAGuardar);

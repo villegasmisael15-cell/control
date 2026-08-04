@@ -16,7 +16,7 @@ class User extends Authenticatable
         'email',
         'password',
         'rol',
-        'sectores',
+        'fcm_token',
     ];
 
     protected $hidden = [
@@ -37,10 +37,21 @@ class User extends Authenticatable
         return $this->hasMany(MonitoreoClimaRiego::class);
     }
 
+    // Relación para los sectores que un operador seleccionó al registrarse
+    public function sectoresOperador()
+    {
+        return $this->hasMany(OperadorSector::class, 'user_id');
+    }
+
+    // Relación para los invernaderos y sectores que posee un dueño
+    public function sectorCaracteristicas()
+    {
+        return $this->hasMany(SectorCaracteristica::class, 'user_id');
+    }
+
     /**
      * ACCESOR PARA EL ROL:
      * Engaña al sistema únicamente en las lecturas de vistas y controladores.
-     * Lee directamente el valor interno guardado en los atributos para no interferir con las actualizaciones.
      */
     public function getRolAttribute()
     {
@@ -50,18 +61,5 @@ class User extends Authenticatable
             return 'administrador';
         }
         return $realRol;
-    }
-
-    /**
-     * ACCESOR PARA LOS SECTORES:
-     * Al ser admin_general en la base de datos, le entrega todos los sectores registrados.
-     */
-    public function getSectoresAttribute($value)
-    {
-        if (isset($this->attributes['rol']) && $this->attributes['rol'] === 'admin_general') {
-            return implode(',', \App\Models\SectorCaracteristica::pluck('sector')->toArray());
-        }
-
-        return $value;
     }
 }

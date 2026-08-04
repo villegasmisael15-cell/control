@@ -21,7 +21,8 @@
                 </div>
                 <div class="flex items-center gap-4 text-sm font-medium">
                     <span class="bg-emerald-700 px-3 py-1 rounded text-xs flex items-center gap-1">
-                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
+                        <i class="fa-solid fa-user"></i> {{ auth()->user()->name }} 
+                        <span class="opacity-75 uppercase text-[10px] ml-1">({{ auth()->user()->rol }})</span>
                     </span>
                     <a href="{{ route('sanidad.index') }}" class="text-emerald-100 hover:text-white transition flex items-center gap-1">
                         <i class="fa-solid fa-arrow-left"></i> Volver Historial
@@ -42,7 +43,13 @@
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
                 <h2 class="text-xl font-bold text-gray-800">Nueva Asignación de Sanidad y Nutrición</h2>
-                <p class="text-xs text-gray-500 mt-1">Configure los datos generales de la orden de trabajo y asigne al operador responsable de la ejecución.</p>
+                <p class="text-xs text-gray-500 mt-1">
+                    @if(auth()->user()->rol === 'dueño' || auth()->user()->rol === 'dueno')
+                    Panel del Dueño: Visualización y control general de sus invernaderos y sectores.
+                    @else
+                    El operador registra las actividades asignadas para los invernaderos y sectores correspondientes.
+                    @endif
+                </p>
             </div>
 
             <form action="{{ route('sanidad.store') }}" method="POST" class="p-6 space-y-8">
@@ -54,22 +61,42 @@
                         <label class="block text-sm font-semibold text-gray-700 mb-1">Fecha Programada</label>
                         <input type="date" name="fecha" value="{{ date('Y-m-d') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500 bg-white">
                     </div>
+
+                    @if(auth()->user()->rol === 'dueño' || auth()->user()->rol === 'dueno' || auth()->user()->rol === 'administrador')
+                    <!-- Si es Dueño o Admin, puede filtrar/ver los operadores de sus sectores -->
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 uppercase mb-1">1. Asignar a Operador:</label>
+                        <label class="block text-sm font-bold text-gray-700 uppercase mb-1">1. Operador Responsable:</label>
                         <select name="operador_id" id="operador_id" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-white" required onchange="filtrarSectoresPorOperador()">
-                            <option value="">Seleccione el encargado...</option>
+                            <option value="">Seleccione el operador...</option>
                             @foreach($operadores as $op)
-                            <option value="{{ $op->id }}" data-sectores="{{ $op->sectores }}" {{ old('operador_id') == $op->id ? 'selected' : '' }}>{{ $op->name }}</option>
+                            <option value="{{ $op->id }}" data-sectores='{!! json_encode($op->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}' {{ old('operador_id') == $op->id ? 'selected' : '' }}>{{ $op->name }}</option>
                             @endforeach
                         </select>
                         @error('operador_id')
                         <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
                         @enderror
                     </div>
+                    @else
+                    <!-- Si es operador, su ID se autodefine -->
+                    <input type="hidden" name="operador_id" id="operador_id" value="{{ auth()->user()->id }}">
+                    @endif
+
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 uppercase mb-1">2. Sector / Nave Autorizada:</label>
-                        <select name="sector" id="sector" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-gray-100" required disabled onchange="cambiarDatosPorSector()">
-                            <option value="">Primero elija un operador...</option>
+                        <label class="block text-sm font-bold text-gray-700 uppercase mb-1">
+                            @if(auth()->user()->rol === 'dueño' || auth()->user()->rol === 'dueno' || auth()->user()->rol === 'administrador')
+                            2. Invernadero y Sector:
+                            @else
+                            1. Invernadero y Sector Asignado:
+                            @endif
+                        </label>
+                        <select name="sector" id="sector" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-white" required onchange="cambiarDatosPorSector()">
+                            <option value="">-- Seleccione Invernadero y Sector --</option>
+                            @if(auth()->user()->rol === 'operador')
+                                <!-- El operador carga directamente sus propios sectores elegidos/asignados -->
+                                @foreach(auth()->user()->sectorCaracteristicas ?? [] as $sec)
+                                <option value="{{ $sec->sector }}">{{ $sec->invernadero }} — {{ $sec->sector }}</option>
+                                @endforeach
+                            @endif
                         </select>
                         @error('sector')
                         <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
@@ -77,7 +104,7 @@
                     </div>
                 </div>
 
-                <!-- SUBFORMULARIO 1: MANEJO DE AGROQUÍMICOS (AGRUPADO EN BLOQUES MÚLTIPLES) -->
+                <!-- SUBFORMULARIO 1: MANEJO DE AGROQUÍMICOS -->
                 <div class="space-y-6">
                     <div class="border-b border-gray-200 pb-2">
                         <h3 class="font-bold text-base text-gray-700 flex items-center gap-1.5">
@@ -86,7 +113,6 @@
                         </h3>
                     </div>
 
-                    <!-- BLOQUE APARTE: Información Fija del Sector Seleccionado -->
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-orange-50/40 p-4 rounded-xl border border-orange-200 text-xs shadow-2xs">
                         <div class="bg-white p-3 rounded-lg border border-orange-100 flex flex-col justify-center">
                             <span class="text-orange-900 font-bold uppercase tracking-wider text-[10px] mb-0.5">Variedad Cultivada:</span>
@@ -102,25 +128,21 @@
                         </div>
                     </div>
 
-                    <!-- BOTÓN REUBICADO ABAJO DE LAS TARJETAS -->
                     <div class="flex justify-end">
                         <button type="button" onclick="agregarNuevoBloqueAgroquimico()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg transition shadow-sm cursor-pointer">
                             <i class="fa-solid fa-folder-plus mr-1"></i> Añadir Registro de Aplicación
                         </button>
                     </div>
 
-                    <!-- Inputs ocultos para enviar estos tres datos fijos en el Request -->
                     <input type="hidden" name="variedad_sector" id="hidden-variedad" value="">
                     <input type="hidden" name="numero_plantas_sector" id="hidden-plantas" value="">
                     <input type="hidden" name="fecha_trasplante_sector" id="hidden-trasplante" value="">
 
-                    <!-- CONTENEDOR RAÍZ PARA BLOQUES DE AGROQUÍMICOS -->
                     <div id="raiz-bloques-agroquimicos" class="space-y-6">
-                        <!-- Renderizado vía JS -->
                     </div>
                 </div>
 
-                <!-- SUBFORMULARIO 2: SECCIÓN FERTILIZANTES (AHORA OPCIONAL / NO OBLIGATORIO) -->
+                <!-- SUBFORMULARIO 2: SECCIÓN FERTILIZANTES -->
                 <div class="space-y-6 pt-4 border-t border-gray-100">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-2">
                         <h3 class="font-bold text-base text-gray-700 flex items-center gap-1.5">
@@ -133,7 +155,6 @@
                     </div>
 
                     <div id="raiz-tanques-fertilizantes" class="space-y-6">
-                        <!-- Renderizado vía JS -->
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200 mt-4">
@@ -159,7 +180,7 @@
 
     <script>
         const hoy = "{{ date('Y-m-d') }}";
-        const mapaSectoresData = @json($sectoresConVariedad);
+        const mapaSectoresData = @json($sectoresConVariedad ?? []);
         
         let contadorTanques = 0;
         let contadorAgroquimicos = 0;
@@ -195,8 +216,10 @@
         function filtrarSectoresPorOperador() {
             const selectOperador = document.getElementById('operador_id');
             const selectSector = document.getElementById('sector');
+            if (!selectOperador || !selectSector) return;
+
             const opcionSeleccionada = selectOperador.options[selectOperador.selectedIndex];
-            const cadenaSectores = opcionSeleccionada.getAttribute('data-sectores');
+            const cadenaSectoresRaw = opcionSeleccionada ? opcionSeleccionada.getAttribute('data-sectores') : null;
 
             selectSector.innerHTML = '';
             
@@ -208,7 +231,7 @@
             document.getElementById('hidden-plantas').value = "";
             document.getElementById('hidden-trasplante').value = "";
 
-            if (!cadenaSectores || cadenaSectores.trim() === '') {
+            if (!cadenaSectoresRaw || cadenaSectoresRaw.trim() === '') {
                 selectSector.innerHTML = '<option value="">Este operador no tiene sectores asignados</option>';
                 selectSector.disabled = true;
                 selectSector.classList.add('bg-gray-100');
@@ -220,19 +243,30 @@
 
             const opcionDefecto = document.createElement('option');
             opcionDefecto.value = '';
-            opcionDefecto.textContent = 'Seleccione un sector...';
+            opcionDefecto.textContent = '-- Seleccione Invernadero y Sector --';
             selectSector.appendChild(opcionDefecto);
 
-            const listaSectores = cadenaSectores.split(',').map(s => s.trim());
-
-            listaSectores.forEach(sector => {
-                if (sector !== '') {
-                    const opt = document.createElement('option');
-                    opt.value = sector;
-                    opt.textContent = sector;
-                    selectSector.appendChild(opt);
-                }
-            });
+            try {
+                const listaPares = JSON.parse(cadenaSectoresRaw);
+                listaPares.forEach(item => {
+                    if (item.sector) {
+                        const opt = document.createElement('option');
+                        opt.value = item.sector;
+                        opt.textContent = `${item.invernadero} — ${item.sector}`;
+                        selectSector.appendChild(opt);
+                    }
+                });
+            } catch (e) {
+                const listaSectores = cadenaSectoresRaw.split(',').map(s => s.trim());
+                listaSectores.forEach(sector => {
+                    if (sector !== '') {
+                        const opt = document.createElement('option');
+                        opt.value = sector;
+                        opt.textContent = sector;
+                        selectSector.appendChild(opt);
+                    }
+                });
+            }
         }
 
         function cambiarDatosPorSector() {
@@ -259,7 +293,6 @@
             }
         }
 
-        // --- LÓGICA DE BLOQUES MÚLTIPLES PARA AGROQUÍMICOS ---
         function agregarNuevoBloqueAgroquimico() {
             contadorAgroquimicos++;
             const raiz = document.getElementById('raiz-bloques-agroquimicos');
@@ -318,7 +351,7 @@
             verLockeoAgroBloques();
         }
 
-       function agregarProductoToAgro(idAgro) {
+        function agregarProductoToAgro(idAgro) {
             const tbody = document.getElementById(`cuerpo_productos_agro_${idAgro}`);
             const nuevaFila = document.createElement('tr');
             nuevaFila.className = "hover:bg-stone-50/40 fila-producto-subdetalle";
@@ -396,7 +429,6 @@
             }
         }
 
-        // --- LÓGICA DE TANQUES Y ACCIONES PARA FERTILIZANTES (YA SIN REQUIRIR OBLIGATORIEDAD) ---
         function agregarNuevoTanque() {
             contadorTanques++;
             const raiz = document.getElementById('raiz-tanques-fertilizantes');
@@ -525,7 +557,8 @@
         }
 
         document.addEventListener("DOMContentLoaded", function() {
-            if(document.getElementById('operador_id').value !== "") {
+            const elOperador = document.getElementById('operador_id');
+            if(elOperador && elOperador.tagName === 'SELECT' && elOperador.value !== "") {
                 filtrarSectoresPorOperador();
             }
             agregarNuevoBloqueAgroquimico();

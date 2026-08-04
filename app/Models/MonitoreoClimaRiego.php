@@ -21,6 +21,7 @@ class MonitoreoClimaRiego extends Model
         'fecha',
         'sector',
         'temperatura',
+        'invernadero',
         'humedad',
         'dpv',
         'vol_riego_entrada',

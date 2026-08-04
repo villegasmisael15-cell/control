@@ -14,9 +14,15 @@
     <form method="POST" action="{{ route('sectores.guardar_inicial') }}" class="space-y-4">
         @csrf
         
-        <div class="bg-gray-100 border border-gray-300 rounded-lg p-3 text-center font-mono text-sm text-gray-700 font-bold shadow-inner">
-            CONFIGURANDO: {{ $sector }}
+        <div class="bg-gray-100 border border-gray-300 rounded-lg p-3 text-center font-mono text-sm text-gray-700 font-bold shadow-inner space-y-1">
+            <div>INVERNADERO: {{ $invernadero }}</div>
+            <div class="text-xs text-emerald-700">SECTOR: {{ $sector }}</div>
+            
+            <input type="hidden" name="invernadero" value="{{ $invernadero }}">
             <input type="hidden" name="sector" value="{{ $sector }}">
+            @isset($dueno_id)
+                <input type="hidden" name="dueno_id" value="{{ $dueno_id }}">
+            @endisset
         </div>
 
         <div>

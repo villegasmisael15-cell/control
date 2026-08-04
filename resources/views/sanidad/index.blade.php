@@ -124,6 +124,12 @@
         <!-- LISTADO DE BITÁCORAS PRINCIPALES -->
         <div class="space-y-8">
             @forelse($bitacoras as $bitacora)
+            @php
+                $caracHist = \App\Models\SectorCaracteristica::where('user_id', $bitacora->operador_id)
+                    ->where('sector', $bitacora->sector)
+                    ->first();
+                $invHist = $caracHist ? $caracHist->invernadero : 'General';
+            @endphp
             <div class="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
 
                 <!-- ENCABEZADO REGISTRO MAESTRO -->
@@ -133,12 +139,12 @@
                             <i class="fa-solid fa-calendar text-gray-400"></i>
                             {{ \Carbon\Carbon::parse($bitacora->fecha)->format('d/m/Y') }}
                         </span>
-                        <span class="bg-emerald-50 text-emerald-800 text-xs px-2.5 py-0.5 rounded-full font-bold border border-emerald-200">
-                            Sector: {{ $bitacora->sector }}
+                        <span class="bg-emerald-50 text-emerald-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-200">
+                            {{ $invHist }} — {{ $bitacora->sector }}
                         </span>
                         <span class="text-xs text-gray-500 font-medium flex items-center gap-1">
                             <i class="fa-solid fa-user-gear text-emerald-600"></i>
-                            Operador: <strong class="text-emerald-700">{{ $bitacora->operador ? $bitacora->operador->name : 'No asignado' }}</strong>
+                            Dueño / Encargado: <strong class="text-emerald-700">{{ $bitacora->operador ? $bitacora->operador->name : 'No asignado' }}</strong>
                         </span>
                     </div>
 
@@ -179,7 +185,7 @@
                         @php
                         $primerArq = $bitacora->agroquimicos->first();
                         $agroquimicosAgrupados = $bitacora->agroquimicos->groupBy(function($item) {
-                        return $item->fecha_aplicacion . '_' . $item->aplicacion;
+                            return $item->fecha_aplicacion . '_' . $item->aplicacion;
                         });
                         @endphp
 

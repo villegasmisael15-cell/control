@@ -36,17 +36,26 @@
                         <input type="date" name="fecha" value="{{ date('Y-m-d') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500">
                     </div>
                     <div class="mb-4">
-                        <label class="block text-sm font-bold text-gray-700 uppercase mb-2">Sector / Nave:</label>
+                        <label for="sector" class="block text-sm font-bold text-gray-700 uppercase mb-2">Invernadero y Sector:</label>
                         <div class="relative">
-                            <select name="sector" id="sector" class="form-select border border-gray-300 rounded w-full p-2" required>
-                                <option value=" ">Seleccione un sector</option>
-                                @foreach($sectores as $sector)
-                                <option value="{{ $sector }}" {{ old('sector') == $sector ? 'selected' : '' }}>{{ $sector }}</option>
+                            <select name="sector" id="sector" class="form-select border border-gray-300 rounded w-full p-2 bg-white text-sm" required onchange="actualizarInvernadero(this)">
+                                <option value="">Seleccione un sector</option>
+                                @foreach($sectores as $item)
+                                <option value="{{ $item->sector }}"
+                                    data-invernadero="{{ $item->invernadero }}"
+                                    {{ old('sector') == $item->sector ? 'selected' : '' }}>
+                                    {{ $item->invernadero }} — {{ $item->sector }}
+                                </option>
                                 @endforeach
                             </select>
+                            <!-- Campo oculto para enviar el invernadero -->
+                            <input type="hidden" name="invernadero" id="invernadero_hidden" value="{{ old('invernadero') }}">
                         </div>
                         @error('sector')
                         <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                        @error('invernadero')
+                        <p class="text-sm text-red-600 mt-1">El invernadero es obligatorio.</p>
                         @enderror
                     </div>
                 </div>
@@ -340,11 +349,14 @@
         const inputs = ['temperatura', 'humedad', 'radiacion_lectura', 'lectura_tensiometro', 'ce', 'abejorros_flores'];
 
         inputs.forEach(id => {
-            document.getElementById(id).addEventListener('input', calcularValores);
+            const el = document.getElementById(id);
+            if(el) el.addEventListener('input', calcularValores);
         });
 
-        document.getElementById('chk_eps').addEventListener('change', alternarFilasAnalisis);
-        document.getElementById('chk_ecp').addEventListener('change', alternarFilasAnalisis);
+        const chkEps = document.getElementById('chk_eps');
+        const chkEcp = document.getElementById('chk_ecp');
+        if(chkEps) chkEps.addEventListener('change', alternarFilasAnalisis);
+        if(chkEcp) chkEcp.addEventListener('change', alternarFilasAnalisis);
 
         const inputsSemaforos = [
             'eps_rapido_no3', 'eps_rapido_k', 'eps_rapido_ca', 'eps_rapido_na', 'eps_rapido_p', 'eps_rapido_ph', 'eps_rapido_ce',
@@ -377,16 +389,16 @@
             const selectCumplio = document.getElementById('analisis_rapido_cumplio');
 
             if (!isNaN(ceValor) && ceValor > 3.0) {
-                divAlertaCe.classList.remove('hidden');
-                divAnalisisRapido.classList.remove('hidden');
+                if(divAlertaCe) divAlertaCe.classList.remove('hidden');
+                if(divAnalisisRapido) divAnalisisRapido.classList.remove('hidden');
                 alternarFilasAnalisis();
-                if (selectCumplio.value === 'no') {
-                    divSeccionLab.classList.remove('hidden');
+                if (selectCumplio && selectCumplio.value === 'no') {
+                    if(divSeccionLab) divSeccionLab.classList.remove('hidden');
                 }
             } else {
-                divAlertaCe.classList.add('hidden');
-                divAnalisisRapido.classList.add('hidden');
-                divSeccionLab.classList.add('hidden');
+                if(divAlertaCe) divAlertaCe.classList.add('hidden');
+                if(divAnalisisRapido) divAnalisisRapido.classList.add('hidden');
+                if(divSeccionLab) divSeccionLab.classList.add('hidden');
             }
 
             // 1. Cálculo DPV
@@ -399,19 +411,19 @@
                 document.getElementById('dpv_view').value = dpv;
 
                 if (dpv >= 0.8 && dpv <= 1.4) {
-                    eBox.className = "bg-emerald-100 rounded-xl border border-emerald-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
-                    eText.className = "text-2xl font-black text-emerald-800";
-                    eText.innerText = "ÓPTIMO";
+                    if(eBox) eBox.className = "bg-emerald-100 rounded-xl border border-emerald-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
+                    if(eText) eText.className = "text-2xl font-black text-emerald-800";
+                    if(eText) eText.innerText = "ÓPTIMO";
                 } else {
-                    eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
-                    eText.className = "text-2xl font-black text-red-800";
-                    eText.innerText = "REVISAR CLIMA";
+                    if(eBox) eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
+                    if(eText) eText.className = "text-2xl font-black text-red-800";
+                    if(eText) eText.innerText = "REVISAR CLIMA";
                 }
             } else {
                 document.getElementById('dpv_view').value = "";
-                eBox.className = "bg-gray-100 rounded-xl border border-gray-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
-                eText.className = "text-2xl font-black text-gray-400";
-                eText.innerText = "—";
+                if(eBox) eBox.className = "bg-gray-100 rounded-xl border border-gray-300 p-6 flex flex-col justify-center items-center h-full transition duration-300";
+                if(eText) eText.className = "text-2xl font-black text-gray-400";
+                if(eText) eText.innerText = "—";
             }
 
             // 2. Tensiómetro
@@ -481,7 +493,7 @@
                 rAccionTomada.value = "";
             }
 
-            // 4. Semáforo Abejorros (25-30 verde, 20-24 amarillo, <19 rojo)
+            // 4. Semáforo Abejorros
             const aSemaforoView = document.getElementById('abejorros_semaforo_view');
             if (!isNaN(abejorros)) {
                 if (abejorros >= 25 && abejorros <= 30) {
@@ -505,29 +517,31 @@
             const seccionLab = document.getElementById('seccion_laboratorio');
 
             if (seleccion === 'no') {
-                seccionLab.classList.remove('hidden');
+                if(seccionLab) seccionLab.classList.remove('hidden');
             } else {
-                seccionLab.classList.add('hidden');
+                if(seccionLab) seccionLab.classList.add('hidden');
             }
         }
 
         function alternarFilasAnalisis() {
-            const epsChecked = document.getElementById('chk_eps').checked;
-            const ecpChecked = document.getElementById('chk_ecp').checked;
+            const chkEps = document.getElementById('chk_eps');
+            const chkEcp = document.getElementById('chk_ecp');
+            const epsChecked = chkEps ? chkEps.checked : false;
+            const ecpChecked = chkEcp ? chkEcp.checked : false;
 
             const filaEps = document.getElementById('fila_analisis_eps');
             const filaEcp = document.getElementById('fila_analisis_ecp');
 
             if (epsChecked) {
-                filaEps.classList.remove('hidden');
+                if(filaEps) filaEps.classList.remove('hidden');
             } else {
-                filaEps.classList.add('hidden');
+                if(filaEps) filaEps.classList.add('hidden');
             }
 
             if (ecpChecked) {
-                filaEcp.classList.remove('hidden');
+                if(filaEcp) filaEcp.classList.remove('hidden');
             } else {
-                filaEcp.classList.add('hidden');
+                if(filaEcp) filaEcp.classList.add('hidden');
             }
         }
 
@@ -672,6 +686,20 @@
                 aplicarColor('lab_s', labS, 192, 480);
             }
         }
+
+        function actualizarInvernadero(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const invernadero = selectedOption.getAttribute('data-invernadero') || '';
+            const invHidden = document.getElementById('invernadero_hidden');
+            if(invHidden) invHidden.value = invernadero;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const selectElement = document.getElementById('sector');
+            if (selectElement && selectElement.selectedIndex > 0) {
+                actualizarInvernadero(selectElement);
+            }
+        });
     </script>
 </body>
 

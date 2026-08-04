@@ -17,7 +17,7 @@ class ReporteController extends Controller
         $semana = $request->get('semana');
         $anioActual = date('Y');
 
-        // 1. Consulta base uniendo tus tablas originales
+        // 1. Consulta base uniendo las tablas originales
         $query = DB::table('recepcion_exportaciones')
             ->leftJoin('reportes', 'recepcion_exportaciones.id', '=', 'reportes.recepcion_exportacion_id')
             ->leftJoin('recepcion_nacionales', 'recepcion_exportaciones.id', '=', 'recepcion_nacionales.recepcion_exportacion_id')
@@ -37,14 +37,19 @@ class ReporteController extends Controller
                 'recepcion_exportaciones.productor_id'
             );
 
-        // 2. FILTRO DE SEGURIDAD POR ROL (Estricto del negocio)
-        if ($user->rol === 'operador') {
+        // 2. FILTRO DE SEGURIDAD POR ROL (Actualizado de operador a dueño)
+        if ($user->rol === 'dueno') {
+            $sectoresDueño = DB::table('sector_caracteristicas')
+                ->where('user_id', $user->id)
+                ->pluck('sector')
+                ->toArray();
+
             $query->where('reportes.aprobado', true)
-                  ->where(function($q) use ($user) {
+                  ->where(function($q) use ($user, $sectoresDueño) {
                       $q->where('recepcion_exportaciones.productor_id', $user->id)
-                        ->orWhere('recepcion_exportaciones.sector_registro', $user->sector);
+                        ->orWhereIn('recepcion_exportaciones.sector_registro', $sectoresDueño);
                   });
-        } elseif ($user->rol !== 'administrador') {
+        } elseif ($user->rol !== 'administrador' && $user->rol !== 'usuario_comercial') {
             abort(403, 'No autorizado.');
         }
 
@@ -81,7 +86,7 @@ class ReporteController extends Controller
                 $pesoNeto = (float)$item->total_kg - $pesoRechazo;
             }
             
-            // LÓGICA DE RECHAZO POST: Se le resta al aceptado neto del operador
+            // LÓGICA DE RECHAZO POST: Se le resta al aceptado neto del dueño
             $rechazoPostObtenido = $item->rechazo_post !== null ? (float)$item->rechazo_post : 0.00;
             $kilosAceptadosFinales = $pesoNeto - $rechazoPostObtenido;
             $kilosAceptadosFinales = $kilosAceptadosFinales >= 0 ? $kilosAceptadosFinales : 0.00;
@@ -109,7 +114,7 @@ class ReporteController extends Controller
                 $participacionCalculada = ($destinoCalculado * 100) / $agroparkDelDia;
             }
 
-            $operadorName = DB::table('users')->where('id', $item->productor_id)->value('name');
+            $productorName = DB::table('users')->where('id', $item->productor_id)->value('name');
 
             return (object)[
                 'recepcion_id'      => $item->recepcion_id,
@@ -121,7 +126,8 @@ class ReporteController extends Controller
                 'reporte_id'        => $item->reporte_id,
                 'observaciones'     => $item->observaciones,
                 'aprobado'          => $item->aprobado, 
-                'operador_name'     => $operadorName ?? 'Desconocido',
+                'operador_name'     => $productorName ?? 'Desconocido',
+                'productor_id'      => $item->productor_id,
                 'fecha_registro'    => $fechaFiltroDiario,
                 'destino'           => $destinoCalculado > 0 ? $destinoCalculado : null,
                 'participacion'     => $participacionCalculada > 0 ? number_format($participacionCalculada, 2) . '%' : '—',
@@ -133,9 +139,7 @@ class ReporteController extends Controller
         return view('reportes.index', compact('reportes'));
     }
 
- 
-
-      public function update(Request $request, $recepcionId)
+    public function update(Request $request, $recepcionId)
     {
         if (auth()->user()->rol !== 'administrador') {
             abort(403, 'No autorizado.');
@@ -195,26 +199,22 @@ class ReporteController extends Controller
                 $aceptadosKgFinal = $pesoNetoInicial - $rechazoPostFinal;
                 $aceptadosKgFinal = $aceptadosKgFinal >= 0 ? $aceptadosKgFinal : 0.00;
 
-                // ¡RECALCULO EN CALIENTE DE LAS FÓRMULAS CON EL NUEVO DATO ACEPTADO!
+                // RECALCULO EN CALIENTE DE LAS FÓRMULAS CON EL NUEVO DATO ACEPTADO
                 $destinoFinal = 0.00;
                 $participacionCalculada = 0.00;
                 $nacionalFinal = 0.00;
                 $empacadosFinal = 0.00;
 
                 if ($sumaPesosDiarios > 0 && $agroparkDiario > 0) {
-                    // FÓRMULA B: Destino Condensación recalculado en base a los kilos aceptados corregidos
                     $divisionDiaria = $agroparkDiario / $sumaPesosDiarios;
                     $destinoFinal = $aceptadosKgFinal * $divisionDiaria;
 
-                    // FÓRMULA C: Nueva participación
                     if ($destinoFinal > 0) {
                         $participacionCalculada = ($destinoFinal * 100) / $agroparkDiario;
                     }
 
-                    // FÓRMULA 3: Nuevo cálculo proporcional de Fruta Nacional
                     $nacionalFinal = ($nacionalGlobalDiario * $participacionCalculada) / 100;
 
-                    // FÓRMULA 4: Nuevo cálculo final de Empacados
                     if ($factorMultiplicador > 0) {
                         $empacadosFinal = ($destinoFinal - $nacionalFinal) * $factorMultiplicador;
                         if ($empacadosFinal < 0) $empacadosFinal = 0.00;
@@ -224,7 +224,7 @@ class ReporteController extends Controller
             } else {
                 
                 // --- ACCIÓN: MODAL DE CAPTURA GENERAL / DATOS MANUALES ---
-                $estatusAprobado = true; // Forzar visibilidad al operador al guardar datos manuales
+                $estatusAprobado = true; // Forzar visibilidad al dueño/operador al guardar datos manuales
 
                 $rechazoPostFinal = $reporteExistente ? (float)$reporteExistente->rechazo_post : 0.00;
                 $aceptadosKgFinal = $pesoNetoInicial - $rechazoPostFinal;
@@ -310,10 +310,7 @@ class ReporteController extends Controller
         }
     }
 
-
-
-
-public function descargarPDF($id)
+    public function descargarPDF($id)
     {
         $reporte = DB::table('recepcion_exportaciones')
             ->leftJoin('reportes', 'recepcion_exportaciones.id', '=', 'reportes.recepcion_exportacion_id')
@@ -323,9 +320,8 @@ public function descargarPDF($id)
                 'recepcion_exportaciones.id as recepcion_id', 
                 'recepcion_exportaciones.sector_registro as recepcion_sector', 
                 'recepcion_exportaciones.peso_exportacion as total_kg',  
-                // CORRECCIÓN: Usar el valor calculado con descarte de la tabla de reportes
+                'recepcion_exportaciones.productor_id',
                 'reportes.aceptados_kg as aceptados_kg',
-                // CORRECCIÓN: Traer el rechazo procesado real de la báscula
                 'recepcion_nacionales.peso_rechazo_procesado as rechazados_kg',
                 'reportes.id as reporte_id',
                 'reportes.empacados',

@@ -4,13 +4,11 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
-use App\Models\User;
 
 class SectorUnico implements ValidationRule
 {
     protected $userId;
 
-    // Pasamos el ID del usuario actual para ignorarlo si estamos editando
     public function __construct($userId = null)
     {
         $this->userId = $userId;
@@ -22,22 +20,26 @@ class SectorUnico implements ValidationRule
             return;
         }
 
-        // Limpiar y separar los sectores ingresados (ej: "Sector 1, Sector 2" -> ['Sector 1', 'Sector 2'])
-        $sectoresNuevos = array_map('trim', explode(',', $value));
+        // Convertir y aplanar cualquier formato (string, array o array anidado) a un array plano de strings
+        $elementos = [];
+        
+        if (is_array($value)) {
+            array_walk_recursive($value, function($item) use (&$elementos) {
+                if (is_string($item) || is_numeric($item)) {
+                    $elementos[] = trim((string)$item);
+                }
+            });
+        } elseif (is_string($value)) {
+            $elementos = array_map('trim', explode(',', $value));
+        }
 
-        // Obtener todos los usuarios excepto el que se está editando
-        $usuarios = User::where('id', '!=', $this->userId)->whereNotNull('sectores')->get();
+        // Filtrar elementos vacíos
+        $sectoresNuevos = array_filter($elementos);
 
-        foreach ($usuarios as $usuario) {
-            $sectoresExistentes = array_map('trim', explode(',', $usuario->sectores));
-            
-            // Verificar si hay intersección (sectores repetidos)
-            $repetidos = array_intersect($sectoresNuevos, $sectoresExistentes);
-
-            if (!empty($repetidos)) {
-                $fail('El o los siguientes sectores ya están asignados a otro usuario: ' . implode(', ', $repetidos) . '.');
-                return;
-            }
+        // Validar que el usuario no envíe elementos duplicados en su propia lista
+        if (count($sectoresNuevos) !== count(array_unique($sectoresNuevos))) {
+            $fail('Has ingresado elementos duplicados en tu lista.');
+            return;
         }
     }
 }

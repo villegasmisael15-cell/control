@@ -137,16 +137,28 @@
         <p class="subtitulo">REPORTE INTEGRADO DE COMPROBANTES</p>
     </div>
 
+    @php
+        $caracPdf = \App\Models\SectorCaracteristica::where('user_id', $reporte->productor_id ?? $reporte->user_id)
+            ->where('sector', $reporte->recepcion_sector)
+            ->first();
+        $invPdf = $caracPdf ? $caracPdf->invernadero : 'General';
+
+        $caracNacPdf = \App\Models\SectorCaracteristica::where('user_id', $reporte->nac_productor_id ?? $reporte->productor_id ?? $reporte->user_id)
+            ->where('sector', $reporte->nac_sector)
+            ->first();
+        $invNacPdf = $caracNacPdf ? $caracNacPdf->invernadero : 'General';
+    @endphp
+
     <div class="info-box">
         <table style="width: 100%; margin-bottom: 0; border: none; font-size: 12px;">
             <tr style="border: none;">
                 <td style="width: 50%; padding: 0; border: none; vertical-align: top;">
-                    <strong>Productor:</strong> {{ $reporte->nac_productor ?? 'N/A' }} <br>
+                    <strong>Dueño:</strong> {{ $reporte->nac_productor ?? $reporte->productor_name ?? 'N/A' }} <br>
                     <strong>Semana:</strong> 
                     {{ $reporte->fecha_exportacion ? date('W', strtotime($reporte->fecha_exportacion)) : date('W') }}<br>
                 </td>
                 <td style="width: 50%; padding: 0; border: none; text-align: right; vertical-align: top;">
-                    <strong>Sector Principal:</strong> {{ $reporte->recepcion_sector }}<br>
+                    <strong>Invernadero / Sector:</strong> {{ $invPdf }} — {{ $reporte->recepcion_sector }}<br>
                     <strong>Fecha de Exportación:</strong> 
                     {{ $reporte->fecha_exportacion ? date('d/m/Y', strtotime($reporte->fecha_exportacion)) : date('d/m/Y') }}
                 </td>
@@ -223,8 +235,8 @@
     <div class="seccion-titulo">II. Reporte de Recepción Nacional</div>
 
     <div style="margin-bottom: 10px; font-size: 11px; background: #fafafa; padding: 8px; border: 1px solid #e5e7eb;">
-        <strong>Productor Nacional:</strong> {{ $reporte->nac_productor ?? 'N/A' }} |
-        <strong>Sector Origen:</strong> {{ $reporte->nac_sector ?? 'N/A' }}
+        <strong>Dueño Nacional:</strong> {{ $reporte->nac_productor ?? 'N/A' }} |
+        <strong>Invernadero / Sector Origen:</strong> {{ $invNacPdf }} — {{ $reporte->nac_sector ?? 'N/A' }}
     </div>
 
     <table>

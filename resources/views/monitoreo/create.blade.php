@@ -36,25 +36,27 @@
                         <input type="date" name="fecha" value="{{ date('Y-m-d') }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500">
                     </div>
                     <div class="mb-4">
-                        <label for="sector" class="block text-sm font-bold text-gray-700 uppercase mb-2">Sector / Nave:</label>
+                        <label for="sector" class="block text-sm font-bold text-gray-700 uppercase mb-2">Invernadero y Sector:</label>
                         <div class="relative">
-                            <select name="sector" id="sector" class="form-select border border-gray-300 rounded w-full p-2" required>
-                                <option value=" ">Seleccione un sector</option>
-                                @foreach($sectores as $sectorNombre)
-                                @php
-                                $caracteristica = \App\Models\SectorCaracteristica::where('sector', $sectorNombre)->first();
-                                $macetas = $caracteristica ? $caracteristica->macetas_por_gotero : 1;
-                                @endphp
-                                <option value="{{ $sectorNombre }}"
-                                    data-macetas="{{ $macetas }}"
-                                    {{ old('sector') == $sectorNombre ? 'selected' : '' }}>
-                                    {{ $sectorNombre }}
+                            <select name="sector" id="sector" class="form-select border border-gray-300 rounded w-full p-2" required onchange="actualizarInvernadero(this)">
+                                <option value="">Seleccione un sector</option>
+                                @foreach($sectores as $item)
+                                <option value="{{ $item->sector }}"
+                                    data-invernadero="{{ $item->invernadero }}"
+                                    data-macetas="{{ $item->macetas_por_gotero ?? 1 }}"
+                                    {{ old('sector') == $item->sector ? 'selected' : '' }}>
+                                    {{ $item->invernadero }} — {{ $item->sector }}
                                 </option>
                                 @endforeach
                             </select>
+                            <!-- Campo oculto que enviará el invernadero -->
+                            <input type="hidden" name="invernadero" id="invernadero_hidden" value="{{ old('invernadero') }}">
                         </div>
                         @error('sector')
                         <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                        @enderror
+                        @error('invernadero')
+                        <p class="text-sm text-red-600 mt-1">El invernadero es obligatorio.</p>
                         @enderror
                     </div>
                 </div>
@@ -108,7 +110,7 @@
                             </div>
                             <div>
                                 <label class="block text-[11px] font-medium text-gray-600 mb-0.5">CE Sal</label>
-                                <input type="number" step="0.01" id="ce_calida" name="ce_salida" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                                <input type="number" step="0.01" id="ce_salida" name="ce_salida" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm">
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
@@ -223,11 +225,10 @@
     <script>
         const inputs = [
             'temperatura', 'humedad', 'vol_riego_entrada', 'vol_drenaje_salida',
-            'ce_entrada', 'ce_calida', 'ph_entrada', 'ph_salida',
+            'ce_entrada', 'ce_salida', 'ph_entrada', 'ph_salida',
             'peso_tarde_anterior', 'peso_manana', 'radiacion_lectura', 'abejorros_flores'
         ];
 
-        // Escuchamos también el cambio de sector para recalcular inmediatamente
         document.getElementById('sector').addEventListener('change', calcularValores);
 
         inputs.forEach(id => {
@@ -240,7 +241,7 @@
             const volEntOriginal = parseFloat(document.getElementById('vol_riego_entrada').value);
             const volSal = parseFloat(document.getElementById('vol_drenaje_salida').value);
             const ceEnt = parseFloat(document.getElementById('ce_entrada').value);
-            const ceSal = parseFloat(document.getElementById('ce_calida').value);
+            const ceSal = parseFloat(document.getElementById('ce_salida').value);
             const phEnt = parseFloat(document.getElementById('ph_entrada').value);
             const phSal = parseFloat(document.getElementById('ph_salida').value);
             const pTarde = parseFloat(document.getElementById('peso_tarde_anterior').value);
@@ -248,22 +249,18 @@
             const lux = parseFloat(document.getElementById('radiacion_lectura').value);
             const abejorros = parseFloat(document.getElementById('abejorros_flores').value);
 
-            // Obtener las macetas del sector seleccionado dinámicamente
             const sectorSelect = document.getElementById('sector');
             const selectedOption = sectorSelect.options[sectorSelect.selectedIndex];
             const macetas = selectedOption ? parseFloat(selectedOption.getAttribute('data-macetas')) : 1;
 
-            // --- Lógica Nueva: Modificación del volumen de riego ---
             let volEnt = volEntOriginal;
             if (!isNaN(volEntOriginal) && macetas > 0) {
-                // Dividimos el volumen de entrada entre el número de macetas por gotero
                 volEnt = volEntOriginal / macetas;
                 document.getElementById('vol_riego_maceta_view').value = volEnt.toFixed(1) + " mL";
             } else {
                 document.getElementById('vol_riego_maceta_view').value = "";
             }
 
-            // 1. Cálculo DPV y Caja Predictiva General
             const eBox = document.getElementById('estatus_box');
             const eText = document.getElementById('estatus_text');
 
@@ -288,25 +285,21 @@
                 eText.innerText = "—";
             }
 
-            // 2. % Drenaje utilizando el NUEVO VALOR DIVIDIDO (volEnt)
             if (!isNaN(volEnt) && !isNaN(volSal) && volEnt > 0) {
                 document.getElementById('porcentaje_drenaje_view').value = ((volSal / volEnt) * 100).toFixed(1) + "%";
             } else {
                 document.getElementById('porcentaje_drenaje_view').value = "";
             }
 
-            // 3. Diferencias Químicas
             document.getElementById('diferencia_ce_view').value = (!isNaN(ceEnt) && !isNaN(ceSal)) ? (ceSal - ceEnt).toFixed(2) : "";
             document.getElementById('diferencia_ph_view').value = (!isNaN(phEnt) && !isNaN(phSal)) ? (phSal - phEnt).toFixed(2) : "";
 
-            // 4. % Caída Nocturna
             if (!isNaN(pTarde) && !isNaN(pManana) && pTarde > 0) {
                 document.getElementById('porcentaje_caida_nocturna_view').value = (((pTarde - pManana) / pTarde) * 100).toFixed(1) + "%";
             } else {
                 document.getElementById('porcentaje_caida_nocturna_view').value = "";
             }
 
-            // 5. Semáforo Radiación y Acciones
             const rSemaforoView = document.getElementById('radiacion_semaforo_view');
             const rSemaforoHidden = document.getElementById('radiacion_semaforo');
             const rAccionTomada = document.getElementsByName('radiacion_accion_tomada')[0];
@@ -345,7 +338,6 @@
                 rAccionTomada.value = "";
             }
 
-            // 6. Semáforo Abejorros (25-30 verde, 20-24 amarillo, <19 rojo)
             const aSemaforoView = document.getElementById('abejorros_semaforo_view');
             if (!isNaN(abejorros)) {
                 if (abejorros >= 25 && abejorros <= 30) {
@@ -363,6 +355,19 @@
                 aSemaforoView.value = "Sin registro";
             }
         }
+
+        function actualizarInvernadero(selectElement) {
+            const selectedOption = selectElement.options[selectElement.selectedIndex];
+            const invernadero = selectedOption.getAttribute('data-invernadero') || '';
+            document.getElementById('invernadero_hidden').value = invernadero;
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const selectElement = document.getElementById('sector');
+            if (selectElement.selectedIndex > 0) {
+                actualizarInvernadero(selectElement);
+            }
+        });
     </script>
 </body>
 

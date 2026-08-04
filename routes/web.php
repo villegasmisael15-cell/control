@@ -21,19 +21,17 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Vista del Dashboard Principal (MODIFICADA: Resuelve el tablero vacío del admin_general)
-    Route::get('/dashboard', function () {
+   Route::get('/dashboard', function () {
         $user = auth()->user();
 
-        // Si es el administrador que no participa, le mandamos TODOS los sectores del sistema
         if ($user->rol === 'admin_general') {
-            $sectores = \App\Models\SectorCaracteristica::pluck('sector')->toArray();
+            // El administrador general puede ver todos los registros del sistema
+            $sectores = \App\Models\SectorCaracteristica::all();
         } else {
-            // Para operadores u otros usuarios, procesamos sus sectores asignados como siempre
-            $sectoresTexto = $user->sectores;
-            $sectores = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+            // El operador solo ve los invernaderos y sectores que pertenecen estrictamente a su user_id
+            $sectores = \App\Models\SectorCaracteristica::where('user_id', $user->id)->get();
         }
 
-        // Retornamos la vista compartiendo la variable $sectores para que las gráficas la usen
         return view('dashboard', compact('sectores'));
     })->name('dashboard');
 
@@ -63,47 +61,61 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/actualizar-fcm-token', [AuthenticatedSessionController::class, 'guardarTokenFcm'])->middleware('auth');
 
     // 3. IMPLEMENTACIÓN: REGISTRO OBLIGATORIO DE CARACTERÍSTICAS DE SECTOR
-    // Estas rutas manejan la pantalla de bloqueo técnico para operadores sin datos base
     Route::get('/sectores/configurar-inicial', function () {
         $user = auth()->user();
 
-        // BYPASS: Si el usuario es 'admin_general', salta el bloqueo directo al dashboard
         if ($user->rol === 'admin_general') {
             return redirect('/dashboard');
         }
 
-        $sectoresTexto = $user->sectores;
-        $primerSector = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto))[0] : null;
+        // Buscamos el primer registro pendiente incluyendo invernadero y sector
+        $pendiente = \App\Models\SectorCaracteristica::where('user_id', $user->id)
+            ->where(function($query) {
+                $query->whereNull('variedad')->orWhere('variedad', '');
+            })
+            ->first();
 
-        $sector = session('sector_pendiente') ?? $primerSector;
-
-        if (!$sector) {
+        if (!$pendiente) {
             return redirect('/dashboard');
         }
-        return view('sectores.configurar_inicial', compact('sector'));
+
+        $sector = $pendiente->sector;
+        $invernadero = $pendiente->invernadero;
+
+        return view('sectores.configurar_inicial', compact('sector', 'invernadero'));
     })->name('sectores.configurar');
 
-   Route::post('/sectores/configurar-inicial', function (Request $request) {
-    $request->validate([
-        'sector'             => 'required|string',
-        'superficie_m2'      => 'required|integer|min:1',
-        'variedad'           => 'required|string|max:255',
-        'numero_plantas'     => 'required|integer|min:1', // 💡 NUEVO CAMPO VALIDADO
-        'macetas_por_gotero' => 'required|integer|min:1', 
-        'fecha_trasplante'   => 'required|date',
-    ]);
+    Route::post('/sectores/configurar-inicial', function (Request $request) {
+        $request->validate([
+            'invernadero'        => 'required|string',
+            'sector'             => 'required|string',
+            'superficie_m2'      => 'required|integer|min:1',
+            'variedad'           => 'required|string|max:255',
+            'numero_plantas'     => 'required|integer|min:1',
+            'macetas_por_gotero' => 'required|integer|min:1', 
+            'fecha_trasplante'   => 'required|date',
+        ]);
 
-    \App\Models\SectorCaracteristica::updateOrCreate(
-        ['sector' => $request->sector],
-        [
-            'superficie_m2'      => $request->superficie_m2,
-            'variedad'           => $request->variedad,
-            'numero_plantas'     => $request->numero_plantas, // 💡 NUEVO CAMPO GUARDADO
-            'macetas_por_gotero' => $request->macetas_por_gotero, 
-            'fecha_trasplante'   => $request->fecha_trasplante
-        ]
-    );
-        return redirect('/dashboard')->with('status', 'Sector configurado correctamente.');
+        $user = auth()->user();
+
+        // Actualizamos amarrado estrictamente al USUARIO, INVERNADEROS Y SECTOR exactos
+        \App\Models\SectorCaracteristica::updateOrCreate(
+            [
+                'user_id'     => $user->id,
+                'invernadero' => $request->invernadero,
+                'sector'      => $request->sector
+            ],
+            [
+                'superficie_m2'      => $request->superficie_m2,
+                'variedad'           => $request->variedad,
+                'numero_plantas'     => $request->numero_plantas,
+                'macetas_por_gotero' => $request->macetas_por_gotero, 
+                'fecha_trasplante'   => $request->fecha_trasplante
+            ]
+        );
+
+        // Al redirigir, si aún quedan pendientes en otros invernaderos, el middleware o la vista te mandará al siguiente de forma correcta
+        return redirect()->route('sectores.configurar')->with('status', 'Sector configurado correctamente.');
     })->name('sectores.guardar_inicial');
 
     Route::get('/suelo', [SueloMonitoreoController::class, 'index'])->name('suelo.index');

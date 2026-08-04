@@ -72,10 +72,11 @@
                             <td class="py-4 px-6 text-gray-600">{{ $user->email }}</td>
                             <td class="py-4 px-6 text-gray-500">{{ $user->created_at->format('d/m/Y H:i') }}</td>
                             <td class="py-4 px-6 text-center">
-                                {{-- Colores dinámicos en base a cada uno de tus 5 roles actuales --}}
+                                {{-- Colores dinámicos incluyendo el rol Dueño --}}
                                 <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
                                     @if($user->rol === 'administrador') bg-purple-100 text-purple-800
                                     @elseif($user->rol === 'admin_general') bg-indigo-100 text-indigo-800
+                                    @elseif($user->rol === 'dueno') bg-emerald-100 text-emerald-800
                                     @elseif($user->rol === 'operador') bg-blue-100 text-blue-800
                                     @elseif($user->rol === 'usuario_comercial') bg-amber-100 text-amber-800
                                     @elseif($user->rol === 'usuario_rechazo') bg-rose-100 text-rose-800
@@ -90,6 +91,7 @@
                                     @method('PATCH')
                                     <select name="rol" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-1.5 cursor-pointer">
                                         <option value="operador" {{ $user->rol === 'operador' ? 'selected' : '' }}>Operador</option>
+                                        <option value="dueno" {{ $user->rol === 'dueno' ? 'selected' : '' }}>Dueño</option>
                                         <option value="administrador" {{ $user->rol === 'administrador' ? 'selected' : '' }}>Administrador (Participativo)</option>
                                         <option value="admin_general" {{ $user->rol === 'admin_general' ? 'selected' : '' }}>Admin General (Supervisor)</option>
                                         <option value="usuario_comercial" {{ $user->rol === 'usuario_comercial' ? 'selected' : '' }}>Usuario Comercial</option>

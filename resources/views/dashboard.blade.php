@@ -44,8 +44,8 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            <!-- MÓDULO: HIDROPONÍA (Acceso: Administrador, Operador y Usuario Comercial) -->
-            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador' || auth()->user()->rol === 'usuario_comercial')
+            <!-- MÓDULO: HIDROPONÍA (Acceso: Administrador, Operador, Dueño y Usuario Comercial) -->
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'operador', 'dueno', 'usuario_comercial']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
@@ -62,8 +62,8 @@
             </div>
             @endif
 
-            <!-- MÓDULO: SUELO (Acceso: Administrador y Operador) -->
-            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
+            <!-- MÓDULO: SUELO (Acceso: Administrador, Operador y Dueño) -->
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'operador', 'dueno']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-700 text-xl mb-4">
@@ -80,8 +80,8 @@
             </div>
             @endif
 
-            <!-- MÓDULO: SANIDAD Y NUTRICIÓN (Acceso: Administrador y Operador) -->
-            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
+            <!-- MÓDULO: SANIDAD Y NUTRICIÓN (Acceso: Administrador, Operador y Dueño) -->
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'operador', 'dueno']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-red-600 text-xl mb-4">
@@ -98,8 +98,8 @@
             </div>
             @endif
 
-            <!-- MÓDULO: GRÁFICAS Y ANÁLISIS (Acceso: Solo Administrador) -->
-            @can('es-administrador')
+            <!-- MÓDULO: GRÁFICAS Y ANÁLISIS (Acceso: Administrador y Dueño) -->
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xl mb-4">
@@ -114,10 +114,10 @@
                     </a>
                 </div>
             </div>
-            @endcan
+            @endif
 
-            <!-- MÓDULO: RECEPCIÓN (Acceso: Administrador, Usuario Comercial y Usuario Rechazo) -->
-            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'usuario_rechazo')
+            <!-- MÓDULO: RECEPCIÓN (Acceso: Administrador, Dueño, Usuario Comercial y Usuario Rechazo) -->
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general','usuario_comercial', 'usuario_rechazo']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-xl mb-4">
@@ -134,8 +134,8 @@
             </div>
             @endif
 
-            <!-- MÓDULO: REPORTES COMERCIALES (Acceso: Administrador, Operador) -->
-            @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'operador')
+            <!-- MÓDULO: REPORTES COMERCIALES (Acceso: Administrador, Operador y Dueño) -->
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'dueno']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-xl mb-4">
@@ -152,8 +152,8 @@
             </div>
             @endif
 
-            <!-- MÓDULO: CONTROL DE USUARIOS (Acceso: Solo Administrador) -->
-            @can('es-administrador')
+            <!-- MÓDULO: CONTROL DE USUARIOS (Acceso: EXCLUSIVAMENTE Administrador / Admin General) -->
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-xl mb-4">
@@ -168,7 +168,7 @@
                     </a>
                 </div>
             </div>
-            @endcan
+            @endif
 
         </div>
     </main>

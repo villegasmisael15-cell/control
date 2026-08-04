@@ -12,18 +12,18 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="bg-emerald-600 text-white shadow-md">
-    <div class="max-w-5xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
-        <span class="font-bold text-base sm:text-xl tracking-wider truncate flex items-center min-w-0">
-            <i class="fa-solid fa-leaf mr-1.5 sm:mr-2 shrink-0"></i>
-            <span class="truncate">SISTEMA CONTROL</span>
-        </span>
-        <a href="{{ route('monitoreo.index') }}" class="text-xs sm:text-sm bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3 py-2 rounded-md transition font-medium shrink-0 whitespace-nowrap flex items-center gap-1">
-            <i class="fa-solid fa-arrow-left"></i> 
-            <span class="hidden xs:inline">Volver a la Bitácora</span>
-            <span class="inline xs:hidden">Volver</span>
-        </a>
-    </div>
-</nav>
+        <div class="max-w-5xl mx-auto px-3 sm:px-4 h-16 flex items-center justify-between gap-2">
+            <span class="font-bold text-base sm:text-xl tracking-wider truncate flex items-center min-w-0">
+                <i class="fa-solid fa-leaf mr-1.5 sm:mr-2 shrink-0"></i>
+                <span class="truncate">SISTEMA CONTROL</span>
+            </span>
+            <a href="{{ route('monitoreo.index') }}" class="text-xs sm:text-sm bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3 py-2 rounded-md transition font-medium shrink-0 whitespace-nowrap flex items-center gap-1">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span class="hidden xs:inline">Volver a la Bitácora</span>
+                <span class="inline xs:hidden">Volver</span>
+            </a>
+        </div>
+    </nav>
 
     <main class="max-w-5xl mx-auto px-4 py-8 w-full flex-grow">
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
@@ -39,8 +39,9 @@
                     <span class="text-xs font-semibold px-3 py-1.5 bg-gray-100 text-gray-800 rounded-lg border border-gray-200">
                         <i class="fa-solid fa-calendar mr-1"></i> {{ \Carbon\Carbon::parse($monitoreo->fecha)->format('d/m/Y') }}
                     </span>
-                    <span class="text-xs font-bold px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200">
-                        <i class="fa-solid fa-layer-group mr-1"></i> {{ $monitoreo->sector }}
+                    <span class="text-xs font-bold px-3 py-1.5 bg-emerald-100 text-emerald-800 rounded-lg border border-emerald-200 flex items-center gap-1.5">
+                        <i class="fa-solid fa-house-chimney"></i>
+                        <span>{{ $monitoreo->invernadero ? $monitoreo->invernadero : 'Sin Invernadero' }} — {{ $monitoreo->sector }}</span>
                     </span>
                 </div>
             </div>
@@ -219,7 +220,7 @@
                                 @elseif($monitoreo->abejorros_semaforo === 'AMARILLO')
                                 <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-amber-100 text-amber-800 border border-amber-200">AMARILLO (20 - 24)</span>
                                 @elseif($monitoreo->abejorros_semaforo === 'ROJO')
-                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-red-100 text-red-800 border border-red-200">ROJO (< 19)</span>
+                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-red-100 text-red-800 border border-red-200">ROJO (&lt; 19)</span>
                                 @else
                                 <span class="text-xs text-gray-400">Sin evaluar</span>
                                 @endif
@@ -244,7 +245,7 @@
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-4 border-t border-gray-100">
                     <span class="text-xs text-gray-400 text-center sm:text-left">Inspección de parámetros históricos en modo de solo lectura.</span>
 
-                    @can('es-administrador')
+                    @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'dueno']))
                     <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                         <a href="{{ route('monitoreo.excel', $monitoreo->id) }}" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-sm transition shadow flex items-center gap-1.5 whitespace-nowrap">
                             <i class="fa-solid fa-file-excel"></i> Descargar Excel
@@ -254,7 +255,7 @@
                             <i class="fa-solid fa-pen-to-square"></i> Editar Formulario
                         </a>
                     </div>
-                    @endcan
+                    @endif
                 </div>
             </div>
         </div>

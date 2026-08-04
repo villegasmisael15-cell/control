@@ -55,17 +55,17 @@
                         <input type="date" name="fecha" value="{{ old('fecha', $bitacora->fecha) }}" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-emerald-500 bg-white">
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 uppercase mb-1">1. Asignar a Operador:</label>
+                        <label class="block text-sm font-bold text-gray-700 uppercase mb-1">1. Dueño / Operador Asignado:</label>
                         <select name="operador_id" id="operador_id" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-white" required onchange="filtrarSectoresPorOperador()">
                             <option value="">Seleccione el encargado...</option>
                             @foreach($operadores as $op)
-                            <option value="{{ $op->id }}" data-sectores="{{ $op->sectores }}" {{ old('operador_id', $bitacora->operador_id) == $op->id ? 'selected' : '' }}>{{ $op->name }}</option>
+                            <option value="{{ $op->id }}" data-sectores='{!! json_encode($op->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}' {{ old('operador_id', $bitacora->operador_id) == $op->id ? 'selected' : '' }}>{{ $op->name }}</option>
                             @endforeach
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-bold text-gray-700 uppercase mb-1">2. Sector / Nave Autorizada:</label>
-                        <select name="sector" id="sector" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-gray-100" required disabled onchange="cambiarDatosPorSector()">
+                        <label class="block text-sm font-bold text-gray-700 uppercase mb-1">2. Invernadero y Sector:</label>
+                        <select name="sector" id="sector" class="border border-gray-300 rounded-lg w-full p-2 text-sm focus:outline-emerald-500 bg-white" required onchange="cambiarDatosPorSector()">
                             <option value="{{ $bitacora->sector }}">{{ $bitacora->sector }}</option>
                         </select>
                     </div>
@@ -108,7 +108,7 @@
                     </div>
                 </div>
 
-                <!-- SUBFORMULARIO 2: SECCIÓN FERTILIZANTES (AHORA OPCIONAL) -->
+                <!-- SUBFORMULARIO 2: SECCIÓN FERTILIZANTES -->
                 <div class="space-y-6 pt-4 border-t border-gray-100">
                     <div class="flex items-center justify-between border-b border-gray-200 pb-2">
                         <h3 class="font-bold text-base text-gray-700 flex items-center gap-1.5">
@@ -193,7 +193,7 @@
             selectSector.innerHTML = '';
 
             if (!cadenaSectores || cadenaSectores.trim() === '') {
-                selectSector.innerHTML = '<option value="">Este operador no tiene sectores asignados</option>';
+                selectSector.innerHTML = '<option value="">Este encargado no tiene sectores asignados</option>';
                 selectSector.disabled = true;
                 return;
             }
@@ -201,21 +201,36 @@
             selectSector.disabled = false;
             const opcionDefecto = document.createElement('option');
             opcionDefecto.value = '';
-            opcionDefecto.textContent = 'Seleccione un sector...';
+            opcionDefecto.textContent = '-- Seleccione Invernadero y Sector --';
             selectSector.appendChild(opcionDefecto);
 
-            const listaSectores = cadenaSectores.split(',').map(s => s.trim());
-            listaSectores.forEach(sector => {
-                if (sector !== '') {
-                    const opt = document.createElement('option');
-                    opt.value = sector;
-                    opt.textContent = sector;
-                    if (sector === sectorSeleccionar) {
-                        opt.selected = true;
+            try {
+                const listaPares = JSON.parse(cadenaSectores);
+                listaPares.forEach(item => {
+                    if (item.sector) {
+                        const opt = document.createElement('option');
+                        opt.value = item.sector;
+                        opt.textContent = `${item.invernadero} — ${item.sector}`;
+                        if (item.sector === sectorSeleccionar) {
+                            opt.selected = true;
+                        }
+                        selectSector.appendChild(opt);
                     }
-                    selectSector.appendChild(opt);
-                }
-            });
+                });
+            } catch (e) {
+                const listaSectores = cadenaSectores.split(',').map(s => s.trim());
+                listaSectores.forEach(sector => {
+                    if (sector !== '') {
+                        const opt = document.createElement('option');
+                        opt.value = sector;
+                        opt.textContent = sector;
+                        if (sector === sectorSeleccionar) {
+                            opt.selected = true;
+                        }
+                        selectSector.appendChild(opt);
+                    }
+                });
+            }
             cambiarDatosPorSector();
         }
 
@@ -292,41 +307,44 @@
             verLockeoAgroBloques();
         }
 
-      function agregarProductoToAgro(idAgro) {
+        function agregarProductoToAgro(idAgro, producto = '', dosis = '', unidad = 'mL', is = '', observaciones = '') {
             const tbody = document.getElementById(`cuerpo_productos_agro_${idAgro}`);
             const nuevaFila = document.createElement('tr');
             nuevaFila.className = "hover:bg-stone-50/40 fila-producto-subdetalle";
             
+            const esUnidadEstandar = ['mL', 'L', 'g', 'kg'].includes(unidad);
+            const selectVal = esUnidadEstandar ? unidad : 'OTRO';
+            const hiddenClass = esUnidadEstandar ? 'hidden' : '';
+
             nuevaFila.innerHTML = `
                 <td class="p-2 border border-stone-100">
-                    <input type="text" name="producto_${idAgro}[]" placeholder="Ej: Confidor" required class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
+                    <input type="text" name="producto_${idAgro}[]" value="${producto}" placeholder="Ej: Confidor" required class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
                 </td>
                 <td class="p-2 border border-stone-100">
                     <div class="flex flex-col gap-1">
                         <div class="flex gap-1">
-                            <input type="number" step="0.01" name="dosis_${idAgro}[]" required placeholder="Cant." class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
+                            <input type="number" step="0.01" name="dosis_${idAgro}[]" value="${dosis}" required placeholder="Cant." class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
                             <select onchange="evaluarUnidadManual(this)" class="w-1/2 border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500 bg-white selector-unidad-base">
-                                <option value="mL">mL</option>
-                                <option value="L">L</option>
-                                <option value="g">g</option>
-                                <option value="kg">kg</option>
-                                <option value="OTRO">Otro...</option>
+                                <option value="mL" ${selectVal === 'mL' ? 'selected' : ''}>mL</option>
+                                <option value="L" ${selectVal === 'L' ? 'selected' : ''}>L</option>
+                                <option value="g" ${selectVal === 'g' ? 'selected' : ''}>g</option>
+                                <option value="kg" ${selectVal === 'kg' ? 'selected' : ''}>kg</option>
+                                <option value="OTRO" ${selectVal === 'OTRO' ? 'selected' : ''}>Otro...</option>
                             </select>
                         </div>
-                        <input type="text" name="unidad_dosis_${idAgro}[]" value="mL" placeholder="Escriba la unidad..." class="w-full border border-emerald-400 bg-emerald-50/50 rounded p-1 text-xs focus:outline-emerald-500 hidden campo-unidad-manual">
+                        <input type="text" name="unidad_dosis_${idAgro}[]" value="${unidad}" placeholder="Escriba la unidad..." class="w-full border border-emerald-400 bg-emerald-50/50 rounded p-1 text-xs focus:outline-emerald-500 ${hiddenClass} campo-unidad-manual">
                     </div>
                 </td>
                 <td class="p-2 border border-stone-100 text-center">
-                    <input type="text" inputmode="numeric" name="is_intervalo_seguridad_${idAgro}[]" placeholder="0" class="w-16 sm:w-full min-w-[50px] mx-auto border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500 text-center bg-white font-bold">
+                    <input type="text" inputmode="numeric" name="is_intervalo_seguridad_${idAgro}[]" value="${is}" placeholder="0" class="w-16 sm:w-full min-w-[50px] mx-auto border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500 text-center bg-white font-bold">
                 </td>
                 <td class="p-2 border border-stone-100">
-                    <input type="text" name="agroquimicos_observaciones_${idAgro}[]" placeholder="..." class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
+                    <input type="text" name="agroquimicos_observaciones_${idAgro}[]" value="${observaciones}" placeholder="..." class="w-full border border-gray-300 rounded p-1.5 text-xs focus:outline-emerald-500">
                 </td>
                 <td class="p-2 border border-stone-100 text-center">
                     <button type="button" onclick="eliminarProductoFila(this, ${idAgro})" class="text-red-500 hover:text-red-700 font-bold text-base cursor-pointer btn-quitar-producto-fila">&times;</button>
                 </td>
             `;
-            
             tbody.appendChild(nuevaFila);
             verLockeoProductosAgro(idAgro);
         }
@@ -360,7 +378,7 @@
             });
         }
 
-        // --- FERTILIZANTES (YA SIN REQUIRIR OBLIGATORIEDAD) ---
+        // --- FERTILIZANTES ---
         function agregarNuevoTanque(nombreTanque = '', tipoSolucion = 'SOLUCION MADRE') {
             contadorTanques++;
             const raiz = document.getElementById('raiz-tanques-fertilizantes');
@@ -495,10 +513,8 @@
                     const grupo = gruposAgro[clave];
                     agregarNuevoBloqueAgroquimico(grupo[0].fecha_aplicacion, grupo[0].aplicacion);
                     const idActual = contadorAgroquimicos;
-                    grupo.forEach((prod, index) => {
-                        if(index === 0) {
-                            document.getElementById(`cuerpo_productos_agro_${idActual}`).innerHTML = '';
-                        }
+                    document.getElementById(`cuerpo_productos_agro_${idActual}`).innerHTML = '';
+                    grupo.forEach((prod) => {
                         agregarProductoToAgro(idActual, prod.producto, prod.dosis, prod.unidad_dosis, prod.is_intervalo_seguridad, prod.observaciones);
                     });
                 });
@@ -506,7 +522,7 @@
                 agregarNuevoBloqueAgroquimico();
             }
 
-            // Precargar Fertilizantes existentes (si los hay)
+            // Precargar Fertilizantes existentes
             const nombresTanques = Object.keys(fertilizantesExistentes);
             if (nombresTanques.length > 0) {
                 nombresTanques.forEach(nombreTanque => {
@@ -521,7 +537,6 @@
                     });
                 });
             }
-            // Nota: Ya no se añade un tanque por defecto obligatorio si no existen registros previos.
         });
     </script>
 </body>

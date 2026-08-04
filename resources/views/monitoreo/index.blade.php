@@ -86,8 +86,8 @@
                     </div>
                 </div>
 
-                {{-- 🔍 BUSCADOR POR SECTOR O TRABAJADOR --}}
-                @can('es-administrador')
+                {{-- 🔍 BUSCADOR POR SECTOR O TRABAJADOR (Visible para Administradores y Dueños) --}}
+                @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'dueno']))
                 <div class="col-span-1 md:col-span-7 flex gap-2 items-end">
                     <div class="w-full">
                         <label for="buscar_termino" class="block text-xs font-bold text-gray-600 uppercase mb-1.5 tracking-wider">Buscar por Sector u Operador:</label>
@@ -104,7 +104,7 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                     </button>
                 </div>
-                @endcan
+                @endif
 
                 {{-- 🧹 BOTÓN PARA LIMPIAR FILTROS --}}
                 @if(request('semana') || request('buscar_termino'))
@@ -128,7 +128,7 @@
                         <tr class="bg-gray-100 border-b border-gray-200 text-gray-700 uppercase tracking-wider text-[11px] font-bold">
                             <th class="py-3 px-4">Fecha</th>
                             <th class="py-3 px-4">Sector</th>
-                            <th class="py-3 px-4">Operador</th>
+                            <th class="py-3 px-4">Dueño</th>
                             <th class="py-3 px-4">DPV</th>
                             <th class="py-3 px-4 bg-blue-50/50">% Drenaje</th>
                             <th class="py-3 px-4 bg-amber-50/50">Dif. CE</th>
@@ -148,7 +148,14 @@
                                     <i class="fa-solid fa-eye text-xs text-gray-400"></i> {{ \Carbon\Carbon::parse($row->fecha)->format('d/m/Y') }}
                                 </a>
                             </td>
-                            <td class="py-3.5 px-4"><span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded font-semibold">{{ $row->sector }}</span></td>
+                            <td class="py-3.5 px-4">
+                                <span class="bg-gray-100 text-gray-800 text-xs px-2.5 py-1 rounded-md font-semibold flex flex-col gap-0.5 max-w-max">
+                                    @if(!empty($row->invernadero))
+                                    <span class="text-[10px] text-emerald-700 font-bold uppercase tracking-wide"><i class="fa-solid fa-house-chimney mr-1"></i>{{ $row->invernadero }}</span>
+                                    @endif
+                                    <span><i class="fa-solid fa-seedling mr-1 text-gray-400"></i>{{ $row->sector }}</span>
+                                </span>
+                            </td>
                             <td class="py-3.5 px-4">
                                 <span class="text-xs text-gray-600 font-medium flex items-center gap-1">
                                     <i class="fa-solid fa-user-tie text-emerald-600 text-[10px]"></i>
@@ -174,16 +181,16 @@
                             {{-- COLUMNA DE ABEJORROS CON SEMÁFORO --}}
                             <td class="py-3.5 px-4 bg-yellow-50/20">
                                 @if(!is_null($row->abejorros_flores))
-                                    <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
-                                    @if($row->abejorros_semaforo === 'VERDE')
-                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">Verde</span>
-                                    @elseif($row->abejorros_semaforo === 'AMARILLO')
-                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">Amarillo</span>
-                                    @elseif($row->abejorros_semaforo === 'ROJO')
-                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">Rojo</span>
-                                    @endif
+                                <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
+                                @if($row->abejorros_semaforo === 'VERDE')
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">Verde</span>
+                                @elseif($row->abejorros_semaforo === 'AMARILLO')
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">Amarillo</span>
+                                @elseif($row->abejorros_semaforo === 'ROJO')
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">Rojo</span>
+                                @endif
                                 @else
-                                    <span class="text-xs text-gray-400">N/D</span>
+                                <span class="text-xs text-gray-400">N/D</span>
                                 @endif
                             </td>
 
@@ -204,7 +211,7 @@
                                         <i class="fa-solid fa-pen-to-square text-sm"></i>
                                     </a>
 
-                                    @can('es-administrador')
+                                    @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
                                     <form action="{{ route('monitoreo.destroy', $row->id) }}" method="POST" id="delete-form-{{ $row->id }}" class="inline">
                                         @csrf
                                         @method('DELETE')
@@ -212,7 +219,7 @@
                                             <i class="fa-solid fa-trash text-sm"></i>
                                         </button>
                                     </form>
-                                    @endcan
+                                    @endif
                                 </div>
                             </td>
                         </tr>

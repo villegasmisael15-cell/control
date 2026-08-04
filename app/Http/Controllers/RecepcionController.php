@@ -8,44 +8,63 @@ use App\Models\RecepcionNacional;
 use App\Models\RecepcionExportacion;
 use Illuminate\Http\RedirectResponse;
 use App\Models\ControlCondensacion;
+use App\Models\SectorCaracteristica;
 
 class RecepcionController extends Controller
 {
-
     /**
-     * Muestra la pantalla principal con las tablas filtradas por semana.
+     * Muestra la pantalla principal con las tablas filtradas por semana y restricciones de dueño.
      */
     public function index(Request $request)
     {
-        // El formato correcto para el navegador/Flatpickr es 'Y-\WW' (ejemplo exacto para hoy: "2026-W27")
         $semanaInput = $request->filled('semana') ? $request->semana : date('Y-\WW');
-
-        // Descomponemos el año y el número de semana para los queries
         $partes = explode('-W', $semanaInput);
         $semanaFiltrar = isset($partes[1]) ? (int)$partes[1] : null;
 
-        // 1. Cargamos los operadores
-        $productores = User::where('rol', 'operador')->orderBy('name', 'asc')->get();
+        $user = auth()->user();
+
+        // 1. Cargamos a los Dueños que tengan sectores registrados
+        $productores = User::where('rol', 'dueno')
+            ->has('sectorCaracteristicas')
+            ->orderBy('name', 'asc')
+            ->get();
+
+        // Consultas base
+        $nacionalQuery = RecepcionNacional::with(['productor']);
+        $exportacionQuery = RecepcionExportacion::with(['productor']);
+        $pendientesQuery = RecepcionExportacion::with(['productor'])->where('pendientes', '>', 0);
+
+        // RESTRICCIÓN POR ROL: Si es dueño, filtra estrictamente por sus propios sectores registrados
+        if ($user->rol === 'dueno') {
+            $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
+                ->pluck('sector')
+                ->toArray();
+
+            $nacionalQuery->whereIn('sector_registro', $sectoresDueño);
+            $exportacionQuery->whereIn('sector_registro', $sectoresDueño);
+            $pendientesQuery->whereIn('sector_registro', $sectoresDueño);
+        }
 
         // 2. IDs de embarques ya usados para el modal
         $idsEmbarquesConRechazo = RecepcionNacional::whereNotNull('recepcion_exportacion_id')
             ->pluck('recepcion_exportacion_id')
             ->toArray();
 
-        $embarquesExportacion = RecepcionExportacion::whereNotIn('id', $idsEmbarquesConRechazo)
+        $embarquesExportacion = (clone $exportacionQuery)
+            ->whereNotIn('id', $idsEmbarquesConRechazo)
             ->orderBy('fecha_exportacion', 'desc')
             ->get();
 
-        // 3. Recepciones Nacionales filtradas por la semana activa
-        $recepcionesNacionales = RecepcionNacional::with(['productor'])
+        // 3. Recepciones Nacionales filtradas por la semana activa y rol
+        $recepcionesNacionales = $nacionalQuery
             ->when($semanaFiltrar, function ($query) use ($semanaFiltrar) {
                 return $query->where('semana_nacional', $semanaFiltrar);
             })
             ->orderBy('fecha_nacional', 'desc')
             ->get();
 
-        // 4. Recepciones Exportaciones filtradas por la semana activa
-        $recepcionesExportaciones = RecepcionExportacion::with(['productor'])
+        // 4. Recepciones Exportaciones filtradas por la semana activa y rol
+        $recepcionesExportaciones = $exportacionQuery
             ->when($semanaFiltrar, function ($query) use ($semanaFiltrar) {
                 return $query->where('semana_exportacion', $semanaFiltrar);
             })
@@ -53,19 +72,14 @@ class RecepcionController extends Controller
             ->get();
 
         // 5. Embarques que aún tienen cajas pendientes de restituir
-        $embarquesPendientesDeCajas = RecepcionExportacion::with(['productor'])
-            ->where('pendientes', '>', 0)
+        $embarquesPendientesDeCajas = $pendientesQuery
             ->orderBy('fecha_exportacion', 'desc')
             ->get();
 
-        // =========================================================================
-        // NUEVO: Buscamos si ya existe el dato fijo de Agropark guardado para esta semana específica
-        // =========================================================================
         $controlCondensacion = null;
         if ($semanaFiltrar) {
-            $controlCondensacion = \App\Models\ControlCondensacion::where('semana', $semanaFiltrar)->first();
+            $controlCondensacion = ControlCondensacion::where('semana', $semanaFiltrar)->first();
         }
-        // =========================================================================
 
         return view('recepcion.index', [
             'recepcionesNacionales'      => $recepcionesNacionales,
@@ -74,7 +88,6 @@ class RecepcionController extends Controller
             'embarquesExportacion'       => $embarquesExportacion,
             'embarquesPendientesDeCajas' => $embarquesPendientesDeCajas,
             'semanaActiva'               => $semanaInput,
-            // Mandamos las nuevas variables necesarias para que el HTML y el Modal funcionen
             'controlCondensacion'        => $controlCondensacion,
             'semanaActual'               => $semanaFiltrar
         ]);
@@ -98,8 +111,6 @@ class RecepcionController extends Controller
             'recepcion_exportacion_id' => ['nullable', 'exists:recepcion_exportaciones,id'],
         ]);
 
-        // CORRECCIÓN CRÍTICA: Buscamos el registro existente usando estrictamente Fecha, Operador y Sector
-        // Quitamos 'recepcion_exportacion_id' de aquí para que encuentre el registro comercial original que tiene null
         $criteriosBusqueda = [
             'fecha_nacional'  => $request->fecha_nacional,
             'productor_id'    => $request->productor_id,
@@ -145,9 +156,8 @@ class RecepcionController extends Controller
         $totalCajas = $cajasComercial + $cajasRechazo;
         $totalKg    = $pesoComercial + $pesoRechazo;
 
-        // 1. Consolidar la información en la tabla nacional
-        $registroNacional = RecepcionNacional::updateOrCreate(
-            $criteriosBusqueda, // Usa la llave de búsqueda limpia (Fecha, Operador, Sector)
+        RecepcionNacional::updateOrCreate(
+            $criteriosBusqueda,
             [
                 'semana_nacional'                 => $request->semana_nacional,
                 'cajas_comercializar'             => $cajasComercial,
@@ -160,17 +170,14 @@ class RecepcionController extends Controller
                 'total_cajas'                     => $totalCajas,
                 'total_kg'                        => $totalKg,
                 'capturado_por_id'                => auth()->id(),
-                // Se añade o mantiene el id de exportación sin usarlo como restricción de búsqueda
                 'recepcion_exportacion_id'        => $request->recepcion_exportacion_id ?: ($registroExistente ? $registroExistente->recepcion_exportacion_id : null),
             ]
         );
 
-        // 2. DISPARADOR DE TRAZABILIDAD AUTOMÁTICA CON CANDADO DE PRIMERA VEZ (MANTENIDO INTACTO)
         if ($request->filled('recepcion_exportacion_id')) {
             $embarque = RecepcionExportacion::find($request->recepcion_exportacion_id);
 
             if ($embarque) {
-                // Sumamos únicamente el peso de rechazo de fruta acumulado para este embarque
                 $totalPesoRechazoAsociado = RecepcionNacional::where('recepcion_exportacion_id', $embarque->id)
                     ->sum('peso_rechazo_procesado');
 
@@ -180,7 +187,6 @@ class RecepcionController extends Controller
                     ? ($pesoNetoCalculado >= 0 ? $pesoNetoCalculado : 0)
                     : $embarque->peso_neto_fijo;
 
-                // ACTUALIZACIÓN DE EMBARQUE: Ya no modificamos 'restituidas' ni 'pendientes' desde aquí
                 $embarque->update([
                     'peso_neto_fijo' => $pesoNetoFijo
                 ]);
@@ -215,11 +221,8 @@ class RecepcionController extends Controller
             'sector_registro'    => $request->sector_registro,
             'cajas_exportacion'  => $request->cajas_exportadas,
             'peso_exportacion'   => $request->peso_exportacion,
-
-            // REGLA 1: Las restituidas inician limpias y las pendientes adoptan el total de lo exportado
             'restituidas'        => 0,
             'pendientes'         => $request->cajas_exportadas,
-
             'capturado_por_id'   => auth()->id(),
         ]);
 
@@ -238,14 +241,12 @@ class RecepcionController extends Controller
 
         $exportacion = RecepcionExportacion::findOrFail($request->recepcion_exportacion_id);
 
-        // Validación estricta basada en existencias físicas reales
         if ($request->cajas_a_restituir > $exportacion->pendientes) {
             return redirect()->back()
                 ->withInput()
                 ->withErrors(['cajas_a_restituir' => 'La cantidad ingresada supera las cajas pendientes actuales (' . $exportacion->pendientes . ' restantes).']);
         }
 
-        // El cálculo ahora es una resta y suma limpia sobre el inventario de empaques
         $nuevoPendiente = $exportacion->pendientes - $request->cajas_a_restituir;
         $nuevoRestituidas = $exportacion->restituidas + $request->cajas_a_restituir;
 
@@ -379,41 +380,35 @@ class RecepcionController extends Controller
             'tipo'     => $tipo
         ]);
     }
+
     /**
      * Almacena o modifica la condensación diaria (Agropark) de forma segura.
      */
-   public function guardarCondensacion(Request $request): RedirectResponse
+    public function guardarCondensacion(Request $request): RedirectResponse
     {
-        // Validación: Agregamos las cajas_enviadas como opcionales a la lista existente
         $request->validate([
             'fecha'                  => ['required', 'date'],
             'total_empacados_global' => ['nullable', 'numeric', 'min:0'],
             'total_nacional_global'  => ['nullable', 'numeric', 'min:0'],
             'agropark'               => ['nullable', 'numeric', 'min:0'],
-            'cajas_enviadas'         => ['nullable', 'integer', 'min:1'], // <-- Agregado
+            'cajas_enviadas'         => ['nullable', 'integer', 'min:1'],
         ]);
 
         try {
             $fechaFormateada = \Carbon\Carbon::parse($request->fecha)->format('Y-m-d');
-
-            // Buscamos el registro actual de condensación para este día
             $controlCondensacion = \DB::table('control_condensaciones')->whereDate('fecha', $fechaFormateada)->first();
 
-            // Si se envía un nuevo valor de Agropark lo tomamos; si no, conservamos el actual de la BD
             $agroparkExistente = $request->has('agropark') && $request->agropark !== null
                 ? (float)$request->agropark
                 : ($controlCondensacion->agropark ?? 0.0);
 
-            // 💡 NUEVO: Si se envía un nuevo valor de Cajas Enviadas lo tomamos; si no, conservamos el de la BD
             $cajasEnviadasExistentes = $request->has('cajas_enviadas') && $request->cajas_enviadas !== null
                 ? (int)$request->cajas_enviadas
                 : ($controlCondensacion->cajas_enviadas ?? 0);
 
-            // Rescatamos los totales globales del formulario o mantenemos los actuales (0 por defecto)
             $empacadosGlobal = $request->filled('total_empacados_global') ? (float)$request->total_empacados_global : ($controlCondensacion->total_empacados_global ?? 0.00);
             $nacionalGlobal = $request->filled('total_nacional_global') ? (float)$request->total_nacional_global : ($controlCondensacion->total_nacional_global ?? 0.00);
 
-            // Calculamos el factor multiplicador únicamente si existen los valores globales obligatorios de la fórmula
             $resultado1 = $agroparkExistente - $nacionalGlobal;
             $resultado2_factor = 0.00;
 
@@ -421,18 +416,16 @@ class RecepcionController extends Controller
                 $resultado2_factor = $empacadosGlobal / $resultado1;
             }
 
-            // Obtener el número de semana ISO automáticamente
             $semanaCalculada = $request->filled('semana')
                 ? (int)$request->semana
                 : (int)\Carbon\Carbon::parse($fechaFormateada)->weekOfYear;
 
-            // Guardamos o actualizamos incluyendo la nueva columna sin pisar datos anteriores
             \DB::table('control_condensaciones')->updateOrInsert(
                 ['fecha' => $fechaFormateada],
                 [
                     'semana'                 => $semanaCalculada,
                     'agropark'               => $agroparkExistente,
-                    'cajas_enviadas'         => $cajasEnviadasExistentes, // <-- CAMPO EN BASE DE DATOS INYECTADO
+                    'cajas_enviadas'         => $cajasEnviadasExistentes,
                     'total_empacados_global' => $empacadosGlobal,
                     'total_nacional_global'  => $nacionalGlobal,
                     'factor_multiplicador'   => $resultado2_factor,
@@ -441,8 +434,7 @@ class RecepcionController extends Controller
                 ]
             );
 
-            // 2. Traer los embarques del día para la distribución por sectores
-            $recepcionesDelDia = \App\Models\RecepcionExportacion::whereDate('fecha_exportacion', $fechaFormateada)->get();
+            $recepcionesDelDia = RecepcionExportacion::whereDate('fecha_exportacion', $fechaFormateada)->get();
 
             $sumaPesosDiarios = $recepcionesDelDia->sum(function ($item) {
                 return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
@@ -450,8 +442,6 @@ class RecepcionController extends Controller
 
             if ($sumaPesosDiarios > 0 && $agroparkExistente > 0) {
                 foreach ($recepcionesDelDia as $registro) {
-
-                    // A) Peso Neto Inicial del Sector (Se usará como base para aceptados_kg)
                     if (!is_null($registro->peso_neto_fijo)) {
                         $pesoNeto = (float)$registro->peso_neto_fijo;
                     } else {
@@ -460,11 +450,9 @@ class RecepcionController extends Controller
                     }
                     $pesoNeto = $pesoNeto >= 0 ? $pesoNeto : 0;
 
-                    // B) Calcular dato destino (Condensación)
                     $divisionDiaria = $agroparkExistente / $sumaPesosDiarios;
                     $destinoCalculado = $pesoNeto * $divisionDiaria;
 
-                    // C) Calcular Participación
                     $participacionCalculada = 0;
                     if ($destinoCalculado > 0 && $agroparkExistente > 0) {
                         $participacionCalculada = ($destinoCalculado * 100) / $agroparkExistente;
@@ -478,16 +466,13 @@ class RecepcionController extends Controller
                         if ($empacadosFinalCalculado < 0) $empacadosFinalCalculado = 0;
                     }
 
-                    // OBTENEMOS EL RECHAZO POSTERIOR EXISTENTE
                     $rechazoPostExistente = \DB::table('reportes')
                         ->where('recepcion_exportacion_id', $registro->id)
                         ->value('rechazo_post') ?? 0.00;
 
-                    // Los kilos aceptados finales que se guardan en caliente
                     $aceptadosKgGuardar = $pesoNeto - (float)$rechazoPostExistente;
                     $aceptadosKgGuardar = $aceptadosKgGuardar >= 0 ? $aceptadosKgGuardar : 0.00;
 
-                    // GUARDAR EN LA TABLA reportes INCLUYENDO EL DATO DE ACEPTADOS_KG
                     \DB::table('reportes')
                         ->updateOrInsert(
                             ['recepcion_exportacion_id' => $registro->id],
@@ -512,6 +497,4 @@ class RecepcionController extends Controller
             return redirect()->back()->withErrors(['error' => 'Error crítico al guardar los datos: ' . $e->getMessage()]);
         }
     }
-
-    
 }

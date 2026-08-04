@@ -21,14 +21,14 @@
                 <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
             </div>
 
-            <!-- Acciones con soporte para tus roles condicionales -->
+            <!-- Acciones con soporte para roles condicionales -->
             <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
                 <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[110px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
                     <i class="fa-solid fa-user text-[10px]"></i>
                     <span class="truncate">{{ auth()->user()->name }}</span>
                 </span>
 
-                @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'dueno')
                 <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
                     <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
                     <span class="hidden xs:inline">Volver al Panel</span>
@@ -68,17 +68,14 @@
                 <label for="semana_picker" class="block text-xs font-bold text-gray-600 uppercase mb-1 tracking-wider">Filtrar por Semana:</label>
 
                 <div class="flex items-center gap-2">
-                    <!-- Input real que se envía a Laravel -->
                     <input type="hidden" name="semana" id="semana_final_input" value="{{ $semanaActiva }}">
 
-                    <!-- Input estético controlado por el calendario Flatpickr -->
                     <input type="text"
                         id="semana_picker"
                         placeholder="Seleccione un día..."
                         readonly
                         class="w-full bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-2 cursor-pointer shadow-sm outline-none">
 
-                    {{-- Botón para limpiar filtro --}}
                     @if(request()->filled('semana'))
                     <a href="{{ route('recepcion.index') }}" class="bg-gray-100 hover:bg-gray-200 text-gray-500 border border-gray-300 rounded-lg p-2 text-sm transition h-[38px] flex items-center justify-center" title="Limpiar Filtro">
                         <i class="fa-solid fa-filter-circle-xmark"></i>
@@ -110,13 +107,13 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'dueno')
                         <button onclick="abrirModalNacional('recepcion')" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
                             <i class="fa-solid fa-plus"></i> Registrar Recepción
                         </button>
                         @endif
 
-                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_rechazo')
+                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_rechazo' || auth()->user()->rol === 'dueno')
                         <button onclick="abrirModalNacional('rechazo')" class="w-full sm:w-auto justify-center bg-red-600 hover:bg-red-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
                             <i class="fa-solid fa-ban"></i> Capturar Kg de Rechazo
                         </button>
@@ -127,7 +124,7 @@
 
             @php
             $nacionalesAgrupados = $recepcionesNacionales->groupBy(function($item) {
-            return \Carbon\Carbon::parse($item->fecha_nacional)->format('Y-m-d');
+                return \Carbon\Carbon::parse($item->fecha_nacional)->format('Y-m-d');
             });
             @endphp
 
@@ -146,7 +143,8 @@
                             <tr>
                                 <th scope="col" class="px-4 py-3 text-center" rowspan="2">Semana #</th>
                                 <th scope="col" class="px-4 py-3" rowspan="2">Fecha</th>
-                                <th scope="col" class="px-4 py-3" rowspan="2">Productor</th>
+                                <th scope="col" class="px-4 py-3" rowspan="2">Dueño</th>
+                                <th scope="col" class="px-4 py-3" rowspan="2">Invernadero / Sector</th>
                                 <th scope="col" class="px-4 py-2 text-center bg-emerald-50 text-emerald-800 border-x border-gray-200" colspan="2">Nacional Recepcion</th>
                                 <th scope="col" class="px-4 py-2 text-center bg-red-50 text-red-800 border-x border-gray-200" colspan="2">Nacional Rechazo</th>
                                 <th scope="col" class="px-4 py-2 text-center bg-gray-200 text-gray-800" colspan="2">Totales Acumulados</th>
@@ -163,12 +161,23 @@
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
                             @foreach($grupoNacional as $nacional)
+                            @php
+                                $caracNac = \App\Models\SectorCaracteristica::where('user_id', $nacional->productor_id)
+                                    ->where('sector', $nacional->sector_registro)
+                                    ->first();
+                                $invNac = $caracNac ? $caracNac->invernadero : 'General';
+                            @endphp
                             <tr class="hover:bg-gray-50/70 transition">
                                 <td class="px-4 py-3 font-bold text-gray-900 text-center">{{ $nacional->semana_nacional }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-gray-700">
                                     {{ \Carbon\Carbon::parse($nacional->fecha_nacional)->format('d/m/Y') }}
                                 </td>
                                 <td class="px-4 py-3 font-medium text-gray-800">{{ $nacional->productor->name ?? 'N/A' }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-600">
+                                    <span class="bg-emerald-50 text-emerald-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-200">
+                                        {{ $invNac }} — {{ $nacional->sector_registro }}
+                                    </span>
+                                </td>
                                 <td class="px-3 py-3 text-center bg-emerald-50/20 font-semibold text-gray-900">
                                     <div>{{ number_format($nacional->cajas_comerciales_vigentes) }}</div>
                                     @if($nacional->fue_ajustado)
@@ -206,7 +215,7 @@
                         </tbody>
                         <tfoot class="border-t-2 border-gray-300 bg-gray-100 font-bold text-gray-900">
                             <tr>
-                                <td class="px-4 py-3 text-center text-xs uppercase text-gray-500 tracking-wider" colspan="3">Subtotal Día</td>
+                                <td class="px-4 py-3 text-center text-xs uppercase text-gray-500 tracking-wider" colspan="4">Subtotal Día</td>
                                 <td class="px-3 py-3 text-center bg-emerald-100/60 text-gray-950 font-extrabold">{{ number_format($grupoNacional->sum('cajas_comerciales_vigentes')) }}</td>
                                 <td class="px-3 py-3 text-center bg-emerald-100/60 text-gray-950 font-extrabold">{{ number_format($grupoNacional->sum('peso_comercial_vigente'), 2) }} kg</td>
                                 <td class="px-3 py-3 text-center bg-red-100/60 text-red-950 font-extrabold">{{ number_format($grupoNacional->sum('cajas_rechazo_procesado')) }}</td>
@@ -236,7 +245,7 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'dueno')
                         <button onclick="abrirModalExportacion()" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
                             <i class="fa-solid fa-plus"></i> Registrar Exportación
                         </button>
@@ -247,7 +256,7 @@
 
             @php
             $exportacionesAgrupadas = $recepcionesExportaciones->groupBy(function($item) {
-            return \Carbon\Carbon::parse($item->fecha_exportacion)->format('Y-m-d');
+                return \Carbon\Carbon::parse($item->fecha_exportacion)->format('Y-m-d');
             });
             @endphp
 
@@ -260,12 +269,11 @@
                     </h3>
 
                     <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial')
+                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'dueno')
                         <button onclick="abrirModalRestituidasPorFecha('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             <i class="fa-solid fa-boxes-packing"></i> Restituir Cajas
                         </button>
 
-                        {{-- BOTÓN COMPAÑERO: CAJAS ENVIADAS --}}
                         <button onclick="abrirModalEnviadasPorFecha('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-cyan-600 hover:bg-cyan-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             <i class="fa-solid fa-truck-ramp-box"></i> Cajas Enviadas
                         </button>
@@ -285,7 +293,8 @@
                             <tr>
                                 <th scope="col" class="px-4 py-3 text-center">Semana #</th>
                                 <th scope="col" class="px-4 py-3">Fecha Envío</th>
-                                <th scope="col" class="px-4 py-3">Productor</th>
+                                <th scope="col" class="px-4 py-3">Dueño</th>
+                                <th scope="col" class="px-4 py-3">Invernadero / Sector</th>
                                 <th scope="col" class="px-4 py-3 text-center bg-blue-50 text-blue-800">Cajas Exportadas</th>
                                 <th scope="col" class="px-4 py-3 text-center bg-blue-50 text-blue-800">Peso Total</th>
                                 <th scope="col" class="px-4 py-3 text-center bg-purple-50 text-purple-800">Cajas Restituidas</th>
@@ -295,10 +304,21 @@
                         </thead>
                         <tbody class="divide-y divide-gray-200 bg-white">
                             @foreach($grupoExportacion as $exportacion)
+                            @php
+                                $caracExp = \App\Models\SectorCaracteristica::where('user_id', $exportacion->productor_id)
+                                    ->where('sector', $exportacion->sector_registro)
+                                    ->first();
+                                $invExp = $caracExp ? $caracExp->invernadero : 'General';
+                            @endphp
                             <tr class="hover:bg-gray-50/70 transition">
                                 <td class="px-4 py-3 font-bold text-gray-900 text-center">{{ $exportacion->semana_exportacion }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ \Carbon\Carbon::parse($exportacion->fecha_exportacion)->format('d/m/Y') }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-800">{{ $exportacion->productor->name ?? 'N/A' }}</td>
+                                <td class="px-4 py-3 font-medium text-gray-600">
+                                    <span class="bg-blue-50 text-blue-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-blue-200">
+                                        {{ $invExp }} — {{ $exportacion->sector_registro }}
+                                    </span>
+                                </td>
                                 <td class="px-4 py-3 text-center bg-blue-50/10 font-semibold text-gray-900">{{ number_format($exportacion->cajas_exportacion) }}</td>
                                 <td class="px-4 py-3 text-center bg-blue-50/10 text-gray-700 font-medium">
                                     <div>{{ number_format($exportacion->peso_exportacion, 3) }} kg</div>
@@ -319,7 +339,6 @@
                                         <form action="{{ route('recepcion.destroyExportacion', $exportacion->id) }}" method="POST" id="form-delete-exportacion-{{ $exportacion->id }}" class="inline">
                                             @csrf
                                             @method('DELETE')
-                                            <!-- 💡 Cambiamos confirmarEliminacion por mostrarModalGenerico y ajustamos el ID del formulario -->
                                             <button type="button" onclick="mostrarModalGenerico('form-delete-exportacion-{{ $exportacion->id }}')" class="text-red-600 hover:text-red-800 p-1 cursor-pointer" title="Eliminar">
                                                 <i class="fa-solid fa-trash-can"></i>
                                             </button>
@@ -333,43 +352,33 @@
                     </table>
                 </div>
 
-                {{-- RESUMEN DE CONDENSACIÓN INDEPENDIENTE POR TABLA DIARIA --}}
                 @if(auth()->user()->rol === 'administrador')
                 @php
                 $sumaCajasExportadasDiarias = $grupoExportacion->sum('cajas_exportacion');
 
                 $sumaPesosNetosFijosDiarios = (float) $grupoExportacion->sum(function($item) {
-                return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
+                    return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
                 });
 
-                // Recuperamos el registro único de condensación de este día
                 $condensacionDelDia = \App\Models\ControlCondensacion::where('fecha', $fechaKey)->first();
                 $cantidadManualGuardada = $condensacionDelDia ? (float)$condensacionDelDia->agropark : 0.0;
-
-                // 💡 AQUÍ LEEMOS EL NUEVO DATO DE LA BASE DE DATOS
                 $cajasEnviadasGuardadas = $condensacionDelDia ? (int)$condensacionDelDia->cajas_enviadas : 0;
 
                 $porcentajeCondensacionDiario = 0;
 
                 if ($sumaPesosNetosFijosDiarios > 0 && $cantidadManualGuardada > 0) {
-                $resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
-                $porcentajeExacto = (1 - $resultadoDivision) * 100;
-                $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
+                    $resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
+                    $porcentajeExacto = (1 - $resultadoDivision) * 100;
+                    $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
                 }
                 @endphp
                 <div class="bg-gray-900 text-white font-bold p-4 shadow border border-gray-700 border-t-0 rounded-b-xl">
-                    {{-- Contenedor Principal: En móvil se vuelve columna con separación controlada --}}
                     <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-4 text-sm w-full">
-
-                        {{-- TÍTULO: Siempre arriba en móvil y ocupando su espacio --}}
                         <div class="uppercase tracking-wider text-xs font-extrabold text-amber-400 flex items-center gap-1 pb-2 border-b border-gray-800 xl:border-b-0 xl:pb-0">
                             <i class="fa-solid fa-chart-pie"></i> Resumen Condensación del Día
                         </div>
 
-                        {{-- CONTENEDOR DE MÉTRICAS: Grid de 2 columnas en móvil, fila única en pantallas grandes --}}
                         <div class="grid grid-cols-2 sm:grid-cols-3 md:flex md:flex-wrap md:items-center gap-4 md:gap-8 justify-between md:justify-end w-full xl:w-auto">
-
-                            {{-- Total Cajas Exp. --}}
                             <div class="flex flex-col justify-center">
                                 <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Exp.</span>
                                 <span class="text-base text-blue-400 font-extrabold whitespace-nowrap">
@@ -377,7 +386,6 @@
                                 </span>
                             </div>
 
-                            {{-- Total Cajas Env. --}}
                             <div class="flex flex-col justify-center">
                                 <span class="text-xs text-gray-400 block uppercase font-medium">Total Cajas Env.</span>
                                 <span class="text-base text-cyan-400 font-extrabold whitespace-nowrap">
@@ -385,7 +393,6 @@
                                 </span>
                             </div>
 
-                            {{-- Suma Pesos Netos Fijos --}}
                             <div class="flex flex-col justify-center">
                                 <span class="text-xs text-gray-400 block uppercase font-medium">Pesos Netos Fijos</span>
                                 <span class="text-base text-red-400 font-extrabold whitespace-nowrap">
@@ -393,7 +400,6 @@
                                 </span>
                             </div>
 
-                            {{-- Agropark --}}
                             <div class="flex flex-col justify-center">
                                 <span class="text-xs text-gray-400 block uppercase font-medium">Agropark</span>
                                 <span class="text-base text-blue-400 font-extrabold whitespace-nowrap">
@@ -401,14 +407,12 @@
                                 </span>
                             </div>
 
-                            {{-- Porcentaje de Condensación: Ocupa las 2 columnas en móviles muy chicos para resaltar --}}
                             <div class="col-span-2 sm:col-span-1 flex flex-col justify-center pt-2 sm:pt-0 border-t border-gray-800 sm:border-t-0">
                                 <span class="text-xs text-amber-400 block uppercase font-medium">% Condensación</span>
                                 <span class="text-lg text-emerald-400 font-black whitespace-nowrap">
                                     <i class="fa-solid fa-percent mr-1"></i> {{ number_format($porcentajeCondensacionDiario, 2) }} %
                                 </span>
                             </div>
-
                         </div>
                     </div>
                 </div>
@@ -422,7 +426,7 @@
         </div>
     </main>
 
-    <!-- MODAL NACIONAL CORREGIDO -->
+    <!-- MODAL NACIONAL -->
     <div id="modal-nacional" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
         <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl my-auto flex flex-col overflow-hidden max-h-[95vh]">
             <div class="bg-amber-600 text-white px-6 py-4 flex justify-between items-center shrink-0">
@@ -450,20 +454,13 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Productor / Dueño del Sector</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dueño del Sector</label>
                     <select name="productor_id" id="productor_select" onchange="filtrarDatosPorOperador()" required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                        <option value="" disabled selected>-- Selecciona un productor --</option>
-                        @if(auth()->user()->rol === 'administrador')
-                        <option value="{{ auth()->user()->id }}" data-sectores="{{ is_string(auth()->user()->sectores) ? auth()->user()->sectores : json_encode(auth()->user()->sectores) }}">
-                            {{ auth()->user()->name }} (Tú - Administrador)
-                        </option>
-                        @endif
+                        <option value="" disabled selected>-- Selecciona un dueño --</option>
                         @foreach($productores as $productor)
-                        @if($productor->id !== auth()->id())
-                        <option value="{{ $productor->id }}" data-sectores="{{ is_string($productor->sectores) ? $productor->sectores : json_encode($productor->sectores) }}">
-                            {{ $productor->name ?? $productor->nombre }}
+                        <option value="{{ $productor->id }}" data-sectores='{!! json_encode($productor->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}'>
+                            {{ $productor->name }}
                         </option>
-                        @endif
                         @endforeach
                     </select>
                 </div>
@@ -473,7 +470,6 @@
                     <select name="recepcion_exportacion_id" id="recepcion_exportacion_select" class="w-full border border-blue-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-blue-50/40 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium">
                         <option value="" selected>-- Selecciona el embarque origen --</option>
                         @foreach($embarquesExportacion as $embarque)
-                        <!-- 💡 SOLO SE AGREGA EL ATRIBUTO data-fecha AQUÍ ABAJO -->
                         <option class="opcion-embarque hidden" value="{{ $embarque->id }}" data-operador="{{ $embarque->productor_id }}" data-fecha="{{ $embarque->fecha_exportacion }}">
                             Fecha: {{ \Carbon\Carbon::parse($embarque->fecha_exportacion)->format('d/m/Y') }} — Cajas Env: {{ $embarque->cajas_exportacion }} (Semana #{{ $embarque->semana_exportacion }})
                         </option>
@@ -482,7 +478,7 @@
                 </div>
 
                 <div id="contenedor-sector-registro" class="hidden mt-3">
-                    <label class="block text-xs font-bold text-amber-700 uppercase mb-1">Sector Específico del Registro</label>
+                    <label class="block text-xs font-bold text-amber-700 uppercase mb-1">Invernadero y Sector</label>
                     <select name="sector_registro" id="sector_registro_select" class="w-full border border-amber-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-amber-50/50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium">
                     </select>
                 </div>
@@ -527,7 +523,7 @@
         </div>
     </div>
 
-    <!-- MODAL EXPORTACIÓN LIMPIO -->
+    <!-- MODAL EXPORTACIÓN -->
     <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50">
         <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl mx-4 overflow-hidden">
             <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
@@ -552,30 +548,19 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Productor / Dueño del Sector</label>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dueño del Sector</label>
                     <select name="productor_id" id="productor_exportacion_select" onchange="cargarSectoresDelProductorExportacion()" required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <option value="" disabled selected>-- Selecciona un productor --</option>
-                        @if(auth()->user()->rol === 'administrador')
-                        <option value="{{ auth()->user()->id }}" data-sectores="{{ is_string(auth()->user()->sectores) ? auth()->user()->sectores : json_encode(auth()->user()->sectores) }}">
-                            {{ auth()->user()->name }} (Tú - Administrador)
-                        </option>
-                        @endif
-                        @if(isset($productores) && count($productores) > 0)
+                        <option value="" disabled selected>-- Selecciona un dueño --</option>
                         @foreach($productores as $productor)
-                        @if($productor->id !== auth()->id())
-                        <option value="{{ $productor->id }}" data-sectores="{{ is_string($productor->sectores) ? $productor->sectores : json_encode($productor->sectores) }}">
-                            {{ $productor->name ?? $productor->nombre ?? 'Usuario sin nombre' }}
+                        <option value="{{ $productor->id }}" data-sectores='{!! json_encode($productor->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}'>
+                            {{ $productor->name }}
                         </option>
-                        @endif
                         @endforeach
-                        @else
-                        <option value="" disabled>No se encontraron productores cargados</option>
-                        @endif
                     </select>
                 </div>
 
                 <div id="contenedor-sector-exportacion" class="hidden mt-3 animate-fade-in">
-                    <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Sector Específico del Registro</label>
+                    <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Invernadero y Sector</label>
                     <select name="sector_registro" id="sector_exportacion_select" required class="w-full border border-blue-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-blue-50/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium">
                     </select>
                 </div>
@@ -620,7 +605,7 @@
                 <div>
                     <label for="recepcion_exportacion_id" class="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">Seleccionar Embarque Pendiente:</label>
                     <select name="recepcion_exportacion_id" id="recepcion_exportacion_id" required class="w-full bg-gray-50 border border-gray-300 text-gray-800 text-sm rounded-lg focus:ring-purple-500 focus:border-purple-500 p-2.5 outline-none cursor-pointer">
-                        <option value="">-- Seleccione Fecha / Operador / Sector --</option>
+                        <option value="">-- Seleccione Fecha / Dueño / Sector --</option>
                         @foreach($embarquesPendientesDeCajas as $emb)
                         <option value="{{ $emb->id }}" data-fecha="{{ \Carbon\Carbon::parse($emb->fecha_exportacion)->format('Y-m-d') }}">
                             {{ \Carbon\Carbon::parse($emb->fecha_exportacion)->format('d/m/Y') }} - {{ $emb->productor->name ?? 'N/A' }} ({{ $emb->sector_registro }}) - [Pendientes: {{ number_format($emb->pendientes) }} uds]
@@ -642,7 +627,7 @@
         </div>
     </div>
 
-    {{-- NUEVO MODAL: CAPTURA DE CAJAS ENVIADAS EN CONDENSACIÓN --}}
+    <!-- MODAL CAJAS ENVIADAS -->
     <div id="modalEnviadas" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
         <div class="bg-white rounded-xl shadow-xl border border-gray-200 w-full max-w-md overflow-hidden transform transition-all">
             <div class="bg-cyan-700 p-4 text-white flex justify-between items-center">
@@ -654,11 +639,8 @@
                 </button>
             </div>
 
-            {{-- Apuntamos a la ruta global de condensación --}}
             <form action="{{ route('condensacion.guardar') }}" method="POST" class="p-6 space-y-4">
                 @csrf
-
-                {{-- Campos ocultos para saber qué día y semana estamos afectando --}}
                 <input type="hidden" name="semana" value="{{ $semanaActual ?? ($recepcionesExportaciones->first()->semana_exportacion ?? 1) }}">
                 <input type="hidden" name="fecha" id="enviadas_fecha_input" required>
 
@@ -668,9 +650,7 @@
                 </div>
 
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" onclick="cerrarModalEnviadas()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">
-                        Cancelar
-                    </button>
+                    <button type="button" onclick="cerrarModalEnviadas()" class="bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition cursor-pointer">Cancelar</button>
                     <button type="submit" class="bg-cyan-700 hover:bg-cyan-800 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow cursor-pointer">
                         <i class="fa-solid fa-floppy-disk"></i> Guardar Cajas
                     </button>
@@ -929,15 +909,14 @@
             const inputFechaNacional = document.getElementById('fecha_nacional_input');
 
             if (!selectProductor) return;
-            const idOperador = selectProductor.value;
+            const idProductor = selectProductor.value;
 
-            cargarSectoresDelProductor();
+            cargarSectoresDelDueño('productor_select', 'sector_registro_select', 'contenedor-sector-registro');
 
             const divEmbarque = document.getElementById('contenedor-embarque-origen');
-            if (modoCaptura === 'rechazo' && idOperador) {
+            if (modoCaptura === 'rechazo' && idProductor) {
                 if (selectEmbarque) selectEmbarque.value = "";
 
-                // Obtener el año y mes seleccionado en el input de fecha (Formato: YYYY-MM)
                 let mesAñoFiltro = "";
                 if (inputFechaNacional && inputFechaNacional.value) {
                     mesAñoFiltro = inputFechaNacional.value.substring(0, 7);
@@ -945,11 +924,10 @@
 
                 opcionesEmbarque.forEach(opcion => {
                     const idOpEmbarque = opcion.getAttribute('data-operador');
-                    const fechaEmbarque = opcion.getAttribute('data-fecha'); // Formato: YYYY-MM-DD
+                    const fechaEmbarque = opcion.getAttribute('data-fecha');
                     const mesAñoEmbarque = fechaEmbarque ? fechaEmbarque.substring(0, 7) : "";
 
-                    // Coincide con el operador Y con el mes de la fecha que se está capturando
-                    if (idOpEmbarque == idOperador && (mesAñoFiltro === "" || mesAñoEmbarque === mesAñoFiltro)) {
+                    if (idOpEmbarque == idProductor && (mesAñoFiltro === "" || mesAñoEmbarque === mesAñoFiltro)) {
                         opcion.classList.remove('hidden');
                     } else {
                         opcion.classList.add('hidden');
@@ -961,10 +939,10 @@
             }
         }
 
-        function cargarSectoresDelProductor() {
-            const selectProductor = document.getElementById('productor_select');
-            const selectSector = document.getElementById('sector_registro_select');
-            const contenedorSector = document.getElementById('contenedor-sector-registro');
+        function cargarSectoresDelDueño(selectId, selectSectorId, contenedorId) {
+            const selectProductor = document.getElementById(selectId);
+            const selectSector = document.getElementById(selectSectorId);
+            const contenedorSector = document.getElementById(contenedorId);
 
             if (!selectProductor || !selectSector || !contenedorSector) return;
 
@@ -975,24 +953,22 @@
             }
 
             let sectoresRaw = opcionSeleccionada.getAttribute('data-sectores');
-            let sectores = [];
+            let pares = [];
 
             try {
-                sectores = JSON.parse(sectoresRaw);
+                pares = JSON.parse(sectoresRaw);
             } catch (e) {
-                if (sectoresRaw) {
-                    sectores = sectoresRaw.split(',').map(s => s.trim().replace(/[\[\]"']/g, ''));
-                }
+                pares = [];
             }
 
-            selectSector.innerHTML = '<option value="" disabled selected>-- Selecciona el sector de origen --</option>';
+            selectSector.innerHTML = '<option value="" disabled selected>-- Selecciona Invernadero y Sector --</option>';
 
-            if (sectores && sectores.length > 0) {
-                sectores.forEach(sector => {
-                    if (sector) {
+            if (pares && pares.length > 0) {
+                pares.forEach(item => {
+                    if (item.sector) {
                         const option = document.createElement('option');
-                        option.value = sector;
-                        option.textContent = sector;
+                        option.value = item.sector;
+                        option.textContent = `${item.invernadero} — ${item.sector}`;
                         selectSector.appendChild(option);
                     }
                 });
@@ -1007,48 +983,7 @@
         }
 
         function cargarSectoresDelProductorExportacion() {
-            const selectProductor = document.getElementById('productor_exportacion_select');
-            const selectSector = document.getElementById('sector_exportacion_select');
-            const contenedorSector = document.getElementById('contenedor-sector-exportacion');
-
-            if (!selectProductor || !selectSector || !contenedorSector) return;
-
-            const opcionSeleccionada = selectProductor.options[selectProductor.selectedIndex];
-            if (!opcionSeleccionada || opcionSeleccionada.value === "") {
-                contenedorSector.classList.add('hidden');
-                return;
-            }
-
-            let sectoresRaw = opcionSeleccionada.getAttribute('data-sectores');
-            let sectores = [];
-
-            try {
-                sectores = JSON.parse(sectoresRaw);
-            } catch (e) {
-                if (sectoresRaw) {
-                    sectores = sectoresRaw.split(',').map(s => s.trim().replace(/[\[\]"']/g, ''));
-                }
-            }
-
-            selectSector.innerHTML = '<option value="" disabled selected>-- Selecciona el sector de origen --</option>';
-
-            if (sectores && sectores.length > 0) {
-                sectores.forEach(sector => {
-                    if (sector) {
-                        const option = document.createElement('option');
-                        option.value = sector;
-                        option.textContent = sector;
-                        selectSector.appendChild(option);
-                    }
-                });
-                contenedorSector.classList.remove('hidden');
-            } else {
-                const option = document.createElement('option');
-                option.value = "General";
-                option.textContent = "General (Sin sectores específicos)";
-                selectSector.appendChild(option);
-                contenedorSector.classList.remove('hidden');
-            }
+            cargarSectoresDelDueño('productor_exportacion_select', 'sector_exportacion_select', 'contenedor-sector-exportacion');
         }
 
         function abrirModalRestituidas() {
@@ -1072,7 +1007,6 @@
                 inputFecha.value = fecha;
             }
 
-            // Buscamos la tabla del día para ver si ya hay una cantidad renderizada y precargarla
             const botonDisparador = document.querySelector(`button[onclick="abrirModalEnviadasPorFecha('${fecha}')"]`);
             if (botonDisparador) {
                 const contenedorTabla = botonDisparador.closest('.bg-white');
@@ -1117,9 +1051,8 @@
             const contenedorTabla = botonDisparador.closest('.bg-white');
             if (!contenedorTabla) return;
 
-            // 💡 SOLUCIÓN: Forzamos a que siempre se limpie el campo al abrir el modal
             if (inputAgropark) {
-                inputAgropark.value = ''; // <--- Cambia esto para que inicie vacío siempre
+                inputAgropark.value = '';
             }
 
             modal.classList.remove('hidden');

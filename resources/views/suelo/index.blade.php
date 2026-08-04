@@ -137,7 +137,7 @@
                     <thead>
                         <tr class="bg-gray-100 border-b border-gray-200 text-gray-700 uppercase tracking-wider text-[11px] font-bold">
                             <th class="py-3 px-4">Fecha</th>
-                            <th class="py-3 px-4">Sector</th>
+                            <th class="py-3 px-4">Invernadero / Sector</th>
                             <th class="py-3 px-4">Dueño del Sector</th>
                             <th class="py-3 px-4">DPV Clima</th>
                             <th class="py-3 px-4 bg-blue-50/50">Tensiómetro / Estado</th>
@@ -150,14 +150,24 @@
                     <tbody class="divide-y divide-gray-200 text-gray-700 text-sm">
                         @forelse($monitoreos as $row)
                         @php
-                        $colorRadiacion = $row->radiacion_semaforo === 'VERDE' ? 'text-emerald-600 font-bold' : ($row->radiacion_semaforo === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
+                            $caracSueloIdx = \App\Models\SectorCaracteristica::where('sector', $row->sector)
+                                ->first();
+                            $invSueloIdx = $caracSueloIdx ? $caracSueloIdx->invernadero : 'General';
+                            
+                            // Si no hay valor de radiación, no se asigna clase de color
+                            $colorRadiacion = '';
+                            if (!is_null($row->radiacion_lectura) && $row->radiacion_lectura !== '') {
+                                $colorRadiacion = $row->radiacion_semaforo === 'VERDE' ? 'text-emerald-600 font-bold' : ($row->radiacion_semaforo === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
+                            }
                         @endphp
                         <tr class="hover:bg-gray-50 transition duration-150">
                             <td class="py-3.5 px-4 font-medium">
                                 {{ \Carbon\Carbon::parse($row->fecha)->format('d/m/Y') }}
                             </td>
                             <td class="py-3.5 px-4">
-                                <span class="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded font-semibold">{{ $row->sector }}</span>
+                                <span class="bg-emerald-50 text-emerald-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-200">
+                                    {{ $invSueloIdx }} — {{ $row->sector }}
+                                </span>
                             </td>
                             <td class="py-3.5 px-4">
                                 <span class="text-xs text-gray-600 font-medium flex items-center gap-1">
@@ -185,10 +195,12 @@
                             </td>
 
                             <td class="py-3.5 px-4 bg-orange-50/10 font-medium">
-                                <span class="{{ $colorRadiacion }}">{{ number_format($row->radiacion_lectura) }}</span>
+                                <span class="{{ $colorRadiacion }}">{{ (!is_null($row->radiacion_lectura) && $row->radiacion_lectura !== '') ? number_format($row->radiacion_lectura) : '—' }}</span>
+                                @if(!is_null($row->radiacion_lectura) && $row->radiacion_lectura !== '')
                                 <span class="text-[10px] block font-semibold text-gray-500">
                                     {{ $row->radiacion_semaforo }}
                                 </span>
+                                @endif
                             </td>
 
                             {{-- COLUMNA DE ABEJORROS CON SEMÁFORO --}}
@@ -219,30 +231,31 @@
                                         onclick="mostrarDetalleSuelo(this)"
                                         data-fecha="{{ \Carbon\Carbon::parse($row->fecha)->format('d/m/Y') }}"
                                         data-sector="{{ $row->sector }}"
+                                        data-invernadero="{{ $invSueloIdx }}"
                                         data-operador="{{ $row->dueno_sector }}"
                                         data-temperatura="{{ $row->temperatura ?? '—' }}"
                                         data-humedad="{{ $row->humedad ?? '—' }}"
                                         data-dpv="{{ $row->dpv ?? '—' }}"
                                         data-estatus_clima="{{ $row->estatus_general }}"
                                         data-tensiometro="{{ $row->lectura_tensiometro ?? '—' }}"
-                                        data-tensiometro_estatus="{{ $row->tensiometro_estatus ?? 'Sin diagnostico' }}"
+                                        data-tensiometro_estatus="{{ $row->tensiometro_estatus ?? 'Sin diagnóstico' }}"
                                         data-ce="{{ $row->ce ?? '—' }}"
                                         data-ph="{{ $row->ph ?? '—' }}"
                                         data-alerta_ce="{{ $row->alerta_ce_opcion ?? 'Ninguna' }}"
-                                        data-radiacion_num="{{ number_format($row->radiacion_lectura) }}"
-                                        data-radiacion_semaforo="{{ $row->radiacion_semaforo }}"
+                                        data-radiacion_num="{{ (!is_null($row->radiacion_lectura) && $row->radiacion_lectura !== '') ? number_format($row->radiacion_lectura) : '' }}"
+                                        data-radiacion_semaforo="{{ $row->radiacion_semaforo ?? '' }}"
                                         data-radiacion_accion="{{ $row->radiacion_accion_tomada ?? 'Ninguna' }}"
                                         data-abejorros_flores="{{ $row->abejorros_flores ?? '—' }}"
                                         data-abejorros_semaforo="{{ $row->abejorros_semaforo ?? 'Sin evaluar' }}"
                                         data-rapido_cumplio="{{ strtoupper($row->analisis_rapido_cumplio) }}"
                                         data-tipo_lab="{{ $row->tipo_analisis_lab ?? 'ninguno' }}"
                                         data-analisis_rapidos="{{ json_encode($row->analisisRapidos) }}"
-                                        data-l_mo="{{ $row->lab_mo ?? '—' }}" data-l_pbray="{{ $row->lab_p_bray ?? '—' }}"
-                                        data-l_k="{{ $row->lab_k ?? '—' }}" data-l_mg="{{ $row->lab_mg ?? '—' }}"
-                                        data-l_na="{{ $row->lab_na ?? '—' }}" data-l_fe="{{ $row->lab_fe ?? '—' }}"
-                                        data-l_zn="{{ $row->lab_zn ?? '—' }}" data-l_mn="{{ $row->lab_mn ?? '—' }}"
-                                        data-l_cu="{{ $row->lab_cu ?? '—' }}" data-l_b="{{ $row->lab_b ?? '—' }}"
-                                        data-l_s="{{ $row->lab_s ?? '—' }}" data-l_nno3="{{ $row->lab_n_no3 ?? '—' }}"
+                                        data-l_mo="{{ $row->lab_mo ?? '' }}" data-l_pbray="{{ $row->lab_p_bray ?? '' }}"
+                                        data-l_k="{{ $row->lab_k ?? '' }}" data-l_mg="{{ $row->lab_mg ?? '' }}"
+                                        data-l_na="{{ $row->lab_na ?? '' }}" data-l_fe="{{ $row->lab_fe ?? '' }}"
+                                        data-l_zn="{{ $row->lab_zn ?? '' }}" data-l_mn="{{ $row->lab_mn ?? '' }}"
+                                        data-l_cu="{{ $row->lab_cu ?? '' }}" data-l_b="{{ $row->lab_b ?? '' }}"
+                                        data-l_s="{{ $row->lab_s ?? '' }}" data-l_nno3="{{ $row->lab_n_no3 ?? '' }}"
                                         class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3 py-1.5 rounded-md transition shadow flex items-center gap-1 cursor-pointer">
                                         <i class="fa-solid fa-eye"></i> Ver Detalle
                                     </button>
@@ -289,7 +302,7 @@
             <div class="p-6 space-y-6 text-xs bg-white">
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <div><span class="text-gray-400 block uppercase font-bold">Fecha</span><span id="md_fecha" class="font-bold text-gray-800 text-sm"></span></div>
-                    <div><span class="text-gray-400 block uppercase font-bold">Sector / Nave</span><span id="md_sector" class="font-bold text-gray-800 text-sm"></span></div>
+                    <div><span class="text-gray-400 block uppercase font-bold">Invernadero / Sector</span><span id="md_sector" class="font-bold text-gray-800 text-sm"></span></div>
                     <div><span class="text-gray-400 block uppercase font-bold">Dueño del Sector</span><span id="md_operador" class="font-bold text-gray-800 text-sm"></span></div>
                     <div><span class="text-gray-400 block uppercase font-bold">Estatus General</span><span id="md_estatus_clima" class="font-black"></span></div>
                 </div>
@@ -367,7 +380,8 @@
                     </div>
                 </div>
 
-                <div class="border border-cyan-200 rounded-xl overflow-hidden">
+                {{-- CONTENEDOR DE ANÁLISIS RÁPIDOS: Se oculta por completo si no hay registros --}}
+                <div id="contenedor_wrapper_rapidos" class="border border-cyan-200 rounded-xl overflow-hidden">
                     <div class="bg-cyan-600 text-white px-3 py-2.5 font-bold flex justify-between items-center">
                         <span>Resultados: Análisis Rápidos Realizados en Campo</span>
                         <span id="md_rapido_cumplio" class="bg-white text-cyan-800 px-2 py-0.5 rounded font-black text-[10px]"></span>
@@ -377,6 +391,7 @@
                     </div>
                 </div>
 
+                {{-- CONTENEDOR DE LABORATORIO: Se oculta por completo si no hay datos --}}
                 <div id="md_box_laboratorio" class="border border-emerald-200 rounded-xl overflow-hidden hidden">
                     <div class="bg-emerald-600 text-white p-2.5 font-bold flex justify-between items-center">
                         <span><i class="fa-solid fa-microscope mr-1"></i> Desglose Completo: Análisis de Laboratorio</span>
@@ -587,7 +602,7 @@
 
         function mostrarDetalleSuelo(boton) {
             document.getElementById('md_fecha').innerText = boton.getAttribute('data-fecha') || '—';
-            document.getElementById('md_sector').innerText = boton.getAttribute('data-sector') || '—';
+            document.getElementById('md_sector').innerText = (boton.getAttribute('data-invernadero') || 'General') + ' — ' + (boton.getAttribute('data-sector') || '—');
             document.getElementById('md_operador').innerText = boton.getAttribute('data-operador') || '—';
 
             const estClima = boton.getAttribute('data-estatus_clima');
@@ -599,19 +614,23 @@
             document.getElementById('md_hum').innerText = (boton.getAttribute('data-humedad') || '—') + ' %';
             document.getElementById('md_dpv').innerText = boton.getAttribute('data-dpv') || '—';
 
-            // Radiación detallada con color en el número de forma segura
-            const radNum = boton.getAttribute('data-radiacion_num') || '0';
-            const radSem = boton.getAttribute('data-radiacion_semaforo') || 'VERDE';
+            // Radiación detallada: Si no hay valor, no se pone color ni texto de semáforo
+            const radNum = boton.getAttribute('data-radiacion_num');
+            const radSem = boton.getAttribute('data-radiacion_semaforo');
             const spanRadNum = document.getElementById('md_radiacion_num');
             const spanRadSem = document.getElementById('md_radiacion_semaforo');
 
-            if (spanRadNum) {
-                spanRadNum.innerText = radNum + ' Lux';
-                spanRadNum.className = radSem === 'VERDE' ? 'text-emerald-600 font-bold' : (radSem === 'AMARILLO' ? 'text-amber-600 font-bold' : 'text-red-600 font-bold');
-            }
-            if (spanRadSem) {
-                spanRadSem.innerText = '(' + radSem + ')';
-                spanRadSem.className = 'text-[10px] ml-1 font-semibold text-gray-500';
+            if (spanRadNum && spanRadSem) {
+                if (radNum && radNum.trim() !== '') {
+                    spanRadNum.innerText = radNum + ' Lux';
+                    spanRadNum.className = radSem === 'VERDE' ? 'text-emerald-600 font-bold' : (radSem === 'AMARILLO' ? 'text-amber-600 font-bold' : (radSem === 'ROJO' ? 'text-red-600 font-bold' : 'text-gray-800 font-bold'));
+                    spanRadSem.innerText = '(' + radSem + ')';
+                    spanRadSem.className = 'text-[10px] ml-1 font-semibold text-gray-500';
+                } else {
+                    spanRadNum.innerText = '—';
+                    spanRadNum.className = 'text-gray-800 font-medium';
+                    spanRadSem.innerText = '';
+                }
             }
 
             document.getElementById('md_radiacion_accion').innerText = boton.getAttribute('data-radiacion_accion') || 'Ninguna';
@@ -639,14 +658,16 @@
             const cumplio = boton.getAttribute('data-rapido_cumplio') || 'NO';
             document.getElementById('md_rapido_cumplio').innerText = 'CUMPLIÓ: ' + cumplio;
 
-            // Renderizado e interpretación dinámica de las tablas relacionales EPS y ECP
+            // 1. ANÁLISIS RÁPIDOS EN CAMPO: Ocultar bloque completo si no hay registros, mostrar solo si hay datos
             const analisisRapidosJson = JSON.parse(boton.getAttribute('data-analisis_rapidos') || '[]');
+            const contenedorWrapperRapidos = document.getElementById('contenedor_wrapper_rapidos');
             const contenedorTablas = document.getElementById('contenedor_tablas_rapidas');
             contenedorTablas.innerHTML = '';
 
             if (analisisRapidosJson.length === 0) {
-                contenedorTablas.innerHTML = `<div class="text-center py-2 text-gray-400 italic">No se adjuntaron registros de campo EPS/ECP.</div>`;
+                contenedorWrapperRapidos.classList.add('hidden');
             } else {
+                contenedorWrapperRapidos.classList.remove('hidden');
                 analisisRapidosJson.forEach(ana => {
                     const tipoNombre = (ana.tipo_analisis || '').toUpperCase();
                     const divFila = document.createElement('div');
@@ -667,8 +688,40 @@
                 });
             }
 
+            // 2. ANÁLISIS DE LABORATORIO: Ocultar bloque completo si ningún elemento tiene datos, mostrar solo los que tengan datos
             const tipoLab = boton.getAttribute('data-tipo_lab');
             const boxLab = document.getElementById('md_box_laboratorio');
+            const elementosLab = ['mo', 'pbray', 'k', 'mg', 'na', 'fe', 'zn', 'mn', 'cu', 'b', 's', 'nno3'];
+            
+            let tieneDatosLab = false;
+
+            elementosLab.forEach(el => {
+                const val = boton.getAttribute(`data-l_${el}`);
+                const spanVal = document.getElementById(`md_l_${el}`);
+                const boxEl = document.getElementById(`box_l_${el}`);
+
+                const hasValue = (val !== null && val !== undefined && val !== '' && val !== '—');
+
+                if (hasValue) {
+                    tieneDatosLab = true;
+                    if (spanVal) {
+                        spanVal.innerText = val;
+                        let DB_Elemento = el === 'pbray' ? 'p_bray' : el === 'nno3' ? 'n_no3' : el;
+                        spanVal.className = obtenerClaseSemaforo(tipoLab, DB_Elemento, val);
+                    }
+                    if (boxEl) {
+                        if (tipoLab === 'pasta_saturada' && ['mo', 'fe', 'zn', 'mn', 'cu', 'b'].includes(el)) {
+                            boxEl.classList.add('hidden');
+                        } else {
+                            boxEl.classList.remove('hidden');
+                        }
+                    }
+                } else {
+                    if (boxEl) {
+                        boxEl.classList.add('hidden');
+                    }
+                }
+            });
 
             if (tipoLab && tipoLab !== 'ninguno' && tipoLab !== 'null') {
                 document.getElementById('md_tipo_lab_badge').innerText = 'Tipo: ' + tipoLab.replace('_', ' ');
@@ -676,28 +729,11 @@
                 document.getElementById('md_tipo_lab_badge').innerText = 'Tipo: No especificado';
             }
 
-            const elementosLab = ['mo', 'pbray', 'k', 'mg', 'na', 'fe', 'zn', 'mn', 'cu', 'b', 's', 'nno3'];
-            elementosLab.forEach(el => {
-                const val = boton.getAttribute(`data-l_${el}`);
-                const spanVal = document.getElementById(`md_l_${el}`);
-                const boxEl = document.getElementById(`box_l_${el}`);
-
-                if (spanVal) {
-                    spanVal.innerText = (val && val !== '—') ? val : '—';
-                    let DB_Elemento = el === 'pbray' ? 'p_bray' : el === 'nno3' ? 'n_no3' : el;
-                    spanVal.className = obtenerClaseSemaforo(tipoLab, DB_Elemento, val);
-                }
-
-                if (boxEl) {
-                    if (tipoLab === 'pasta_saturada' && ['mo', 'fe', 'zn', 'mn', 'cu', 'b'].includes(el)) {
-                        boxEl.classList.add('hidden');
-                    } else {
-                        boxEl.classList.remove('hidden');
-                    }
-                }
-            });
-
-            boxLab.classList.remove('hidden');
+            if (!tieneDatosLab) {
+                boxLab.classList.add('hidden');
+            } else {
+                boxLab.classList.remove('hidden');
+            }
 
             const modal = document.getElementById('modal_detalle_suelo');
             modal.classList.remove('hidden');

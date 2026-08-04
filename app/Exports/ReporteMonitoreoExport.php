@@ -32,7 +32,7 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
 
                 // Anchos de columna fijos para evitar que el texto se corte
                 $sheet->getColumnDimension('A')->setWidth(30);
-                $sheet->getColumnDimension('B')->setWidth(20);
+                $sheet->getColumnDimension('B')->setWidth(25);
                 $sheet->getColumnDimension('C')->setWidth(20);
                 $sheet->getColumnDimension('D')->setWidth(25);
 
@@ -43,13 +43,19 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
                 $sheet->getStyle('A1')->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
                 $sheet->getStyle('A1')->getFill()->setFillType(Fill::FILL_SOLID)->getStartColor()->setRGB('1E3A8A');
 
+                // --- OBTENER INVERNADERO Y SECTOR COMBINADOS ---
+                $caracExcel = \App\Models\SectorCaracteristica::where('sector', $this->monitoreo->sector)
+                    ->first();
+                $invExcel = $caracExcel ? $caracExcel->invernadero : 'General';
+                $sectorCombinado = $invExcel . ' — ' . $this->monitoreo->sector;
+
                 // --- METADATOS ---
                 $sheet->setCellValue('A3', 'Fecha de Captura:');
                 $sheet->setCellValue('B3', Carbon::parse($this->monitoreo->fecha)->format('d/m/Y'));
-                $sheet->setCellValue('C3', 'Operador:');
+                $sheet->setCellValue('C3', 'Dueño / Encargado:');
                 $sheet->setCellValue('D3', $this->operadorDueno);
-                $sheet->setCellValue('A4', 'Sector:');
-                $sheet->setCellValue('B4', $this->monitoreo->sector);
+                $sheet->setCellValue('A4', 'Invernadero / Sector:');
+                $sheet->setCellValue('B4', $sectorCombinado);
                 
                 // NUEVO METADATO: Relación de macetas por gotero del sector
                 $sheet->setCellValue('C4', 'Macetas / Gotero:');
@@ -95,12 +101,11 @@ class ReporteMonitoreoExport implements WithStyles, WithEvents
                 $sheet->mergeCells('A21:D21');
                 $sheet->setCellValue('A21', '4. RADIACIÓN SOLAR Y COMPORTAMIENTO');
                 $sheet->setCellValue('A22', 'Hora Captura:');   $sheet->setCellValue('B22', Carbon::parse($this->monitoreo->radiacion_hora)->format('g:i a'));
-                $sheet->setCellValue('C22', 'Lectura Tomada:');     $sheet->setCellValue('D22', number_format($this->monitoreo->radiacion_lectura) . ' Lux');
+                $sheet->setCellValue('C22', 'Lectura Tomada:');    $sheet->setCellValue('D22', number_format($this->monitoreo->radiacion_lectura) . ' Lux');
                 $sheet->setCellValue('A23', 'Semáforo Radiación:'); $sheet->setCellValue('B23', $this->monitoreo->radiacion_semaforo);
                 $sheet->setCellValue('C23', 'Acción Ejecutada:');   $sheet->setCellValue('D23', $this->monitoreo->radiacion_accion_tomada ?? 'Ninguna');
 
                 // --- ESTILOS VISUALES ---
-                // Se agregó 'C4' al grupo de celdas en negrita
                 $filasSubtitulos = ['A3', 'C3', 'A4', 'C4', 'A7', 'C7', 'A8', 'A11', 'C11', 'A12', 'C12', 'A13', 'C13', 'A14', 'C14', 'A22', 'C22', 'A23', 'C23'];
                 foreach ($filasSubtitulos as $celda) {
                     $sheet->getStyle($celda)->getFont()->setBold(true)->getColor()->setRGB('475569');

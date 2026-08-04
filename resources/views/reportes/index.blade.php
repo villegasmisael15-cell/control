@@ -128,16 +128,22 @@
                 @endif
             </div>
 
-            <!-- VISTA MÓVIL (CORREGIDA) -->
+            <!-- VISTA MÓVIL -->
             <div class="block md:hidden space-y-4 p-4 bg-gray-50/50">
                 @foreach($grupoReportes as $reporte)
+                @php
+                    $caracRepM = \App\Models\SectorCaracteristica::where('user_id', $reporte->productor_id ?? $reporte->user_id)
+                        ->where('sector', $reporte->recepcion_sector)
+                        ->first();
+                    $invRepM = $caracRepM ? $caracRepM->invernadero : 'General';
+                @endphp
                 <div class="bg-white rounded-xl p-4 border border-gray-200 space-y-3 shadow-xs">
                     <div class="flex justify-between items-start border-b border-gray-100 pb-2">
                         <div>
-                            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">
-                                Sector {{ $reporte->recepcion_sector }}
+                            <span class="text-xs font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">
+                                {{ $invRepM }} — {{ $reporte->recepcion_sector }}
                             </span>
-                            <h2 class="text-sm font-bold text-gray-900 mt-1">
+                            <h2 class="text-sm font-bold text-gray-900 mt-2">
                                 <i class="fa-solid fa-user text-gray-400 mr-1 text-xs"></i>
                                 {{ $reporte->operador_name ?? auth()->user()->name }}
                             </h2>
@@ -201,16 +207,14 @@
                         @endif
                     </div>
 
-                    <!-- BOTONES EN VISTA MÓVIL CORREGIDOS -->
                     <div class="pt-2 border-t border-gray-100 flex flex-col sm:flex-row gap-2 justify-end">
-                        @if(auth()->user()->rol === 'operador')
+                        @if(auth()->user()->rol === 'dueno' || auth()->user()->rol === 'administrador')
                         <a href="{{ route('reportes.pdf', $reporte->recepcion_id) }}" class="w-full bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition text-center flex items-center justify-center gap-1">
                             <i class="fa-solid fa-file-pdf"></i> PDF
                         </a>
                         @endif
 
                         @if(auth()->user()->rol === 'administrador')
-                        <!-- NUEVO: Botón Capturar Post en Móvil -->
                         <button type="button" onclick="toggleModal('modal-rechazo-{{ $reporte->recepcion_id }}')" class="w-full bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition text-center flex items-center justify-center gap-1">
                             <i class="fa-solid fa-circle-exclamation"></i>
                             {{ ($reporte->rechazo_post ?? 0) > 0 ? 'Post: ' . number_format($reporte->rechazo_post, 2) . ' kg' : 'Capturar Post' }}
@@ -231,8 +235,8 @@
                     <table class="w-full text-left border-collapse whitespace-nowrap">
                         <thead>
                             <tr class="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                                <th class="px-6 py-4">Operador</th>
-                                <th class="px-6 py-4">Sector</th>
+                                <th class="px-6 py-4">Dueño</th>
+                                <th class="px-6 py-4">Invernadero / Sector</th>
                                 <th class="px-6 py-4 bg-gray-100/50">Total Kg</th>
                                 <th class="px-6 py-4 bg-gray-100/50">Rechazado Kg</th>
                                 <th class="px-6 py-4 bg-red-50/50 text-red-700">Rechazo Post</th>
@@ -251,9 +255,19 @@
                         </thead>
                         <tbody class="divide-y divide-gray-100 text-sm text-gray-700">
                             @foreach($grupoReportes as $reporte)
+                            @php
+                                $caracRepD = \App\Models\SectorCaracteristica::where('user_id', $reporte->productor_id ?? $reporte->user_id)
+                                    ->where('sector', $reporte->recepcion_sector)
+                                    ->first();
+                                $invRepD = $caracRepD ? $caracRepD->invernadero : 'General';
+                            @endphp
                             <tr class="hover:bg-gray-50/70 transition">
                                 <td class="px-6 py-4 font-medium text-gray-900">{{ $reporte->operador_name ?? auth()->user()->name }}</td>
-                                <td class="px-6 py-4 font-semibold text-gray-600"> {{ $reporte->recepcion_sector }}</td>
+                                <td class="px-6 py-4 font-semibold text-gray-600">
+                                    <span class="bg-emerald-50 text-emerald-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-200">
+                                        {{ $invRepD }} — {{ $reporte->recepcion_sector }}
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 bg-gray-100/30 text-blue-600 font-medium">{{ $reporte->total_kg }}</td>
                                 <td class="px-6 py-4 bg-gray-100/30 text-red-600 font-medium">{{ $reporte->rechazados_kg !== null ? number_format($reporte->rechazados_kg, 2) : '0.00' }}</td>
                                 <td class="px-6 py-4 bg-red-50/10 text-red-600 font-medium">{{ number_format($reporte->rechazo_post ?? 0, 2) }}</td>
@@ -294,7 +308,7 @@
                                         </button>
                                         @endif
 
-                                        @if(auth()->user()->rol === 'operador')
+                                        @if(auth()->user()->rol === 'dueno' || auth()->user()->rol === 'administrador')
                                         <a href="{{ route('reportes.pdf', $reporte->recepcion_id) }}" class="inline-flex bg-red-600 hover:bg-red-700 text-white text-xs px-4 py-2 rounded-lg font-medium transition text-center items-center justify-center gap-1">
                                             <i class="fa-solid fa-file-pdf"></i> PDF
                                         </a>
@@ -320,7 +334,7 @@
         </div>
         @endforelse
 
-        <!-- SECCIÓN DE MODALES (Mantiene la misma lógica funcional) -->
+        <!-- SECCIÓN DE MODALES -->
         @if(auth()->user()->rol === 'administrador')
         @foreach($reportes as $reporte)
         <div id="modal-{{ $reporte->recepcion_id }}" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4 transition-opacity">

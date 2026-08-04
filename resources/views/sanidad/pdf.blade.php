@@ -34,12 +34,19 @@
         </div>
     </div>
 
+    @php
+        $caracPdfHist = \App\Models\SectorCaracteristica::where('user_id', $bitacora->operador_id)
+            ->where('sector', $bitacora->sector)
+            ->first();
+        $invPdfHist = $caracPdfHist ? $caracPdfHist->invernadero : 'General';
+    @endphp
+
     <!-- DATOS GENERALES -->
     <div class="info-box">
         <table class="info-table">
             <tr>
-                 <td><strong>Operador:</strong> {{ $bitacora->operador ? $bitacora->operador->name : 'No asignado' }}</td>
-                 <td><strong>Sector / Nave:</strong> {{ $bitacora->sector }}</td>
+                 <td><strong>Dueño / Encargado:</strong> {{ $bitacora->operador ? $bitacora->operador->name : 'No asignado' }}</td>
+                 <td><strong>Invernadero / Sector:</strong> {{ $invPdfHist }} — {{ $bitacora->sector }}</td>
                 <td><strong>Fecha de Registro:</strong> {{ \Carbon\Carbon::parse($bitacora->fecha)->format('d/m/Y') }}</td>
             </tr>
         </table>

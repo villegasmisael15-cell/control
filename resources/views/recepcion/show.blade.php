@@ -47,12 +47,20 @@
 
                 <div class="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                        <span class="text-gray-400 block text-xs font-semibold uppercase">Productor</span>
+                        <span class="text-gray-400 block text-xs font-semibold uppercase">Dueño</span>
                         <span class="text-gray-800 font-bold text-base">{{ $registro->productor->name ?? 'N/A' }}</span>
                     </div>
                     <div>
-                        <span class="text-gray-400 block text-xs font-semibold uppercase">Sector Utilizado</span>
-                        <span class="text-gray-800 font-semibold">{{ $registro->sector_registro ?? 'No especificado' }}</span>
+                        <span class="text-gray-400 block text-xs font-semibold uppercase">Invernadero / Sector</span>
+                        @php
+                            $caracRep = \App\Models\SectorCaracteristica::where('user_id', $registro->productor_id)
+                                ->where('sector', $registro->sector_registro)
+                                ->first();
+                            $invRep = $caracRep ? $caracRep->invernadero : 'General';
+                        @endphp
+                        <span class="inline-block mt-0.5 bg-emerald-50 text-emerald-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-200">
+                            {{ $invRep }} — {{ $registro->sector_registro ?? 'No especificado' }}
+                        </span>
                     </div>
                     <div>
                         <span class="text-gray-400 block text-xs font-semibold uppercase">{{ $tipo === 'exportacion' ? 'Fecha de Envío' : 'Fecha de Recepción' }}</span>
@@ -140,15 +148,12 @@
                             <span class="text-3xl font-extrabold {{ $tipo === 'exportacion' ? 'text-blue-400' : 'text-amber-400' }} tracking-tight">
                                 @if($tipo === 'exportacion')
                                 @php
-                                // 1. Si ya existe un peso neto fijo (congelado), usamos ese directamente
                                 if (!is_null($registro->peso_neto_fijo)) {
                                 $pesoNetoExportacion = $registro->peso_neto_fijo;
                                 } else {
-                                // 2. Si es NULL (primera vez), hacemos el cálculo restando el rechazo actual
                                 $pesoRechazoAcumulado = $registro->recepcionesNacionales ? $registro->recepcionesNacionales->sum('peso_rechazo_procesado') : 0;
                                 $pesoNetoExportacion = $registro->peso_exportacion - $pesoRechazoAcumulado;
 
-                                // Si ya se restó un rechazo real por primera vez (mayor a 0), guardamos el candado en la BD
                                 if ($pesoRechazoAcumulado > 0) {
                                 $registro->update([
                                 'peso_neto_fijo' => $pesoNetoExportacion >= 0 ? $pesoNetoExportacion : 0
@@ -169,9 +174,7 @@
                             <span class="text-2xl font-bold text-white tracking-tight">
                                 @if($tipo === 'exportacion')
                                 @php
-                                // Obtenemos las cajas que se desviaron a rechazo nacional
                                 $cajasRechazoAcumuladas = $registro->recepcionesNacionales ? $registro->recepcionesNacionales->sum('cajas_rechazo_procesado') : 0;
-                                // RESTAMOS las cajas de rechazo para obtener el saldo neto real
                                 $cajasNetasExportacion = $registro->cajas_exportacion - $cajasRechazoAcumuladas;
                                 @endphp
                                 {{ number_format($cajasNetasExportacion >= 0 ? $cajasNetasExportacion : 0) }}
@@ -184,21 +187,16 @@
                         @can('es-administrador')
                         @if($tipo === 'exportacion')
                         @php
-                        // CORRECCIÓN CLAVE: Mapeamos la fecha formateada idéntica a la agrupación de las tablas
                         $fechaFiltroDiario = \Carbon\Carbon::parse($registro->fecha_exportacion)->format('Y-m-d');
-
-                        // 1. Buscamos la fila de Agropark que corresponda de manera estricta al DÍA de este embarque
                         $controlCondensacion = \App\Models\ControlCondensacion::where('fecha', $fechaFiltroDiario)->first();
                         $cantidadManualGuardada = $controlCondensacion ? (float)$controlCondensacion->agropark : 0.0;
 
-                        // 2. Sumamos todos los pesos netos fijos de los registros de este mismo DÍA
                         $sumaPesosDiarios = \App\Models\RecepcionExportacion::whereDate('fecha_exportacion', $fechaFiltroDiario)
                         ->get()
                         ->sum(function($item) {
                         return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
                         });
 
-                        // 3. Aplicamos la fórmula distributiva proporcional por día
                         $resultadoCondensacionIndividual = 0;
                         if ($pesoNetoExportacion > 0 && $cantidadManualGuardada > 0 && $sumaPesosDiarios > 0) {
                         $divisionDiaria = $cantidadManualGuardada / $sumaPesosDiarios;
@@ -239,7 +237,7 @@
             </div>
 
             @if($tipo === 'nacional' && (auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial'))
-            <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:col-span-3">
                 <div class="border-b border-gray-100 pb-3 mb-4">
                     <h3 class="text-base font-bold text-gray-800 flex items-center gap-1.5">
                         <i class="fa-solid fa-weight-scale text-emerald-600"></i>
@@ -290,6 +288,8 @@
                 </form>
             </div>
             @endif
+
+        </div>
 
     </main>
 
