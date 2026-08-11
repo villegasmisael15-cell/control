@@ -29,7 +29,7 @@
             </a>
         </div>
     </nav>
-    
+
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow space-y-6">
 
         <!-- ENCABEZADO Y FILTROS EN CASCADA -->
@@ -48,11 +48,11 @@
                 <!-- 1. Seleccionar Dueño -->
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
                     <label for="dueno_id" class="text-xs font-bold text-gray-700 uppercase">Dueño / Operador:</label>
-                    <select name="dueno_id" id="dueno_id" onchange="document.getElementById('invernadero').value=''; document.getElementById('buscar_sector').value=''; this.form.submit()" 
+                    <select name="dueno_id" id="dueno_id" onchange="document.getElementById('invernadero').value=''; document.getElementById('buscar_sector').value=''; this.form.submit()"
                         class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         <option value="">Seleccione un dueño</option>
                         @foreach($dueños ?? [] as $d)
-                            <option value="{{ $d->id }}" {{ request('dueno_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                        <option value="{{ $d->id }}" {{ request('dueno_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -60,12 +60,12 @@
                 <!-- 2. Seleccionar Invernadero -->
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
                     <label for="invernadero" class="text-xs font-bold text-gray-700 uppercase">Invernadero:</label>
-                    <select name="invernadero" id="invernadero" onchange="document.getElementById('buscar_sector').value=''; this.form.submit()" 
+                    <select name="invernadero" id="invernadero" onchange="document.getElementById('buscar_sector').value=''; this.form.submit()"
                         class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         {{ !request('dueno_id') ? 'disabled' : '' }}>
                         <option value="">Seleccione invernadero</option>
                         @foreach($invernaderos ?? [] as $inv)
-                            <option value="{{ $inv }}" {{ request('invernadero') === $inv ? 'selected' : '' }}>{{ $inv }}</option>
+                        <option value="{{ $inv }}" {{ request('invernadero') === $inv ? 'selected' : '' }}>{{ $inv }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -73,12 +73,12 @@
                 <!-- 3. Seleccionar Sector -->
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
                     <label for="buscar_sector" class="text-xs font-bold text-gray-700 uppercase">Sector:</label>
-                    <select name="buscar_sector" id="buscar_sector" onchange="this.form.submit()" 
+                    <select name="buscar_sector" id="buscar_sector" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                         {{ !request('invernadero') ? 'disabled' : '' }}>
                         <option value="">Seleccione sector</option>
                         @foreach($sectores ?? [] as $sec)
-                            <option value="{{ $sec }}" {{ request('buscar_sector') === $sec ? 'selected' : '' }}>{{ $sec }}</option>
+                        <option value="{{ $sec }}" {{ request('buscar_sector') === $sec ? 'selected' : '' }}>{{ $sec }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -178,11 +178,21 @@
                 return;
             }
 
-            const etiquetasFechas = {!! json_encode(array_values($fechas)) !!};
-            const datosDPV = {!! json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!};
-            const datosDrenaje = {!! json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!};
-            const datosCE = {!! json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!};
-            const datosLux = {!! json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!};
+            const etiquetasFechas = {
+                !!json_encode(array_values($fechas)) !!
+            };
+            const datosDPV = {
+                !!json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!
+            };
+            const datosDrenaje = {
+                !!json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!
+            };
+            const datosCE = {
+                !!json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!
+            };
+            const datosLux = {
+                !!json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!
+            };
 
             // 1. Gráfica: DPV
             new Chart(document.getElementById('chartDPV'), {
@@ -199,7 +209,10 @@
                         fill: true
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
 
             // 2. Gráfica: Drenaje
@@ -213,7 +226,10 @@
                         backgroundColor: '#2563eb'
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
 
             // 3. Gráfica: Lux
@@ -231,7 +247,10 @@
                         fill: true
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
 
             // 4. Gráfica: Balance CE
@@ -249,7 +268,10 @@
                         fill: true
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
         };
     </script>
