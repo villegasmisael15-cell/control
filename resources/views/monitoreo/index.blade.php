@@ -169,12 +169,16 @@
                             <td class="py-3.5 px-4 bg-stone-50/40 font-semibold text-stone-600">{{ $row->porcentaje_caida_nocturna }}%</td>
 
                             <td class="py-3.5 px-4 bg-orange-50/10">
-                                @if(($row->radiacion_semaforo ?? 'VERDE') === 'VERDE')
+                                @if(!is_null($row->radiacion_semaforo))
+                                @if($row->radiacion_semaforo === 'VERDE')
                                 <span class="px-2 py-0.5 inline-flex text-xs font-bold rounded bg-emerald-100 text-emerald-800"><i class="fa-solid fa-circle text-[8px] mr-1 mt-1"></i> Óptimo</span>
-                                @elseif(($row->radiacion_semaforo ?? 'VERDE') === 'AMARILLO')
+                                @elseif($row->radiacion_semaforo === 'AMARILLO')
                                 <span class="px-2 py-0.5 inline-flex text-xs font-bold rounded bg-amber-100 text-amber-800"><i class="fa-solid fa-circle text-[8px] mr-1 mt-1"></i> Alerta</span>
                                 @else
                                 <span class="px-2 py-0.5 inline-flex text-xs font-bold rounded bg-red-100 text-red-800"><i class="fa-solid fa-circle text-[8px] mr-1 mt-1"></i> Crítico</span>
+                                @endif
+                                @else
+                                <span class="text-xs text-gray-400">N/D</span>
                                 @endif
                             </td>
 
