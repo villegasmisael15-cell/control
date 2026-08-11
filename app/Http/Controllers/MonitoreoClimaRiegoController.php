@@ -45,13 +45,14 @@ class MonitoreoClimaRiegoController extends Controller
                     $q->whereRaw('1 = 0');
                 }
             });
-        } elseif ($user->rol === 'operador') {
-            // El operador ve estrictamente sus invernaderos y sectores elegidos
+       } elseif ($user->rol === 'operador') {
+            // El operador ve estrictamente sus registros basados en su usuario y sus sectores elegidos
             $sectoresOperador = OperadorSector::where('user_id', $user->id)
                 ->get()
                 ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
 
-            $query->where(function ($q) use ($sectoresOperador) {
+            $query->where('user_id', $user->id) // <-- ESTO FILTRA PARA QUE SOLO VEA LO QUE ÉL REGISTRÓ
+                  ->where(function ($q) use ($sectoresOperador) {
                 foreach ($sectoresOperador as $par) {
                     $q->orWhere(function ($sub) use ($par) {
                         $sub->where('invernadero', $par['invernadero'])
