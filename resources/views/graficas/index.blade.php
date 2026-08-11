@@ -183,10 +183,11 @@
     <script>
         window.onload = function() {
             if (typeof Chart === 'undefined') {
-                console.error("No se pudo cargar el archivo chart.js desde la carpeta public/js/");
+                console.error("No se pudo cargar el archivo chart.js");
                 return;
             }
 
+            // Estas son las llaves correctas: {!! !!} sin espacios intermedios
             const etiquetasFechas = {!! json_encode(array_values($fechas)) !!};
             const datosDPV = {!! json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!};
             const datosDrenaje = {!! json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!};
