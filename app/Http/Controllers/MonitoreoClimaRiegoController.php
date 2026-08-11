@@ -546,7 +546,7 @@ class MonitoreoClimaRiegoController extends Controller
             }
         }
 
-        // 2. Filtro por mes (Obtiene todos los registros del mes sin recortar a 15) o los últimos 15 por defecto
+        // 2. Filtro por mes o últimos 15 registros
         if ($request->filled('mes')) {
             $mesInput = $request->input('mes'); // Formato esperado: "YYYY-MM"
             $query->whereYear('fecha', '=', substr($mesInput, 0, 4))
@@ -566,7 +566,7 @@ class MonitoreoClimaRiegoController extends Controller
         $difCe   = $historico->pluck('diferencia_ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
         $lux     = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
 
-        // 4. Datos necesarios para alimentar los selectores en cascada y el selector de meses de la vista
+        // 4. Datos necesarios para alimentar los selectores
         $dueños = User::whereIn('rol', ['dueno', 'administrador', 'admin_general'])->orderBy('name')->get();
         
         $invernaderos = [];
@@ -586,7 +586,9 @@ class MonitoreoClimaRiegoController extends Controller
                 ->pluck('sector');
         }
 
-        $mesesDisponibles = MonitoreoClimaRiego::selectRaw('DATE_FORMAT(fecha, "%Y-%m") as anio_mes')
+        // Corrección segura para los meses disponibles
+        $mesesDisponibles = MonitoreoClimaRiego::whereNotNull('fecha')
+            ->selectRaw('DATE_FORMAT(fecha, "%Y-%m") as anio_mes')
             ->distinct()
             ->orderBy('anio_mes', 'desc')
             ->pluck('anio_mes');
