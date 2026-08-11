@@ -171,28 +171,18 @@
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
-    <script>
+  <script>
         window.onload = function() {
             if (typeof Chart === 'undefined') {
                 console.error("No se pudo cargar el archivo chart.js desde la carpeta public/js/");
                 return;
             }
 
-            const etiquetasFechas = {
-                !!json_encode(array_values($fechas)) !!
-            };
-            const datosDPV = {
-                !!json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!
-            };
-            const datosDrenaje = {
-                !!json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!
-            };
-            const datosCE = {
-                !!json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!
-            };
-            const datosLux = {
-                !!json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!
-            };
+            const etiquetasFechas = {!! json_encode(array_values($fechas)) !!};
+            const datosDPV = {!! json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!};
+            const datosDrenaje = {!! json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!};
+            const datosCE = {!! json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!};
+            const datosLux = {!! json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!};
 
             // 1. Gráfica: DPV
             new Chart(document.getElementById('chartDPV'), {
@@ -209,10 +199,7 @@
                         fill: true
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 2. Gráfica: Drenaje
@@ -226,10 +213,7 @@
                         backgroundColor: '#2563eb'
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 3. Gráfica: Lux
@@ -247,10 +231,7 @@
                         fill: true
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 4. Gráfica: Balance CE
@@ -268,10 +249,7 @@
                         fill: true
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         };
     </script>
