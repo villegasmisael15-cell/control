@@ -45,24 +45,23 @@ class MonitoreoClimaRiegoController extends Controller
                     $q->whereRaw('1 = 0');
                 }
             });
-      } elseif (str_contains($user->rol, 'operador')) {
-            // El operador (puro o combinado con usuario_comercial) ve estrictamente sus registros
+     } elseif (str_contains($user->rol, 'operador')) {
+            // El operador ve todos los registros de los sectores que tiene asignados
             $sectoresOperador = OperadorSector::where('user_id', $user->id)
                 ->get()
                 ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
 
-            $query->where('user_id', $user->id)
-                  ->where(function ($queryPrincipal) use ($sectoresOperador) {
-                      foreach ($sectoresOperador as $par) {
-                          $queryPrincipal->orWhere(function ($sub) use ($par) {
-                              $sub->where('invernadero', $par['invernadero'])
-                                  ->where('sector', $par['sector']);
-                          });
-                      }
-                      if ($sectoresOperador->isEmpty()) {
-                          $queryPrincipal->whereRaw('1 = 0');
-                      }
-                  });
+            $query->where(function ($queryPrincipal) use ($sectoresOperador) {
+                foreach ($sectoresOperador as $par) {
+                    $queryPrincipal->orWhere(function ($sub) use ($par) {
+                        $sub->where('invernadero', $par['invernadero'])
+                            ->where('sector', $par['sector']);
+                    });
+                }
+                if ($sectoresOperador->isEmpty()) {
+                    $queryPrincipal->whereRaw('1 = 0');
+                }
+            });
         }
 
         $semana = $request->input('semana');
