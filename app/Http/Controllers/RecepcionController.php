@@ -23,8 +23,11 @@ class RecepcionController extends Controller
 
         $user = auth()->user();
 
-        // 1. Cargamos a los Dueños que tengan sectores registrados
-        $productores = User::where('rol', 'dueno')
+        // 1. Cargamos a los Dueños y al Administrador Participativo que tengan sectores registrados
+        $productores = User::where(function($q) {
+                $q->where('rol', 'dueno')
+                  ->orWhereHas('sectorCaracteristicas');
+            })
             ->has('sectorCaracteristicas')
             ->orderBy('name', 'asc')
             ->get();
@@ -34,13 +37,9 @@ class RecepcionController extends Controller
         $exportacionQuery = RecepcionExportacion::with(['productor']);
         $pendientesQuery = RecepcionExportacion::with(['productor'])->where('pendientes', '>', 0);
 
-        // RESTRICCIÓN POR ROL: Si es un dueño puro o un administrador participativo con sectores suyos
-        $esDueñoOAdminParticipativo = str_contains($user->rol, 'dueno') || SectorCaracteristica::where('user_id', $user->id)->exists();
-
-        // Si es dueño o un admin con sectores asignados como dueño, restringimos sus consultas
-        if ($esDueñoOAdminParticipativo && !str_contains($user->rol, 'administrador') && !str_contains($user->rol, 'admin_general')) {
-            // Si quieres que el admin participativo SÍ vea todo, quita la excepción de arriba. 
-            // Pero si debe restringirse a sus propios sectores igual que un dueño:
+        // RESTRICCIÓN POR ROL: Si es un dueño puro (que no sea admin), filtra estrictamente por sus sectores.
+        // Si es administrador (incluso participativo), NO se le restringe nada y ve todo.
+        if ($user->rol === 'dueno' && !str_contains($user->rol, 'administrador')) {
             $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
                 ->pluck('sector')
                 ->toArray();
@@ -87,7 +86,7 @@ class RecepcionController extends Controller
         }
 
         return view('recepcion.index', [
-            'recepcionesNacionales'     => $recepcionesNacionales,
+            'recepcionesNacionales'      => $recepcionesNacionales,
             'recepcionesExportaciones'   => $recepcionesExportaciones,
             'productores'                => $productores,
             'embarquesExportacion'       => $embarquesExportacion,
@@ -97,7 +96,6 @@ class RecepcionController extends Controller
             'semanaActual'               => $semanaFiltrar
         ]);
     }
-
     /**
      * Almacena o consolida una recepción nacional.
      */
