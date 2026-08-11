@@ -12,29 +12,29 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="bg-emerald-600 text-white shadow-md">
-    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-        <!-- Logotipo compacto -->
-        <div class="flex items-center min-w-0">
-            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
-            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
-        </div>
+        <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+            <!-- Logotipo compacto -->
+            <div class="flex items-center min-w-0">
+                <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+                <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+            </div>
 
-        <!-- Acciones: Nombre del usuario y botón de Salir -->
-        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
-            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[110px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
-                <i class="fa-solid fa-user text-[10px]"></i> 
-                <span class="truncate">{{ auth()->user()->name }}</span>
-            </span>
+            <!-- Acciones: Nombre del usuario y botón de Salir -->
+            <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[110px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                    <i class="fa-solid fa-user text-[10px]"></i>
+                    <span class="truncate">{{ auth()->user()->name }}</span>
+                </span>
 
-            <form method="POST" action="{{ route('logout') }}" class="inline">
-                @csrf
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 sm:px-3 py-1.5 rounded-md transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap">
-                    <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Salir
-                </button>
-            </form>
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 sm:px-3 py-1.5 rounded-md transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap">
+                        <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Salir
+                    </button>
+                </form>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
         <div class="mb-8">
@@ -45,7 +45,8 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- MÓDULO: HIDROPONÍA (Acceso: Administrador, Operador, Dueño y Usuario Comercial) -->
-@if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno') || str_contains(auth()->user()->rol, 'usuario_comercial'))            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
+            @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' ))
+             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
                         <i class="fa-solid fa-cloud-sun-rain"></i>
@@ -80,7 +81,7 @@
             @endif
 
             <!-- MÓDULO: SANIDAD Y NUTRICIÓN (Acceso: Administrador, Operador y Dueño) -->
-            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'operador', 'dueno']))
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'dueno']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-red-600 text-xl mb-4">
@@ -116,7 +117,7 @@
             @endif
 
             <!-- MÓDULO: RECEPCIÓN (Acceso: Administrador, Dueño, Usuario Comercial y Usuario Rechazo) -->
-          @if(count(array_intersect(explode(',', auth()->user()->rol), ['administrador', 'admin_general', 'usuario_comercial', 'usuario_rechazo'])) > 0)
+            @if(count(array_intersect(explode(',', auth()->user()->rol), ['administrador', 'admin_general', 'usuario_comercial', 'usuario_rechazo'])) > 0)
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-xl mb-4">
