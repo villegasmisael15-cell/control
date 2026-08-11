@@ -13,24 +13,24 @@
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
-        <nav class="bg-emerald-600 text-white shadow-md px-6 py-4 flex justify-between items-center w-full">
-            <!-- Izquierda: Título alineado a la izquierda de forma natural -->
-            <div class="text-xl font-bold tracking-wider flex items-center gap-2 text-left">
-                <i class="fa-solid fa-leaf"></i> SISTEMA CONTROL
-            </div>
-            
-            <!-- Derecha: Bloque de usuario y botón alineados juntos a la derecha -->
-            <div class="flex items-center gap-4 text-right">
-                <span class="bg-emerald-700/50 px-3 py-1.5 rounded-lg border border-emerald-500/30 flex items-center gap-1 text-xs font-medium whitespace-nowrap">
-                    <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
-                </span>
-                   <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
-                        <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
-                    </a>
-            </div>
-        </nav>  
+    <nav class="bg-emerald-600 text-white shadow-md px-6 py-4 flex justify-between items-center w-full">
+        <!-- Izquierda: Título alineado a la izquierda de forma natural -->
+        <div class="text-xl font-bold tracking-wider flex items-center gap-2 text-left">
+            <i class="fa-solid fa-leaf"></i> SISTEMA CONTROL
+        </div>
+
+        <!-- Derecha: Bloque de usuario y botón alineados juntos a la derecha -->
+        <div class="flex items-center gap-4 text-right">
+            <span class="bg-emerald-700/50 px-3 py-1.5 rounded-lg border border-emerald-500/30 flex items-center gap-1 text-xs font-medium whitespace-nowrap">
+                <i class="fa-solid fa-user"></i> {{ auth()->user()->name }}
+            </span>
+            <a href="{{ route('dashboard') }}" class="text-xs bg-emerald-700 hover:bg-emerald-800 px-3 py-1.5 rounded transition flex items-center gap-1">
+                <i class="fa-solid fa-circle-chevron-left"></i> Volver al Panel
+            </a>
+        </div>
+    </nav>
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow space-y-6">
-        
+
         <!-- ENCABEZADO Y FILTROS INTEGRADOS Y ACOMODADOS CORRECTAMENTE -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
@@ -42,33 +42,29 @@
 
             <!-- Formulario de filtros limpio con Tailwind -->
             <form method="GET" action="{{ route('graficas.index') }}" class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-                
+
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
                     <label for="mes" class="text-xs font-bold text-gray-700 uppercase">Filtrar por Mes:</label>
-                    <input type="month" name="mes" id="mes" value="{{ request('mes') }}" onchange="this.form.submit()" 
+                    <input type="month" name="mes" id="mes" value="{{ request('mes') }}" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
 
                 @can('es-administrador')
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
                     <label for="buscar_sector" class="text-xs font-bold text-gray-700 uppercase">Seleccionar Sector:</label>
-                    <select name="buscar_sector" id="buscar_sector" onchange="this.form.submit()" 
+                    <select name="buscar_sector" id="buscar_sector" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                         <option value="">Todos los sectores</option>
                         @php
-                            $sectoresFiltro = \App\Models\User::whereNotNull('sectores')->pluck('sectores')->toArray();
-                            $sectoresUnicos = [];
-                            foreach($sectoresFiltro as $cadena) {
-                                foreach(explode(',', $cadena) as $sec) {
-                                    $secLimpio = trim($sec);
-                                    if(!empty($secLimpio)) $sectoresUnicos[] = $secLimpio;
-                                }
-                            }
-                            $sectoresUnicos = array_unique($sectoresUnicos);
-                            sort($sectoresUnicos);
+                        $sectoresUnicos = \App\Models\SectorCaracteristica::whereNotNull('sector')
+                        ->where('sector', '!=', '')
+                        ->pluck('sector')
+                        ->unique()
+                        ->sort()
+                        ->toArray();
                         @endphp
                         @foreach($sectoresUnicos as $sectorOpt)
-                            <option value="{{ $sectorOpt }}" {{ request('buscar_sector') === $sectorOpt ? 'selected' : '' }}>{{ $sectorOpt }}</option>
+                        <option value="{{ $sectorOpt }}" {{ request('buscar_sector') === $sectorOpt ? 'selected' : '' }}>{{ $sectorOpt }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -155,86 +151,108 @@
     </footer>
 
     <script>
-    window.onload = function() {
-        if (typeof Chart === 'undefined') {
-            console.error("No se pudo cargar el archivo chart.js desde la carpeta public/js/");
-            return;
-        }
+        window.onload = function() {
+            if (typeof Chart === 'undefined') {
+                console.error("No se pudo cargar el archivo chart.js desde la carpeta public/js/");
+                return;
+            }
 
-        const etiquetasFechas = {!! json_encode(array_values($fechas)) !!};
-        const datosDPV       = {!! json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!};
-        const datosDrenaje   = {!! json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!};
-        const datosCE        = {!! json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!};
-        const datosLux       = {!! json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!};
+            const etiquetasFechas = {
+                !!json_encode(array_values($fechas)) !!
+            };
+            const datosDPV = {
+                !!json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!
+            };
+            const datosDrenaje = {
+                !!json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!
+            };
+            const datosCE = {
+                !!json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!
+            };
+            const datosLux = {
+                !!json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!
+            };
 
-        // 1. Gráfica: DPV
-        new Chart(document.getElementById('chartDPV'), {
-            type: 'line',
-            data: {
-                labels: etiquetasFechas,
-                datasets: [{
-                    label: 'DPV',
-                    data: datosDPV,
-                    borderColor: '#ea580c',
-                    backgroundColor: 'rgba(234, 88, 12, 0.1)',
-                    borderWidth: 2,
-                    tension: 0.2,
-                    fill: true
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+            // 1. Gráfica: DPV
+            new Chart(document.getElementById('chartDPV'), {
+                type: 'line',
+                data: {
+                    labels: etiquetasFechas,
+                    datasets: [{
+                        label: 'DPV',
+                        data: datosDPV,
+                        borderColor: '#ea580c',
+                        backgroundColor: 'rgba(234, 88, 12, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
 
-        // 2. Gráfica: Drenaje
-        new Chart(document.getElementById('chartDrenaje'), {
-            type: 'bar',
-            data: {
-                labels: etiquetasFechas,
-                datasets: [{
-                    label: '% Drenaje',
-                    data: datosDrenaje,
-                    backgroundColor: '#2563eb'
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+            // 2. Gráfica: Drenaje
+            new Chart(document.getElementById('chartDrenaje'), {
+                type: 'bar',
+                data: {
+                    labels: etiquetasFechas,
+                    datasets: [{
+                        label: '% Drenaje',
+                        data: datosDrenaje,
+                        backgroundColor: '#2563eb'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
 
-        // 3. Gráfica: Lux
-        new Chart(document.getElementById('chartLux'), {
-            type: 'line',
-            data: {
-                labels: etiquetasFechas,
-                datasets: [{
-                    label: 'Lectura Lux',
-                    data: datosLux,
-                    borderColor: '#d97706',
-                    backgroundColor: 'rgba(217, 119, 6, 0.05)',
-                    borderWidth: 2.5,
-                    tension: 0.3,
-                    fill: true
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
+            // 3. Gráfica: Lux
+            new Chart(document.getElementById('chartLux'), {
+                type: 'line',
+                data: {
+                    labels: etiquetasFechas,
+                    datasets: [{
+                        label: 'Lectura Lux',
+                        data: datosLux,
+                        borderColor: '#d97706',
+                        backgroundColor: 'rgba(217, 119, 6, 0.05)',
+                        borderWidth: 2.5,
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
 
-        // 4. Gráfica: Balance CE
-        new Chart(document.getElementById('chartCE'), {
-            type: 'line',
-            data: {
-                labels: etiquetasFechas,
-                datasets: [{
-                    label: 'Diferencial CE',
-                    data: datosCE,
-                    borderColor: '#9333ea',
-                    backgroundColor: 'rgba(147, 51, 234, 0.05)',
-                    borderWidth: 2,
-                    tension: 0.2,
-                    fill: true
-                }]
-            },
-            options: { responsive: true, maintainAspectRatio: false }
-        });
-    };
+            // 4. Gráfica: Balance CE
+            new Chart(document.getElementById('chartCE'), {
+                type: 'line',
+                data: {
+                    labels: etiquetasFechas,
+                    datasets: [{
+                        label: 'Diferencial CE',
+                        data: datosCE,
+                        borderColor: '#9333ea',
+                        backgroundColor: 'rgba(147, 51, 234, 0.05)',
+                        borderWidth: 2,
+                        tension: 0.2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        };
     </script>
 </body>
 
