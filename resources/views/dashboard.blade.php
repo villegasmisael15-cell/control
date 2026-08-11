@@ -63,7 +63,7 @@
             @endif
 
             <!-- MÓDULO: SUELO (Acceso: Administrador, Operador y Dueño) -->
-            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'operador', 'dueno']))
+            @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' ))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-700 text-xl mb-4">
