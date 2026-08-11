@@ -520,7 +520,6 @@ class MonitoreoClimaRiegoController extends Controller
         } else {
             // Filtros en cascada para Administradores / Admin General
             if ($request->filled('dueno_id')) {
-                // Obtenemos los sectores que le pertenecen al dueño seleccionado
                 $sectoresDelDueno = SectorCaracteristica::where('user_id', $request->dueno_id)
                     ->get()
                     ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
@@ -547,18 +546,18 @@ class MonitoreoClimaRiegoController extends Controller
             }
         }
 
-        // 2. Filtro por mes o últimos 15 registros
+        // 2. Filtro por mes (Obtiene todos los registros del mes sin recortar a 15) o los últimos 15 por defecto
         if ($request->filled('mes')) {
             $mesInput = $request->input('mes'); // Formato esperado: "YYYY-MM"
             $query->whereYear('fecha', '=', substr($mesInput, 0, 4))
                   ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
             
-            $historicoReciente = $query->orderBy('fecha', 'desc')->get();
+            $historicoReciente = $query->orderBy('fecha', 'asc')->get();
         } else {
-            $historicoReciente = $query->orderBy('fecha', 'desc')->take(15)->get();
+            $historicoReciente = $query->orderBy('fecha', 'desc')->take(15)->get()->reverse();
         }
 
-        $historico = $historicoReciente->reverse();
+        $historico = $historicoReciente;
 
         // 3. Extracción de variables para las gráficas
         $fechas  = $historico->pluck('fecha')->map(fn($f) => Carbon::parse($f)->format('d/m'))->toArray();
@@ -567,7 +566,7 @@ class MonitoreoClimaRiegoController extends Controller
         $difCe   = $historico->pluck('diferencia_ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
         $lux     = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
 
-        // 4. Datos necesarios para alimentar los selectores en cascada de la vista
+        // 4. Datos necesarios para alimentar los selectores en cascada y el selector de meses de la vista
         $dueños = User::whereIn('rol', ['dueno', 'administrador', 'admin_general'])->orderBy('name')->get();
         
         $invernaderos = [];
@@ -587,7 +586,12 @@ class MonitoreoClimaRiegoController extends Controller
                 ->pluck('sector');
         }
 
-        return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'dueños', 'invernaderos', 'sectores'));
+        $mesesDisponibles = MonitoreoClimaRiego::selectRaw('DATE_FORMAT(fecha, "%Y-%m") as anio_mes')
+            ->distinct()
+            ->orderBy('anio_mes', 'desc')
+            ->pluck('anio_mes');
+
+        return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'));
     }
 
     private function enviarAlertaAdministradores($invernadero, $sector, $valor, $tipo = 'drenaje')

@@ -87,8 +87,17 @@
                 <!-- 4. Filtrar por Mes -->
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
                     <label for="mes" class="text-xs font-bold text-gray-700 uppercase">Filtrar por Mes:</label>
-                    <input type="month" name="mes" id="mes" value="{{ request('mes') }}" onchange="this.form.submit()"
+                    <select name="mes" id="mes" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">Todos los meses</option>
+                        @foreach($mesesDisponibles ?? [] as $m)
+                        @php
+                        $carbonFecha = \Carbon\Carbon::createFromFormat('Y-m', $m);
+                        $nombreMes = ucfirst($carbonFecha->translatedFormat('F Y')); // Ej: Agosto 2026
+                        @endphp
+                        <option value="{{ $m }}" {{ request('mes') === $m ? 'selected' : '' }}>{{ $nombreMes }}</option>
+                        @endforeach
+                    </select>
                 </div>
 
                 @if(request('dueno_id') || request('mes') || request('buscar_sector') || request('invernadero'))
@@ -171,18 +180,28 @@
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
-  <script>
+    <script>
         window.onload = function() {
             if (typeof Chart === 'undefined') {
                 console.error("No se pudo cargar el archivo chart.js desde la carpeta public/js/");
                 return;
             }
 
-            const etiquetasFechas = {!! json_encode(array_values($fechas)) !!};
-            const datosDPV = {!! json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!};
-            const datosDrenaje = {!! json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!};
-            const datosCE = {!! json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!};
-            const datosLux = {!! json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!};
+            const etiquetasFechas = {
+                !!json_encode(array_values($fechas)) !!
+            };
+            const datosDPV = {
+                !!json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!
+            };
+            const datosDrenaje = {
+                !!json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!
+            };
+            const datosCE = {
+                !!json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!
+            };
+            const datosLux = {
+                !!json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!
+            };
 
             // 1. Gráfica: DPV
             new Chart(document.getElementById('chartDPV'), {
@@ -199,7 +218,10 @@
                         fill: true
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
 
             // 2. Gráfica: Drenaje
@@ -213,7 +235,10 @@
                         backgroundColor: '#2563eb'
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
 
             // 3. Gráfica: Lux
@@ -231,7 +256,10 @@
                         fill: true
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
 
             // 4. Gráfica: Balance CE
@@ -249,7 +277,10 @@
                         fill: true
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
             });
         };
     </script>
