@@ -548,16 +548,21 @@ class MonitoreoClimaRiegoController extends Controller
         }
 
         // 2. Filtro por mes o últimos 15 registros
-        $mes = $request->input('mes');
+        // 2. Filtro por mes o últimos 15 registros
         if ($request->filled('mes')) {
-            $inicioMes = Carbon::parse($mes)->startOfMonth();
-            $finMes = Carbon::parse($mes)->endOfMonth();
-            $query->whereBetween('fecha', [$inicioMes, $finMes]);
-            $historicoReciente = $query->orderBy('fecha', 'desc')->get();
-        } else {
-            $historicoReciente = $query->orderBy('fecha', 'desc')->take(15)->get();
+            $carbonFecha = Carbon::parse($request->input('mes'));
+            $query->whereYear('fecha', $carbonFecha->year)
+                  ->whereMonth('fecha', $carbonFecha->month);
         }
 
+        // Obtenemos los registros ordenados del más reciente al más antiguo, limitando a 15 si no hay mes filtrado
+        if (!$request->filled('mes')) {
+            $historicoReciente = $query->orderBy('fecha', 'desc')->take(15)->get();
+        } else {
+            $historicoReciente = $query->orderBy('fecha', 'desc')->get();
+        }
+
+        // Invertimos para que la gráfica los pinte cronológicamente de izquierda a derecha (del más antiguo al más nuevo)
         $historico = $historicoReciente->reverse();
 
         // 3. Extracción de variables para las gráficas
