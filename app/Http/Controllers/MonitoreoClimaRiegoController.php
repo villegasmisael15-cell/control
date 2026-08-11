@@ -548,10 +548,11 @@ class MonitoreoClimaRiegoController extends Controller
         }
 
         // 2. Filtro por mes o últimos 15 registros
-        $mes = $request->input('mes');
         if ($request->filled('mes')) {
-            // $mes viene como 'YYYY-MM' (ej. '2026-08')
-            $query->whereRaw('DATE_FORMAT(fecha, "%Y-%m") = ?', [$mes]);
+            $mesInput = $request->input('mes'); // Formato esperado: "YYYY-MM"
+            $query->whereYear('fecha', '=', substr($mesInput, 0, 4))
+                  ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
+            
             $historicoReciente = $query->orderBy('fecha', 'desc')->get();
         } else {
             $historicoReciente = $query->orderBy('fecha', 'desc')->take(15)->get();
