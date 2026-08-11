@@ -15,7 +15,7 @@ class RecepcionController extends Controller
     /**
      * Muestra la pantalla principal con las tablas filtradas por semana y restricciones de dueño.
      */
-    public function index(Request $request)
+   public function index(Request $request)
     {
         $semanaInput = $request->filled('semana') ? $request->semana : date('Y-\WW');
         $partes = explode('-W', $semanaInput);
@@ -34,8 +34,13 @@ class RecepcionController extends Controller
         $exportacionQuery = RecepcionExportacion::with(['productor']);
         $pendientesQuery = RecepcionExportacion::with(['productor'])->where('pendientes', '>', 0);
 
-        // RESTRICCIÓN POR ROL: Si es dueño, filtra estrictamente por sus propios sectores registrados
-        if ($user->rol === 'dueno') {
+        // RESTRICCIÓN POR ROL: Si es un dueño puro o un administrador participativo con sectores suyos
+        $esDueñoOAdminParticipativo = str_contains($user->rol, 'dueno') || SectorCaracteristica::where('user_id', $user->id)->exists();
+
+        // Si es dueño o un admin con sectores asignados como dueño, restringimos sus consultas
+        if ($esDueñoOAdminParticipativo && !str_contains($user->rol, 'administrador') && !str_contains($user->rol, 'admin_general')) {
+            // Si quieres que el admin participativo SÍ vea todo, quita la excepción de arriba. 
+            // Pero si debe restringirse a sus propios sectores igual que un dueño:
             $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
                 ->pluck('sector')
                 ->toArray();
@@ -82,7 +87,7 @@ class RecepcionController extends Controller
         }
 
         return view('recepcion.index', [
-            'recepcionesNacionales'      => $recepcionesNacionales,
+            'recepcionesNacionales'     => $recepcionesNacionales,
             'recepcionesExportaciones'   => $recepcionesExportaciones,
             'productores'                => $productores,
             'embarquesExportacion'       => $embarquesExportacion,
