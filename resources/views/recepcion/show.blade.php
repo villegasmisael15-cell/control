@@ -12,18 +12,18 @@
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
     <nav class="{{ $tipo === 'exportacion' ? 'bg-blue-600' : 'bg-emerald-600' }} text-white shadow-md">
-    <div class="max-w-[95%] mx-auto px-3 sm:px-4 flex items-center justify-between h-16 gap-2">
-        <div class="flex items-center min-w-0">
-            <i class="fa-solid {{ $tipo === 'exportacion' ? 'fa-plane-departure' : 'fa-leaf' }} text-lg sm:text-2xl mr-1.5 sm:mr-2 shrink-0"></i>
-            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+        <div class="max-w-[95%] mx-auto px-3 sm:px-4 flex items-center justify-between h-16 gap-2">
+            <div class="flex items-center min-w-0">
+                <i class="fa-solid {{ $tipo === 'exportacion' ? 'fa-plane-departure' : 'fa-leaf' }} text-lg sm:text-2xl mr-1.5 sm:mr-2 shrink-0"></i>
+                <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+            </div>
+            <a href="{{ route('recepcion.index') }}" class="{{ $tipo === 'exportacion' ? 'bg-blue-700 hover:bg-blue-800' : 'bg-emerald-700 hover:bg-emerald-800' }} text-white font-bold px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap">
+                <i class="fa-solid fa-arrow-left"></i>
+                <span class="hidden xs:inline">Volver a Recepción</span>
+                <span class="inline xs:hidden">Volver</span>
+            </a>
         </div>
-        <a href="{{ route('recepcion.index') }}" class="{{ $tipo === 'exportacion' ? 'bg-blue-700 hover:bg-blue-800' : 'bg-emerald-700 hover:bg-emerald-800' }} text-white font-bold px-2.5 sm:px-4 py-2 rounded-lg text-xs sm:text-sm transition flex items-center gap-1.5 shadow-sm shrink-0 whitespace-nowrap">
-            <i class="fa-solid fa-arrow-left"></i> 
-            <span class="hidden xs:inline">Volver a Recepción</span>
-            <span class="inline xs:hidden">Volver</span>
-        </a>
-    </div>
-</nav>
+    </nav>
 
     <main class="max-w-4xl mx-auto px-4 py-8 w-full flex-grow">
 
@@ -53,10 +53,10 @@
                     <div>
                         <span class="text-gray-400 block text-xs font-semibold uppercase">Invernadero / Sector</span>
                         @php
-                            $caracRep = \App\Models\SectorCaracteristica::where('user_id', $registro->productor_id)
-                                ->where('sector', $registro->sector_registro)
-                                ->first();
-                            $invRep = $caracRep ? $caracRep->invernadero : 'General';
+                        $caracRep = \App\Models\SectorCaracteristica::where('user_id', $registro->productor_id)
+                        ->where('sector', $registro->sector_registro)
+                        ->first();
+                        $invRep = $caracRep ? $caracRep->invernadero : 'General';
                         @endphp
                         <span class="inline-block mt-0.5 bg-emerald-50 text-emerald-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-200">
                             {{ $invRep }} — {{ $registro->sector_registro ?? 'No especificado' }}
@@ -236,8 +236,8 @@
                 </div>
             </div>
 
-            @if($tipo === 'nacional' && (auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial'))
-            <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:col-span-3">
+            @if($tipo === 'nacional' && (str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'usuario_comercial')))
+             <div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-200 p-6 md:col-span-3">
                 <div class="border-b border-gray-100 pb-3 mb-4">
                     <h3 class="text-base font-bold text-gray-800 flex items-center gap-1.5">
                         <i class="fa-solid fa-weight-scale text-emerald-600"></i>

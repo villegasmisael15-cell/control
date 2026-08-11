@@ -28,7 +28,7 @@
                     <span class="truncate">{{ auth()->user()->name }}</span>
                 </span>
 
-                @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'dueno')
+                @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'usuario_comercial') || str_contains(auth()->user()->rol, 'dueno'))
                 <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
                     <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
                     <span class="hidden xs:inline">Volver al Panel</span>
@@ -107,8 +107,7 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'dueno')
-                        <button onclick="abrirModalNacional('recepcion')" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
+                        @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'usuario_comercial') || str_contains(auth()->user()->rol, 'dueno')) <button onclick="abrirModalNacional('recepcion')" class="w-full sm:w-auto justify-center bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
                             <i class="fa-solid fa-plus"></i> Registrar Recepción
                         </button>
                         @endif
@@ -124,7 +123,7 @@
 
             @php
             $nacionalesAgrupados = $recepcionesNacionales->groupBy(function($item) {
-                return \Carbon\Carbon::parse($item->fecha_nacional)->format('Y-m-d');
+            return \Carbon\Carbon::parse($item->fecha_nacional)->format('Y-m-d');
             });
             @endphp
 
@@ -162,10 +161,10 @@
                         <tbody class="divide-y divide-gray-200 bg-white">
                             @foreach($grupoNacional as $nacional)
                             @php
-                                $caracNac = \App\Models\SectorCaracteristica::where('user_id', $nacional->productor_id)
-                                    ->where('sector', $nacional->sector_registro)
-                                    ->first();
-                                $invNac = $caracNac ? $caracNac->invernadero : 'General';
+                            $caracNac = \App\Models\SectorCaracteristica::where('user_id', $nacional->productor_id)
+                            ->where('sector', $nacional->sector_registro)
+                            ->first();
+                            $invNac = $caracNac ? $caracNac->invernadero : 'General';
                             @endphp
                             <tr class="hover:bg-gray-50/70 transition">
                                 <td class="px-4 py-3 font-bold text-gray-900 text-center">{{ $nacional->semana_nacional }}</td>
@@ -245,7 +244,7 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'dueno')
+                        @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'usuario_comercial') || str_contains(auth()->user()->rol, 'dueno'))
                         <button onclick="abrirModalExportacion()" class="w-full sm:w-auto justify-center bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 py-2 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer">
                             <i class="fa-solid fa-plus"></i> Registrar Exportación
                         </button>
@@ -256,7 +255,7 @@
 
             @php
             $exportacionesAgrupadas = $recepcionesExportaciones->groupBy(function($item) {
-                return \Carbon\Carbon::parse($item->fecha_exportacion)->format('Y-m-d');
+            return \Carbon\Carbon::parse($item->fecha_exportacion)->format('Y-m-d');
             });
             @endphp
 
@@ -269,7 +268,7 @@
                     </h3>
 
                     <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-end">
-                        @if(auth()->user()->rol === 'administrador' || auth()->user()->rol === 'usuario_comercial' || auth()->user()->rol === 'dueno')
+                        @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'usuario_comercial') || str_contains(auth()->user()->rol, 'dueno'))
                         <button onclick="abrirModalRestituidasPorFecha('{{ $fechaKey }}')" class="w-full sm:w-auto justify-center bg-purple-600 hover:bg-purple-700 text-white font-bold px-4 py-2.5 rounded-lg text-xs sm:text-sm transition shadow flex items-center gap-1 cursor-pointer whitespace-nowrap">
                             <i class="fa-solid fa-boxes-packing"></i> Restituir Cajas
                         </button>
@@ -305,10 +304,10 @@
                         <tbody class="divide-y divide-gray-200 bg-white">
                             @foreach($grupoExportacion as $exportacion)
                             @php
-                                $caracExp = \App\Models\SectorCaracteristica::where('user_id', $exportacion->productor_id)
-                                    ->where('sector', $exportacion->sector_registro)
-                                    ->first();
-                                $invExp = $caracExp ? $caracExp->invernadero : 'General';
+                            $caracExp = \App\Models\SectorCaracteristica::where('user_id', $exportacion->productor_id)
+                            ->where('sector', $exportacion->sector_registro)
+                            ->first();
+                            $invExp = $caracExp ? $caracExp->invernadero : 'General';
                             @endphp
                             <tr class="hover:bg-gray-50/70 transition">
                                 <td class="px-4 py-3 font-bold text-gray-900 text-center">{{ $exportacion->semana_exportacion }}</td>
@@ -357,7 +356,7 @@
                 $sumaCajasExportadasDiarias = $grupoExportacion->sum('cajas_exportacion');
 
                 $sumaPesosNetosFijosDiarios = (float) $grupoExportacion->sum(function($item) {
-                    return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
+                return !is_null($item->peso_neto_fijo) ? (float)$item->peso_neto_fijo : (float)$item->peso_exportacion;
                 });
 
                 $condensacionDelDia = \App\Models\ControlCondensacion::where('fecha', $fechaKey)->first();
@@ -367,9 +366,9 @@
                 $porcentajeCondensacionDiario = 0;
 
                 if ($sumaPesosNetosFijosDiarios > 0 && $cantidadManualGuardada > 0) {
-                    $resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
-                    $porcentajeExacto = (1 - $resultadoDivision) * 100;
-                    $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
+                $resultadoDivision = $cantidadManualGuardada / $sumaPesosNetosFijosDiarios;
+                $porcentajeExacto = (1 - $resultadoDivision) * 100;
+                $porcentajeCondensacionDiario = ceil($porcentajeExacto * 100) / 100;
                 }
                 @endphp
                 <div class="bg-gray-900 text-white font-bold p-4 shadow border border-gray-700 border-t-0 rounded-b-xl">
@@ -485,35 +484,43 @@
 
                 <hr class="border-gray-200 my-2">
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
-                        <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                            <i class="fa-solid fa-basket-shopping"></i> Comercializar
-                        </h4>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Cajas Comerciales</label>
-                            <input type="number" name="cajas_comercializar" id="cajas_com" placeholder="0" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_rechazo' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 {{ auth()->user()->rol === 'usuario_rechazo' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Peso Comercial (Kg)</label>
-                            <input type="number" name="peso_comercializar" id="peso_com" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_rechazo' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 {{ auth()->user()->rol === 'usuario_rechazo' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
-                        </div>
-                    </div>
+               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    @php
+        $rolActual = trim(auth()->user()->rol);
+    @endphp
 
-                    <div class="space-y-3 bg-red-50/40 p-4 rounded-xl border border-red-100">
-                        <h4 class="text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-1">
-                            <i class="fa-solid fa-ban"></i> Procesado (Rechazo)
-                        </h4>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Cajas de Rechazo</label>
-                            <input type="number" name="cajas_rechazo_procesado" id="cajas_rec" placeholder="0" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_comercial' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 {{ auth()->user()->rol === 'usuario_comercial' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Peso Rechazo (Kg)</label>
-                            <input type="number" name="peso_rechazo_procesado" id="peso_rec" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" {{ auth()->user()->rol === 'usuario_comercial' ? 'readonly' : '' }} class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 {{ auth()->user()->rol === 'usuario_comercial' ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white' }}">
-                        </div>
-                    </div>
-                </div>
+    @if($rolActual !== 'usuario_rechazo')
+    <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
+        <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+            <i class="fa-solid fa-basket-shopping"></i> Comercializar
+        </h4>
+        <div>
+            <label class="block text-xs text-gray-600 mb-1">Cajas Comerciales</label>
+            <input type="number" name="cajas_comercializar" id="cajas_com" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-600 mb-1">Peso Comercial (Kg)</label>
+            <input type="number" name="peso_comercializar" id="peso_com" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
+        </div>
+    </div>
+    @endif
+
+    @if($rolActual !== 'usuario_comercial' && $rolActual !== 'operador' && !str_contains($rolActual, 'operador,usuario_comercial') && !str_contains($rolActual, 'usuario_comercial,operador'))
+    <div class="space-y-3 bg-red-50/40 p-4 rounded-xl border border-red-100">
+        <h4 class="text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-1">
+            <i class="fa-solid fa-ban"></i> Procesado (Rechazo)
+        </h4>
+        <div>
+            <label class="block text-xs text-gray-600 mb-1">Cajas de Rechazo</label>
+            <input type="number" name="cajas_rechazo_procesado" id="cajas_rec" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
+        </div>
+        <div>
+            <label class="block text-xs text-gray-600 mb-1">Peso Rechazo (Kg)</label>
+            <input type="number" name="peso_rechazo_procesado" id="peso_rec" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
+        </div>
+    </div>
+    @endif
+</div>
 
                 <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
                     <button type="button" onclick="cerrarModalNacional()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>

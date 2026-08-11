@@ -11,28 +11,28 @@
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
 
-   <nav class="bg-emerald-600 text-white shadow-md">
-    <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-        <!-- Logotipo compacto -->
-        <div class="flex items-center min-w-0">
-            <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
-            <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
-        </div>
+    <nav class="bg-emerald-600 text-white shadow-md">
+        <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+            <!-- Logotipo compacto -->
+            <div class="flex items-center min-w-0">
+                <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+                <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+            </div>
 
-        <!-- Acciones adaptadas con truncamiento de texto -->
-        <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
-            <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
-                <i class="fa-solid fa-user text-[10px]"></i> 
-                <span class="truncate">{{ auth()->user()->name }}</span>
-            </span>
-            <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
-                <i class="fa-solid fa-circle-chevron-left text-[10px]"></i> 
-                <span class="hidden xs:inline">Volver al Panel</span>
-                <span class="inline xs:hidden">Panel</span>
-            </a>
+            <!-- Acciones adaptadas con truncamiento de texto -->
+            <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                    <i class="fa-solid fa-user text-[10px]"></i>
+                    <span class="truncate">{{ auth()->user()->name }}</span>
+                </span>
+                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                    <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
+                    <span class="hidden xs:inline">Volver al Panel</span>
+                    <span class="inline xs:hidden">Panel</span>
+                </a>
+            </div>
         </div>
-    </div>
-</nav>
+    </nav>
 
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
 
@@ -71,37 +71,40 @@
                             <td class="py-4 px-6 font-medium text-gray-900">{{ $user->name }}</td>
                             <td class="py-4 px-6 text-gray-600">{{ $user->email }}</td>
                             <td class="py-4 px-6 text-gray-500">{{ $user->created_at->format('d/m/Y H:i') }}</td>
-                            <td class="py-4 px-6 text-center">
-                                {{-- Colores dinámicos incluyendo el rol Dueño --}}
-                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                    @if($user->rol === 'administrador') bg-purple-100 text-purple-800
-                                    @elseif($user->rol === 'admin_general') bg-indigo-100 text-indigo-800
-                                    @elseif($user->rol === 'dueno') bg-emerald-100 text-emerald-800
-                                    @elseif($user->rol === 'operador') bg-blue-100 text-blue-800
-                                    @elseif($user->rol === 'usuario_comercial') bg-amber-100 text-amber-800
-                                    @elseif($user->rol === 'usuario_rechazo') bg-rose-100 text-rose-800
-                                    @else bg-gray-100 text-gray-800 @endif">
-                                    {{ strtoupper(str_replace('_', ' ', $user->rol)) }}
-                                </span>
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                @if(auth()->id() !== $user->id)
-                                <form action="{{ route('usuarios.cambiarRol', $user->id) }}" method="POST" class="inline-flex gap-2">
-                                    @csrf
-                                    @method('PATCH')
-                                    <select name="rol" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-1.5 cursor-pointer">
-                                        <option value="operador" {{ $user->rol === 'operador' ? 'selected' : '' }}>Operador</option>
-                                        <option value="dueno" {{ $user->rol === 'dueno' ? 'selected' : '' }}>Dueño</option>
-                                        <option value="administrador" {{ $user->rol === 'administrador' ? 'selected' : '' }}>Administrador (Participativo)</option>
-                                        <option value="admin_general" {{ $user->rol === 'admin_general' ? 'selected' : '' }}>Admin General (Supervisor)</option>
-                                        <option value="usuario_comercial" {{ $user->rol === 'usuario_comercial' ? 'selected' : '' }}>Usuario Comercial</option>
-                                        <option value="usuario_rechazo" {{ $user->rol === 'usuario_rechazo' ? 'selected' : '' }}>Usuario Rechazo</option>
-                                    </select>
-                                </form>
-                                @else
-                                <span class="text-xs text-gray-400 italic">Usuario Actual (Tú)</span>
-                                @endif
-                            </td>
+                           <td class="py-4 px-6 text-center">
+    {{-- Colores dinámicos seguros con str_contains --}}
+    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+        @if(str_contains($user->rol, 'administrador')) bg-purple-100 text-purple-800
+        @elseif(str_contains($user->rol, 'admin_general')) bg-indigo-100 text-indigo-800
+        @elseif(str_contains($user->rol, 'dueno')) bg-emerald-100 text-emerald-800
+        @elseif(str_contains($user->rol, 'operador') && str_contains($user->rol, 'usuario_comercial')) bg-teal-100 text-teal-800
+        @elseif(str_contains($user->rol, 'operador')) bg-blue-100 text-blue-800
+        @elseif(str_contains($user->rol, 'usuario_comercial')) bg-amber-100 text-amber-800
+        @elseif(str_contains($user->rol, 'usuario_rechazo')) bg-rose-100 text-rose-800
+        @else bg-gray-100 text-gray-800 @endif">
+        {{ strtoupper(str_replace('_', ' ', $user->rol)) }}
+    </span>
+</td>
+<td class="py-4 px-6 text-center">
+    @if(auth()->id() !== $user->id)
+    <form action="{{ route('usuarios.cambiarRol', $user->id) }}" method="POST" class="inline-flex">
+        @csrf
+        @method('PATCH')
+
+        <select name="rol" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg p-1.5 cursor-pointer">
+            <option value="operador" {{ trim($user->rol) === 'operador' ? 'selected' : '' }}>Operador</option>
+            <option value="operador,usuario_comercial" {{ trim($user->rol) === 'operador,usuario_comercial' ? 'selected' : '' }}>Operador, Usuario Comercial</option>
+            <option value="usuario_comercial" {{ trim($user->rol) === 'usuario_comercial' ? 'selected' : '' }}>Usuario Comercial</option>
+            <option value="dueno" {{ trim($user->rol) === 'dueno' ? 'selected' : '' }}>Dueño</option>
+            <option value="administrador" {{ trim($user->rol) === 'administrador' ? 'selected' : '' }}>Admin Participativo</option>
+            <option value="admin_general" {{ trim($user->rol) === 'admin_general' ? 'selected' : '' }}>Admin General</option>
+            <option value="usuario_rechazo" {{ trim($user->rol) === 'usuario_rechazo' ? 'selected' : '' }}>Rechazo</option>
+        </select>
+    </form>
+    @else
+    <span class="text-xs text-gray-400 italic">Usuario Actual (Tú)</span>
+    @endif
+</td>
                         </tr>
                         @endforeach
                     </tbody>

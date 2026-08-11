@@ -122,27 +122,21 @@ class UsuarioController extends Controller
     }
 
     // Cambiar el rol de un usuario
-    public function cambiarRol(Request $request, $id)
-    {
-        // 1. Validar que el rol recibido sea uno de los oficiales del sistema
-        $request->validate([
-            'rol' => 'required|string|in:dueno,administrador,operador,admin_general,usuario_comercial,usuario_rechazo',
-        ]);
+ public function cambiarRol(Request $request, $id)
+{
+    $request->validate([
+        'rol' => 'required|string',
+    ]);
 
-        $usuario = User::findOrFail($id);
+    $usuario = User::findOrFail($id);
 
-        // Evitar que el administrador se cambie el rol a sí mismo por accidente
-        if ($usuario->id === auth()->id()) {
-            return redirect()->back()->with('error', 'No puedes cambiar tu propio rol.');
-        }
-
-        // Datos a actualizar
-        $datosActualizar = [
-            'rol' => $request->rol
-        ];
-
-        $usuario->update($datosActualizar);
-
-        return redirect()->route('usuarios.index')->with('success', 'El rol del usuario se actualizó con éxito.');
+    if ($usuario->id === auth()->id()) {
+        return redirect()->back()->with('error', 'No puedes cambiar tu propio rol.');
     }
+
+    $usuario->rol = trim($request->rol);
+    $usuario->save();
+
+    return redirect()->route('usuarios.index')->with('success', 'El rol del usuario se actualizó con éxito.');
+}
 }

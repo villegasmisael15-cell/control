@@ -45,8 +45,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- MÓDULO: HIDROPONÍA (Acceso: Administrador, Operador, Dueño y Usuario Comercial) -->
-            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'operador', 'dueno', 'usuario_comercial']))
-            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
+@if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno') || str_contains(auth()->user()->rol, 'usuario_comercial'))            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
                         <i class="fa-solid fa-cloud-sun-rain"></i>
@@ -117,7 +116,7 @@
             @endif
 
             <!-- MÓDULO: RECEPCIÓN (Acceso: Administrador, Dueño, Usuario Comercial y Usuario Rechazo) -->
-            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general','usuario_comercial', 'usuario_rechazo']))
+          @if(count(array_intersect(explode(',', auth()->user()->rol), ['administrador', 'admin_general', 'usuario_comercial', 'usuario_rechazo'])) > 0)
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-xl mb-4">
