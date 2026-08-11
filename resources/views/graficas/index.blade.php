@@ -29,9 +29,10 @@
             </a>
         </div>
     </nav>
+    
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow space-y-6">
 
-        <!-- ENCABEZADO Y FILTROS INTEGRADOS Y ACOMODADOS CORRECTAMENTE -->
+        <!-- ENCABEZADO Y FILTROS EN CASCADA -->
         <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
@@ -40,37 +41,57 @@
                 <p class="text-gray-500 text-xs sm:text-sm mt-1">Comportamiento histórico de las variables críticas computadas en el invernadero.</p>
             </div>
 
-            <!-- Formulario de filtros limpio con Tailwind -->
+            <!-- Formulario de filtros en cascada -->
             <form method="GET" action="{{ route('graficas.index') }}" class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
 
+                @can('es-administrador')
+                <!-- 1. Seleccionar Dueño -->
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                    <label for="dueno_id" class="text-xs font-bold text-gray-700 uppercase">Dueño / Operador:</label>
+                    <select name="dueno_id" id="dueno_id" onchange="document.getElementById('invernadero').value=''; document.getElementById('buscar_sector').value=''; this.form.submit()" 
+                        class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">Seleccione un dueño</option>
+                        @foreach($dueños ?? [] as $d)
+                            <option value="{{ $d->id }}" {{ request('dueno_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 2. Seleccionar Invernadero -->
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                    <label for="invernadero" class="text-xs font-bold text-gray-700 uppercase">Invernadero:</label>
+                    <select name="invernadero" id="invernadero" onchange="document.getElementById('buscar_sector').value=''; this.form.submit()" 
+                        class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        {{ !request('dueno_id') ? 'disabled' : '' }}>
+                        <option value="">Seleccione invernadero</option>
+                        @foreach($invernaderos ?? [] as $inv)
+                            <option value="{{ $inv }}" {{ request('invernadero') === $inv ? 'selected' : '' }}>{{ $inv }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- 3. Seleccionar Sector -->
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                    <label for="buscar_sector" class="text-xs font-bold text-gray-700 uppercase">Sector:</label>
+                    <select name="buscar_sector" id="buscar_sector" onchange="this.form.submit()" 
+                        class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        {{ !request('invernadero') ? 'disabled' : '' }}>
+                        <option value="">Seleccione sector</option>
+                        @foreach($sectores ?? [] as $sec)
+                            <option value="{{ $sec }}" {{ request('buscar_sector') === $sec ? 'selected' : '' }}>{{ $sec }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endcan
+
+                <!-- 4. Filtrar por Mes -->
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
                     <label for="mes" class="text-xs font-bold text-gray-700 uppercase">Filtrar por Mes:</label>
                     <input type="month" name="mes" id="mes" value="{{ request('mes') }}" onchange="this.form.submit()"
                         class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
 
-                @can('es-administrador')
-                <div class="flex flex-col gap-1 w-full sm:w-auto">
-                    <label for="buscar_sector" class="text-xs font-bold text-gray-700 uppercase">Seleccionar Sector:</label>
-                    <select name="buscar_sector" id="buscar_sector" onchange="this.form.submit()"
-                        class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option value="">Todos los sectores</option>
-                        @php
-                        $sectoresUnicos = \App\Models\SectorCaracteristica::whereNotNull('sector')
-                        ->where('sector', '!=', '')
-                        ->pluck('sector')
-                        ->unique()
-                        ->sort()
-                        ->toArray();
-                        @endphp
-                        @foreach($sectoresUnicos as $sectorOpt)
-                        <option value="{{ $sectorOpt }}" {{ request('buscar_sector') === $sectorOpt ? 'selected' : '' }}>{{ $sectorOpt }}</option>
-                        @endforeach
-                    </select>
-                </div>
-                @endcan
-
-                @if(request('mes') || request('buscar_sector'))
+                @if(request('dueno_id') || request('mes') || request('buscar_sector') || request('invernadero'))
                 <div class="flex items-end h-full pt-4 sm:pt-0 w-full sm:w-auto">
                     <a href="{{ route('graficas.index') }}" class="text-xs font-bold text-red-600 hover:text-red-700 flex items-center gap-1 bg-red-50 border border-red-200 px-3 py-2 rounded-lg transition shadow-sm">
                         <i class="fa-solid fa-filter-circle-xmark"></i> Restablecer filtros
@@ -157,21 +178,11 @@
                 return;
             }
 
-            const etiquetasFechas = {
-                !!json_encode(array_values($fechas)) !!
-            };
-            const datosDPV = {
-                !!json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!
-            };
-            const datosDrenaje = {
-                !!json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!
-            };
-            const datosCE = {
-                !!json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!
-            };
-            const datosLux = {
-                !!json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!
-            };
+            const etiquetasFechas = {!! json_encode(array_values($fechas)) !!};
+            const datosDPV = {!! json_encode(array_values($dpv), JSON_NUMERIC_CHECK) !!};
+            const datosDrenaje = {!! json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!};
+            const datosCE = {!! json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!};
+            const datosLux = {!! json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!};
 
             // 1. Gráfica: DPV
             new Chart(document.getElementById('chartDPV'), {
@@ -188,10 +199,7 @@
                         fill: true
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 2. Gráfica: Drenaje
@@ -205,10 +213,7 @@
                         backgroundColor: '#2563eb'
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 3. Gráfica: Lux
@@ -226,10 +231,7 @@
                         fill: true
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
 
             // 4. Gráfica: Balance CE
@@ -247,10 +249,7 @@
                         fill: true
                     }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false
-                }
+                options: { responsive: true, maintainAspectRatio: false }
             });
         };
     </script>
