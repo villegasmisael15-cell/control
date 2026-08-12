@@ -19,8 +19,6 @@ class MonitoreoClimaRiegoController extends Controller
         $user = auth()->user();
 
         if (in_array($user->rol, ['administrador', 'admin_general'])) {
-            
-            // 1. ADMINISTRADORES: Ven todo
             if ($request->filled('buscar_termino')) {
                 $termino = $request->input('buscar_termino');
                 $query->where(function ($q) use ($termino) {
@@ -31,76 +29,41 @@ class MonitoreoClimaRiegoController extends Controller
                         });
                 });
             }
-
         } elseif ($user->rol === 'dueno') {
-            
-            // 2. DUEÑO: Ve registros de sus sectores creados por él o por sus operadores
-            $sectoresDueno = SectorCaracteristica::where('user_id', $user->id)
-                ->get(['invernadero', 'sector']);
+            $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
+                ->get()
+                ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
 
-            if ($sectoresDueno->isEmpty()) {
-                $query->whereRaw('1 = 0');
-            } else {
-                // Obtener IDs de operadores que están asignados a los sectores de este dueño
-                $idsOperadores = \DB::table('operador_sectores')
-                    ->whereIn('sector', $sectoresDueno->pluck('sector'))
-                    ->whereIn('invernadero', $sectoresDueno->pluck('invernadero'))
-                    ->pluck('user_id')
-                    ->toArray();
-
-                // Unimos el ID del dueño con los IDs de sus operadores
-                $usuariosGrupo = array_unique(array_merge([$user->id], $idsOperadores));
-
-                $query->whereIn('user_id', $usuariosGrupo)
-                    ->where(function ($q) use ($sectoresDueno) {
-                        foreach ($sectoresDueno as $par) {
-                            $q->orWhere(function ($sub) use ($par) {
-                                $sub->where('invernadero', trim($par->invernadero))
-                                    ->where('sector', trim($par->sector));
-                            });
-                        }
+            $query->where(function ($q) use ($sectoresDueño) {
+                foreach ($sectoresDueño as $par) {
+                    $q->orWhere(function ($sub) use ($par) {
+                        $sub->where('invernadero', $par['invernadero'])
+                            ->where('sector', $par['sector']);
                     });
-            }
-
+                }
+                if ($sectoresDueño->isEmpty()) {
+                    $q->whereRaw('1 = 0');
+                }
+            });
         } elseif (str_contains($user->rol, 'operador')) {
-            
-            // 3. OPERADOR: Ve únicamente los sectores que tiene asignados
+            // El operador ve todos los registros de los sectores que tiene asignados
             $sectoresOperador = OperadorSector::where('user_id', $user->id)
-                ->get(['invernadero', 'sector']);
+                ->get()
+                ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
 
-            if ($sectoresOperador->isEmpty()) {
-                $query->whereRaw('1 = 0');
-            } else {
-                // Buscamos quién es el dueño original de esos sectores
-                $dueñoIds = SectorCaracteristica::whereIn('sector', $sectoresOperador->pluck('sector'))
-                    ->whereIn('invernadero', $sectoresOperador->pluck('invernadero'))
-                    ->pluck('user_id')
-                    ->toArray();
-
-                // IDs de todos los operadores vinculados a ese mismo dueño
-                $coOperadoresIds = \DB::table('operador_sectores')
-                    ->whereIn('sector', $sectoresOperador->pluck('sector'))
-                    ->whereIn('invernadero', $sectoresOperador->pluck('invernadero'))
-                    ->pluck('user_id')
-                    ->toArray();
-
-                $usuariosGrupo = array_unique(array_merge($dueñoIds, $coOperadoresIds, [$user->id]));
-
-                $query->whereIn('user_id', $usuariosGrupo)
-                    ->where(function ($queryPrincipal) use ($sectoresOperador) {
-                        foreach ($sectoresOperador as $par) {
-                            $queryPrincipal->orWhere(function ($sub) use ($par) {
-                                $sub->where('invernadero', trim($par->invernadero))
-                                    ->where('sector', trim($par->sector));
-                            });
-                        }
+            $query->where(function ($queryPrincipal) use ($sectoresOperador) {
+                foreach ($sectoresOperador as $par) {
+                    $queryPrincipal->orWhere(function ($sub) use ($par) {
+                        $sub->where('invernadero', $par['invernadero'])
+                            ->where('sector', $par['sector']);
                     });
-            }
+                }
+                if ($sectoresOperador->isEmpty()) {
+                    $queryPrincipal->whereRaw('1 = 0');
+                }
+            });
         }
 
-        // ==========================================
-        // FILTROS DE FECHA (SEMANA / MES) INTACTOS
-        // ==========================================
         $semana = $request->input('semana');
         $mes = $request->input('mes');
 
