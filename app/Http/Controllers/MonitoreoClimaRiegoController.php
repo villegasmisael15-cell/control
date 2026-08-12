@@ -19,6 +19,8 @@ class MonitoreoClimaRiegoController extends Controller
         $user = auth()->user();
 
         if (in_array($user->rol, ['administrador', 'admin_general'])) {
+            
+            // 1. ADMINISTRADORES: Ven todos los registros de todos los dueños
             if ($request->filled('buscar_termino')) {
                 $termino = $request->input('buscar_termino');
                 $query->where(function ($q) use ($termino) {
@@ -29,41 +31,60 @@ class MonitoreoClimaRiegoController extends Controller
                         });
                 });
             }
+
         } elseif ($user->rol === 'dueno') {
+            
+            // 2. DUEÑO: Ve ÚNICAMENTE los registros cuyo user_id sea SU PROPIO ID
             $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
                 ->get()
                 ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
 
-            $query->where(function ($q) use ($sectoresDueño) {
-                foreach ($sectoresDueño as $par) {
-                    $q->orWhere(function ($sub) use ($par) {
-                        $sub->where('invernadero', $par['invernadero'])
-                            ->where('sector', $par['sector']);
+            if ($sectoresDueño->isEmpty()) {
+                $query->whereRaw('1 = 0');
+            } else {
+                // CONDICIÓN CLAVE: Amarramos que la medición pertenezca estrictamente a este dueño
+                $query->where('user_id', $user->id)
+                    ->where(function ($q) use ($sectoresDueño) {
+                        foreach ($sectoresDueño as $par) {
+                            $q->orWhere(function ($sub) use ($par) {
+                                $sub->where('invernadero', $par['invernadero'])
+                                    ->where('sector', $par['sector']);
+                            });
+                        }
                     });
-                }
-                if ($sectoresDueño->isEmpty()) {
-                    $q->whereRaw('1 = 0');
-                }
-            });
+            }
+
         } elseif (str_contains($user->rol, 'operador')) {
-            // El operador ve todos los registros de los sectores que tiene asignados
+            
+            // 3. OPERADOR: Buscamos a qué dueño le pertenecen los sectores que tiene asignados
             $sectoresOperador = OperadorSector::where('user_id', $user->id)
                 ->get()
                 ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
 
-            $query->where(function ($queryPrincipal) use ($sectoresOperador) {
-                foreach ($sectoresOperador as $par) {
-                    $queryPrincipal->orWhere(function ($sub) use ($par) {
-                        $sub->where('invernadero', $par['invernadero'])
-                            ->where('sector', $par['sector']);
+            if ($sectoresOperador->isEmpty()) {
+                $query->whereRaw('1 = 0');
+            } else {
+                // Identificamos el user_id del dueño original en sector_caracteristicas
+                $duenoIds = SectorCaracteristica::whereIn('sector', $sectoresOperador->pluck('sector'))
+                    ->whereIn('invernadero', $sectoresOperador->pluck('invernadero'))
+                    ->pluck('user_id')
+                    ->unique();
+
+                $query->whereIn('user_id', $duenoIds)
+                    ->where(function ($queryPrincipal) use ($sectoresOperador) {
+                        foreach ($sectoresOperador as $par) {
+                            $queryPrincipal->orWhere(function ($sub) use ($par) {
+                                $sub->where('invernadero', $par['invernadero'])
+                                    ->where('sector', $par['sector']);
+                            });
+                        }
                     });
-                }
-                if ($sectoresOperador->isEmpty()) {
-                    $queryPrincipal->whereRaw('1 = 0');
-                }
-            });
+            }
         }
 
+        // ==========================================
+        // FILTROS DE FECHA (SEMANA / MES) INTACTOS
+        // ==========================================
         $semana = $request->input('semana');
         $mes = $request->input('mes');
 
