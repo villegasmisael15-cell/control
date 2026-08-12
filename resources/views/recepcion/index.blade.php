@@ -531,69 +531,60 @@
     </div>
 
     <!-- MODAL EXPORTACIÓN -->
-    <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50">
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl mx-4 overflow-hidden">
-            <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
-                <h3 class="text-lg font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-plane-departure"></i> Registrar Exportación
-                </h3>
-                <button type="button" onclick="cerrarModalExportacion()" class="text-white/80 hover:text-white text-xl cursor-pointer">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <form action="{{ route('recepcion.storeExportacion') }}" method="POST" class="p-6 space-y-4">
-                @csrf
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
-                        <input type="number" name="semana_exportacion" id="semana_exportacion_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha de Envío</label>
-                        <input type="text" name="fecha_exportacion" id="fecha_exportacion_input" placeholder="Seleccione la fecha..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dueño del Sector</label>
-                    <select name="productor_id" id="productor_exportacion_select" onchange="cargarSectoresDelProductorExportacion()" required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                        <option value="" disabled selected>-- Selecciona un dueño --</option>
-                        @foreach($productores as $productor)
-                        <option value="{{ $productor->id }}" data-sectores='{!! json_encode($productor->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}'>
-                            {{ $productor->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div id="contenedor-sector-exportacion" class="hidden mt-3 animate-fade-in">
-                    <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Invernadero y Sector</label>
-                    <select name="sector_registro" id="sector_exportacion_select" required class="w-full border border-blue-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-blue-50/50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium">
-                    </select>
-                </div>
-
-                <hr class="border-gray-200 my-2">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-blue-50/30 p-4 rounded-xl border border-blue-100">
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Cajas Exportadas</label>
-                        <input type="number" name="cajas_exportadas" id="cajas_exp" placeholder="0" min="0" oninput="calcularSaldosExportacion()" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-gray-700 mb-1">Peso de Exportación (Kg)</label>
-                        <input type="number" name="peso_exportacion" placeholder="0.000" step="any" min="0" required class="w-full bg-white border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                    </div>
-                </div>
-
-                <input type="hidden" name="cajas_pendientes" id="cajas_pen_input" value="0">
-
-                <div class="flex justify-end gap-3 pt-2">
-                    <button type="button" onclick="cerrarModalExportacion()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Embarque</button>
-                </div>
-            </form>
+  <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl mx-4 overflow-hidden">
+        <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <i class="fa-solid fa-plane-departure"></i> Registrar Exportación
+            </h3>
+            <button type="button" onclick="cerrarModalExportacion()" class="text-white/80 hover:text-white text-xl cursor-pointer">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
         </div>
+        <form action="{{ route('recepcion.storeExportacion') }}" method="POST" class="p-6 space-y-4">
+            @csrf
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
+                    <input type="number" name="semana_exportacion" id="semana_exportacion_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha de Envío</label>
+                    <input type="text" name="fecha_exportacion" id="fecha_exportacion_input" placeholder="Seleccione la fecha..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                </div>
+            </div>
+
+            <!-- Tabla dinámica de embarques -->
+            <div class="overflow-x-auto max-h-64 border border-gray-200 rounded-xl mt-3">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-blue-50 text-blue-900 font-bold uppercase text-xs sticky top-0">
+                        <tr>
+                            <th class="p-3">Dueño del Sector</th>
+                            <th class="p-3">Invernadero y Sector</th>
+                            <th class="p-3 w-32">Cajas</th>
+                            <th class="p-3 w-36">Peso (Kg)</th>
+                            <th class="p-3 w-12 text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="body-embarques" class="divide-y divide-gray-200 bg-white">
+                        <!-- Las filas se cargan vía JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="flex justify-between items-center pt-2">
+                <button type="button" onclick="agregarRenglonEmbarque()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition flex items-center gap-2 cursor-pointer shadow-sm">
+                    <i class="fa-solid fa-plus"></i> Agregar Embarque
+                </button>
+
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="cerrarModalExportacion()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Embarque(s)</button>
+                </div>
+            </div>
+        </form>
     </div>
+</div>
 
     <!-- MODAL RESTITUIDAS -->
     <div id="modalRestituidas" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -728,8 +719,22 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
-    <script>
+   <script>
         let modoCaptura = 'recepcion';
+
+        // Variable global para alimentar los selects de productores en la captura masiva
+        const productoresGlobal = @json($productores->map(function($p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'sectores' => $p->sectorCaracteristicas->map(fn($s) => [
+                    'invernadero' => $s->invernadero,
+                    'sector' => $s->sector
+                ])
+            ];
+        }));
+
+        let contadorFilasEmbarque = 0;
 
         document.addEventListener("DOMContentLoaded", function() {
             flatpickr("#fecha_nacional_input", {
@@ -873,6 +878,12 @@
             if (!modal) return;
             modal.classList.remove('hidden');
             modal.classList.add('flex');
+
+            // Asegura cargar una fila inicial si está vacía la lista
+            const body = document.getElementById('body-embarques');
+            if (body && body.children.length === 0) {
+                agregarRenglonEmbarque();
+            }
         }
 
         function cerrarModalExportacion() {
@@ -880,6 +891,82 @@
             if (!modal) return;
             modal.classList.remove('flex');
             modal.classList.add('hidden');
+        }
+
+        function agregarRenglonEmbarque() {
+            const body = document.getElementById('body-embarques');
+            if (!body) return;
+
+            const index = contadorFilasEmbarque++;
+            let opcionesProductores = '<option value="" disabled selected>-- Seleccione Dueño --</option>';
+            productoresGlobal.forEach(p => {
+                opcionesProductores += `<option value="${p.id}">${p.name}</option>`;
+            });
+
+            const filaHTML = `
+                <tr id="fila-embarque-${index}">
+                    <td class="p-2">
+                        <select name="embarques[${index}][productor_id]" onchange="actualizarSectoresRenglon(${index})" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none bg-white focus:border-blue-500">
+                            ${opcionesProductores}
+                        </select>
+                    </td>
+                    <td class="p-2">
+                        <select name="embarques[${index}][sector_registro]" id="select-sector-${index}" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none bg-white focus:border-blue-500">
+                            <option value="" disabled selected>-- Elija Dueño Primero --</option>
+                        </select>
+                    </td>
+                    <td class="p-2">
+                        <input type="number" name="embarques[${index}][cajas_exportadas]" placeholder="0" min="0" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none font-semibold focus:border-blue-500">
+                    </td>
+                    <td class="p-2">
+                        <input type="number" name="embarques[${index}][peso_exportacion]" placeholder="0.00" step="any" min="0" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
+                    </td>
+                    <td class="p-2 text-center">
+                        <button type="button" onclick="eliminarRenglonEmbarque(${index})" class="text-red-500 hover:text-red-700 text-base cursor-pointer">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+            body.insertAdjacentHTML('beforeend', filaHTML);
+        }
+
+        function actualizarSectoresRenglon(index) {
+            const selectProductor = document.querySelector(`select[name="embarques[${index}][productor_id]"]`);
+            const selectSector = document.getElementById(`select-sector-${index}`);
+            if (!selectProductor || !selectSector) return;
+
+            const productorId = selectProductor.value;
+            const productor = productoresGlobal.find(p => p.id == productorId);
+
+            selectSector.innerHTML = '<option value="" disabled selected>-- Selecciona Invernadero y Sector --</option>';
+
+            if (productor && productor.sectores && productor.sectores.length > 0) {
+                productor.sectores.forEach(s => {
+                    if (s.sector) {
+                        const option = document.createElement('option');
+                        option.value = s.sector;
+                        option.textContent = `${s.invernadero} — ${s.sector}`;
+                        selectSector.appendChild(option);
+                    }
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = "General";
+                option.textContent = "General (Sin sectores específicos)";
+                selectSector.appendChild(option);
+            }
+        }
+
+        function eliminarRenglonEmbarque(index) {
+            const body = document.getElementById('body-embarques');
+            if (body && body.children.length > 1) {
+                const fila = document.getElementById(`fila-embarque-${index}`);
+                if (fila) fila.remove();
+            } else {
+                alert('Debe conservar al menos un embarque en la lista.');
+            }
         }
 
         function calcularSaldosExportacion() {
@@ -1039,7 +1126,6 @@
                 inputFecha.value = "";
             }
         }
-
 
         function abrirModalCondensacion(fecha) {
             const modal = document.getElementById('modalCondensacion');

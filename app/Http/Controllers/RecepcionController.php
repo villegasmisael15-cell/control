@@ -209,29 +209,31 @@ class RecepcionController extends Controller
         }
 
         $request->validate([
-            'semana_exportacion' => ['required', 'integer', 'min:1', 'max:53'],
-            'fecha_exportacion'  => ['required', 'date'],
-            'productor_id'       => ['required', 'exists:users,id'],
-            'sector_registro'    => ['required', 'string'],
-            'cajas_exportadas'   => ['required', 'integer', 'min:0'],
-            'peso_exportacion'   => ['required', 'numeric', 'min:0'],
+            'semana_exportacion'           => ['required', 'integer', 'min:1', 'max:53'],
+            'fecha_exportacion'            => ['required', 'date'],
+            'embarques'                    => ['required', 'array', 'min:1'],
+            'embarques.*.productor_id'     => ['required', 'exists:users,id'],
+            'embarques.*.sector_registro'  => ['required', 'string'],
+            'embarques.*.cajas_exportadas' => ['required', 'integer', 'min:0'],
+            'embarques.*.peso_exportacion' => ['required', 'numeric', 'min:0'],
         ]);
 
-        RecepcionExportacion::create([
-            'semana_exportacion' => $request->semana_exportacion,
-            'fecha_exportacion'  => $request->fecha_exportacion,
-            'productor_id'       => $request->productor_id,
-            'sector_registro'    => $request->sector_registro,
-            'cajas_exportacion'  => $request->cajas_exportadas,
-            'peso_exportacion'   => $request->peso_exportacion,
-            'restituidas'        => 0,
-            'pendientes'         => $request->cajas_exportadas,
-            'capturado_por_id'   => auth()->id(),
-        ]);
+        foreach ($request->embarques as $item) {
+            RecepcionExportacion::create([
+                'semana_exportacion' => $request->semana_exportacion,
+                'fecha_exportacion'  => $request->fecha_exportacion,
+                'productor_id'       => $item['productor_id'],
+                'sector_registro'    => $item['sector_registro'],
+                'cajas_exportacion'  => $item['cajas_exportadas'],
+                'peso_exportacion'   => $item['peso_exportacion'],
+                'restituidas'        => 0,
+                'pendientes'         => $item['cajas_exportadas'],
+                'capturado_por_id'   => auth()->id(),
+            ]);
+        }
 
-        return redirect()->route('recepcion.index')->with('status', 'Embarque de exportación registrado con éxito.');
+        return redirect()->route('recepcion.index')->with('status', 'Embarque(s) de exportación registrado(s) con éxito.');
     }
-
     /**
      * Almacena las cajas vacías devueltas.
      */
