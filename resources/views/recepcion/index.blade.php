@@ -426,35 +426,75 @@
     </main>
 
     <!-- MODAL NACIONAL -->
-    <div id="modal-nacional" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-2xl my-auto flex flex-col overflow-hidden max-h-[95vh]">
-            <div class="bg-amber-600 text-white px-6 py-4 flex justify-between items-center shrink-0">
-                <h3 id="modal-nacional-titulo" class="text-lg font-bold flex items-center gap-2">
-                    <i class="fa-solid fa-house-chimney"></i> Registrar Entrada Nacional
-                </h3>
-                <button type="button" onclick="cerrarModalNacional()" class="text-white/80 hover:text-white text-xl cursor-pointer transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+   <div id="modal-nacional" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-5xl mx-auto overflow-hidden my-auto max-h-[95vh] flex flex-col">
+        
+        <!-- Encabezado -->
+        <div class="bg-amber-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shrink-0">
+            <h3 id="modal-nacional-titulo" class="text-base sm:text-lg font-bold flex items-center gap-2">
+                <i class="fa-solid fa-house-chimney"></i> Registrar Entrada Nacional
+            </h3>
+            <button type="button" onclick="cerrarModalNacional()" class="text-white/80 hover:text-white text-xl cursor-pointer transition">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <form action="{{ route('recepcion.storeNacional') }}" method="POST" id="form-modal-nacional" class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-grow max-h-[calc(95vh-120px)] scrollbar-thin scrollbar-thumb-gray-300">
+            @csrf
+            <input type="hidden" name="es_rechazo_operativo" id="es_rechazo_operativo" value="0">
+
+            <!-- Fechas y Semanas (Datos Generales) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
+                    <input type="number" name="semana_nacional" id="semana_nacional_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha de Recepción</label>
+                    <input type="text" name="fecha_nacional" id="fecha_nacional_input" placeholder="Seleccione la fecha..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 bg-gray-50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                </div>
             </div>
 
-            <form action="{{ route('recepcion.storeNacional') }}" method="POST" id="form-modal-nacional" class="p-6 space-y-4 overflow-y-auto flex-grow max-h-[calc(95vh-120px)] scrollbar-thin scrollbar-thumb-gray-300">
-                @csrf
-                <input type="hidden" name="es_rechazo_operativo" id="es_rechazo_operativo" value="0">
+            <!-- CONTENEDOR 1: TABLA DINÁMICA PARA ENTRADA NACIONAL MÚLTIPLE -->
+            <div id="contenedor-captura-multiple-nacional" class="space-y-3">
+                <div class="overflow-x-auto max-h-72 border border-gray-200 rounded-xl mt-3 shadow-inner">
+                    <table class="w-full text-left text-sm min-w-[750px]">
+                        <thead class="bg-amber-50 text-amber-900 font-bold uppercase text-xs sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 min-w-[170px]">Dueño del Sector</th>
+                                <th class="p-3 min-w-[180px]">Invernadero y Sector</th>
+                                @php $rolActual = trim(auth()->user()->rol); @endphp
+                                
+                                @if($rolActual !== 'usuario_rechazo')
+                                    <th class="p-2 text-center bg-emerald-100/60 text-emerald-900 w-24">Cajas Com.</th>
+                                    <th class="p-2 text-center bg-emerald-100/60 text-emerald-900 w-28">Kg Com.</th>
+                                @endif
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
-                        <input type="number" name="semana_nacional" id="semana_nacional_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha de Recepción</label>
-                        <input type="text" name="fecha_nacional" id="fecha_nacional_input" placeholder="Seleccione la fecha..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 bg-gray-50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                    </div>
+                                @if($rolActual !== 'usuario_comercial' && $rolActual !== 'operador' && !str_contains($rolActual, 'operador,usuario_comercial') && !str_contains($rolActual, 'usuario_comercial,operador'))
+                                    <th class="p-2 text-center bg-red-100/60 text-red-900 w-24">Cajas Rec.</th>
+                                    <th class="p-2 text-center bg-red-100/60 text-red-900 w-28">Kg Rec.</th>
+                                @endif
+                                <th class="p-3 w-12 text-center">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="body-nacionales" class="divide-y divide-gray-200 bg-white">
+                            <!-- Las filas múltiples se agregan dinámicamente con JS -->
+                        </tbody>
+                    </table>
                 </div>
 
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                    <button type="button" onclick="agregarRenglonNacional()" class="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-plus"></i> Agregar Entrada Nacional
+                    </button>
+                </div>
+            </div>
+
+            <!-- CONTENEDOR 2: FORMULARIO INDIVIDUAL DE RECHAZO OPERATIVO (INTACTO) -->
+            <div id="contenedor-captura-individual-rechazo" class="hidden space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dueño del Sector</label>
-                    <select name="productor_id" id="productor_select" onchange="filtrarDatosPorOperador()" required class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                    <select name="productor_id" id="productor_select" onchange="filtrarDatosPorOperador()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
                         <option value="" disabled selected>-- Selecciona un dueño --</option>
                         @foreach($productores as $productor)
                         <option value="{{ $productor->id }}" data-sectores='{!! json_encode($productor->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}'>
@@ -484,52 +524,49 @@
 
                 <hr class="border-gray-200 my-2">
 
-               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    @php
-        $rolActual = trim(auth()->user()->rol);
-    @endphp
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    @if($rolActual !== 'usuario_rechazo')
+                    <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
+                        <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                            <i class="fa-solid fa-basket-shopping"></i> Comercializar
+                        </h4>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Cajas Comerciales</label>
+                            <input type="number" name="cajas_comercializar" id="cajas_com" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Peso Comercial (Kg)</label>
+                            <input type="number" name="peso_comercializar" id="peso_com" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
+                        </div>
+                    </div>
+                    @endif
 
-    @if($rolActual !== 'usuario_rechazo')
-    <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
-        <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-            <i class="fa-solid fa-basket-shopping"></i> Comercializar
-        </h4>
-        <div>
-            <label class="block text-xs text-gray-600 mb-1">Cajas Comerciales</label>
-            <input type="number" name="cajas_comercializar" id="cajas_com" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
-        </div>
-        <div>
-            <label class="block text-xs text-gray-600 mb-1">Peso Comercial (Kg)</label>
-            <input type="number" name="peso_comercializar" id="peso_com" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
-        </div>
-    </div>
-    @endif
-
-    @if($rolActual !== 'usuario_comercial' && $rolActual !== 'operador' && !str_contains($rolActual, 'operador,usuario_comercial') && !str_contains($rolActual, 'usuario_comercial,operador'))
-    <div class="space-y-3 bg-red-50/40 p-4 rounded-xl border border-red-100">
-        <h4 class="text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-1">
-            <i class="fa-solid fa-ban"></i> Procesado (Rechazo)
-        </h4>
-        <div>
-            <label class="block text-xs text-gray-600 mb-1">Cajas de Rechazo</label>
-            <input type="number" name="cajas_rechazo_procesado" id="cajas_rec" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
-        </div>
-        <div>
-            <label class="block text-xs text-gray-600 mb-1">Peso Rechazo (Kg)</label>
-            <input type="number" name="peso_rechazo_procesado" id="peso_rec" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
-        </div>
-    </div>
-    @endif
-</div>
-
-                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
-                    <button type="button" onclick="cerrarModalNacional()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Registro</button>
+                    @if($rolActual !== 'usuario_comercial' && $rolActual !== 'operador' && !str_contains($rolActual, 'operador,usuario_comercial') && !str_contains($rolActual, 'usuario_comercial,operador'))
+                    <div class="space-y-3 bg-red-50/40 p-4 rounded-xl border border-red-100">
+                        <h4 class="text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-1">
+                            <i class="fa-solid fa-ban"></i> Procesado (Rechazo)
+                        </h4>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Cajas de Rechazo</label>
+                            <input type="number" name="cajas_rechazo_procesado" id="cajas_rec" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Peso Rechazo (Kg)</label>
+                            <input type="number" name="peso_rechazo_procesado" id="peso_rec" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
+                        </div>
+                    </div>
+                    @endif
                 </div>
-            </form>
-        </div>
-    </div>
+            </div>
 
+            <!-- Botones Generales de Envío -->
+            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
+                <button type="button" onclick="cerrarModalNacional()" class="px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
+                <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Registro</button>
+            </div>
+        </form>
+    </div>
+</div>
     <!-- MODAL EXPORTACIÓN -->
  <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4">
     <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl mx-auto overflow-hidden my-auto max-h-[90vh] flex flex-col">
@@ -729,15 +766,16 @@
 
         // Variable global para alimentar los selects de productores en la captura masiva
         const productoresGlobal = {!! json_encode($productores->map(fn($p) => [
-    'id' => $p->id,
-    'name' => $p->name,
-    'sectores' => $p->sectorCaracteristicas->map(fn($s) => [
-        'invernadero' => $s->invernadero,
-        'sector' => $s->sector
-    ])
-])) !!};
+            'id' => $p->id,
+            'name' => $p->name,
+            'sectores' => $p->sectorCaracteristicas->map(fn($s) => [
+                'invernadero' => $s->invernadero,
+                'sector' => $s->sector
+            ])
+        ])) !!};
 
         let contadorFilasEmbarque = 0;
+        let contadorFilasNacional = 0;
 
         document.addEventListener("DOMContentLoaded", function() {
             flatpickr("#fecha_nacional_input", {
@@ -825,26 +863,38 @@
             const modal = document.getElementById('modal-nacional');
             const titulo = document.getElementById('modal-nacional-titulo');
             const esRechazoInput = document.getElementById('es_rechazo_operativo');
-            const contenedorEmbarque = document.getElementById('contenedor-embarque-origen');
-            const selectEmbarque = document.getElementById('recepcion_exportacion_select');
+
+            const contenedorMultiple = document.getElementById('contenedor-captura-multiple-nacional');
+            const contenedorIndividual = document.getElementById('contenedor-captura-individual-rechazo');
+            const selectProductorInd = document.getElementById('productor_select');
 
             if (!modal) return;
             modoCaptura = tipo;
-            calcularTotalesNacional();
 
             if (tipo === 'rechazo') {
+                // RECHAZO DE EXPORTACIÓN: Formulario individual previo e intacto
                 if (titulo) titulo.innerHTML = '<i class="fa-solid fa-ban text-red-500"></i> Capturar Kg de Rechazo de Exportación';
                 if (esRechazoInput) esRechazoInput.value = "1";
-                if (selectEmbarque) selectEmbarque.required = true;
-                if (contenedorEmbarque) contenedorEmbarque.classList.remove('hidden');
+
+                if (contenedorMultiple) contenedorMultiple.classList.add('hidden');
+                if (contenedorIndividual) contenedorIndividual.classList.remove('hidden');
+
+                if (selectProductorInd) selectProductorInd.required = true;
+                calcularTotalesNacional();
             } else {
-                if (titulo) titulo.innerHTML = '<i class="fa-solid fa-house-chimney text-emerald-500"></i> Registrar Entrada Nacional';
+                // ENTRADA NACIONAL: Captura múltiple por filas
+                if (titulo) titulo.innerHTML = '<i class="fa-solid fa-house-chimney text-amber-600"></i> Registrar Entrada Nacional';
                 if (esRechazoInput) esRechazoInput.value = "0";
-                if (selectEmbarque) {
-                    selectEmbarque.value = "";
-                    selectEmbarque.required = false;
+
+                if (contenedorIndividual) contenedorIndividual.classList.add('hidden');
+                if (contenedorMultiple) contenedorMultiple.classList.remove('hidden');
+
+                if (selectProductorInd) selectProductorInd.required = false;
+
+                const body = document.getElementById('body-nacionales');
+                if (body && body.children.length === 0) {
+                    agregarRenglonNacional();
                 }
-                if (contenedorEmbarque) contenedorEmbarque.classList.add('hidden');
             }
 
             modal.classList.remove('hidden');
@@ -856,6 +906,109 @@
             if (!modal) return;
             modal.classList.remove('flex');
             modal.classList.add('hidden');
+        }
+
+        function agregarRenglonNacional() {
+            const body = document.getElementById('body-nacionales');
+            if (!body) return;
+
+            const index = contadorFilasNacional++;
+            let opcionesProductores = '<option value="" disabled selected>-- Dueño --</option>';
+
+            if (typeof productoresGlobal !== 'undefined') {
+                productoresGlobal.forEach(p => {
+                    opcionesProductores += `<option value="${p.id}">${p.name}</option>`;
+                });
+            }
+
+            const rol = "{{ trim(auth()->user()->rol) }}";
+            const puedeComercializar = (rol !== 'usuario_rechazo');
+            const puedeProcesarRechazo = (rol !== 'usuario_comercial' && rol !== 'operador' && !rol.includes('operador,usuario_comercial') && !rol.includes('usuario_comercial,operador'));
+
+            let celdaComercial = '';
+            if (puedeComercializar) {
+                celdaComercial = `
+                    <td class="p-1.5 w-24">
+                        <input type="number" name="nacionales[${index}][cajas_comercializar]" placeholder="0" min="0" class="w-full border border-emerald-300 rounded-lg p-2 text-xs outline-none font-semibold focus:border-emerald-500">
+                    </td>
+                    <td class="p-1.5 w-28">
+                        <input type="number" name="nacionales[${index}][peso_comercializar]" placeholder="0.00" step="0.01" min="0" class="w-full border border-emerald-300 rounded-lg p-2 text-xs outline-none focus:border-emerald-500">
+                    </td>
+                `;
+            }
+
+            let celdaRechazo = '';
+            if (puedeProcesarRechazo) {
+                celdaRechazo = `
+                    <td class="p-1.5 w-24">
+                        <input type="number" name="nacionales[${index}][cajas_rechazo_procesado]" placeholder="0" min="0" class="w-full border border-red-300 rounded-lg p-2 text-xs outline-none font-semibold focus:border-red-500">
+                    </td>
+                    <td class="p-1.5 w-28">
+                        <input type="number" name="nacionales[${index}][peso_rechazo_procesado]" placeholder="0.00" step="0.01" min="0" class="w-full border border-red-300 rounded-lg p-2 text-xs outline-none focus:border-red-500">
+                    </td>
+                `;
+            }
+
+            const filaHTML = `
+                <tr id="fila-nacional-${index}" class="hover:bg-amber-50/40 transition">
+                    <td class="p-2 min-w-[170px]">
+                        <select name="nacionales[${index}][productor_id]" onchange="actualizarSectoresRenglonNacional(${index})" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none bg-white focus:border-amber-500 truncate">
+                            ${opcionesProductores}
+                        </select>
+                    </td>
+                    <td class="p-2 min-w-[180px]">
+                        <select name="nacionales[${index}][sector_registro]" id="select-sector-nacional-${index}" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none bg-white focus:border-amber-500 truncate">
+                            <option value="" disabled selected>-- Elija Dueño --</option>
+                        </select>
+                    </td>
+                    ${celdaComercial}
+                    ${celdaRechazo}
+                    <td class="p-2 w-12 text-center">
+                        <button type="button" onclick="eliminarRenglonNacional(${index})" class="text-red-500 hover:text-red-700 text-base cursor-pointer p-1">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+
+            body.insertAdjacentHTML('beforeend', filaHTML);
+        }
+
+        function actualizarSectoresRenglonNacional(index) {
+            const selectProductor = document.querySelector(`select[name="nacionales[${index}][productor_id]"]`);
+            const selectSector = document.getElementById(`select-sector-nacional-${index}`);
+            if (!selectProductor || !selectSector) return;
+
+            const productorId = selectProductor.value;
+            const productor = productoresGlobal.find(p => p.id == productorId);
+
+            selectSector.innerHTML = '<option value="" disabled selected>-- Selecciona Invernadero y Sector --</option>';
+
+            if (productor && productor.sectores && productor.sectores.length > 0) {
+                productor.sectores.forEach(s => {
+                    if (s.sector) {
+                        const option = document.createElement('option');
+                        option.value = s.sector;
+                        option.textContent = `${s.invernadero} — ${s.sector}`;
+                        selectSector.appendChild(option);
+                    }
+                });
+            } else {
+                const option = document.createElement('option');
+                option.value = "General";
+                option.textContent = "General (Sin sectores específicos)";
+                selectSector.appendChild(option);
+            }
+        }
+
+        function eliminarRenglonNacional(index) {
+            const body = document.getElementById('body-nacionales');
+            if (body && body.children.length > 1) {
+                const fila = document.getElementById(`fila-nacional-${index}`);
+                if (fila) fila.remove();
+            } else {
+                alert('Debe conservar al menos un registro en la lista.');
+            }
         }
 
         function calcularTotalesNacional() {
@@ -882,7 +1035,6 @@
             modal.classList.remove('hidden');
             modal.classList.add('flex');
 
-            // Asegura cargar una fila inicial si está vacía la lista
             const body = document.getElementById('body-embarques');
             if (body && body.children.length === 0) {
                 agregarRenglonEmbarque();
@@ -896,7 +1048,7 @@
             modal.classList.add('hidden');
         }
 
-      function agregarRenglonEmbarque() {
+        function agregarRenglonEmbarque() {
             const body = document.getElementById('body-embarques');
             if (!body) return;
 
