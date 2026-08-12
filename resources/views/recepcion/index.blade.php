@@ -7,7 +7,7 @@
     <title>Recepción - Sistema Control</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/weekSelect/style.css">
+    
 </head>
 
 <body class="bg-gray-100 font-sans antialiased min-h-full flex flex-col">
@@ -765,15 +765,14 @@
         let modoCaptura = 'recepcion';
 
         // Variable global para alimentar los selects de productores en la captura masiva
-        const productoresGlobal = {!! json_encode($productores->map(fn($p) => [
-            'id' => $p->id,
-            'name' => $p->name,
-            'sectores' => $p->sectorCaracteristicas->map(fn($s) => [
-                'invernadero' => $s->invernadero,
-                'sector' => $s->sector
-            ])
-        ])) !!};
-
+        const productoresGlobal = @json($productores->map(fn($p) => [
+    'id' => $p->id,
+    'name' => $p->name,
+    'sectores' => $p->sectorCaracteristicas->map(fn($s) => [
+        'invernadero' => $s->invernadero,
+        'sector' => $s->sector
+    ])
+]));
         let contadorFilasEmbarque = 0;
         let contadorFilasNacional = 0;
 
