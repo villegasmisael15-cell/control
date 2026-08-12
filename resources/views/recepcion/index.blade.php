@@ -313,8 +313,8 @@
                                 <td class="px-4 py-3 font-bold text-gray-900 text-center">{{ $exportacion->semana_exportacion }}</td>
                                 <td class="px-4 py-3 whitespace-nowrap text-gray-700">{{ \Carbon\Carbon::parse($exportacion->fecha_exportacion)->format('d/m/Y') }}</td>
                                 <td class="px-4 py-3 font-medium text-gray-800">{{ $exportacion->productor->name ?? 'N/A' }}</td>
-                                <td class="px-4 py-3 font-medium text-gray-600">
-                                    <span class="bg-blue-50 text-blue-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-blue-200">
+                                <td class="px-2 sm:px-4 py-2.5 sm:py-3 font-medium text-gray-600">
+                                    <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[11px] sm:text-xs px-2 sm:px-2.5 py-1 rounded-md font-semibold border border-emerald-200 whitespace-normal text-left break-words leading-tight">
                                         {{ $invExp }} — {{ $exportacion->sector_registro }}
                                     </span>
                                 </td>
