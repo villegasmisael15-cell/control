@@ -20,7 +20,7 @@ class MonitoreoClimaRiegoController extends Controller
 
         if (in_array($user->rol, ['administrador', 'admin_general'])) {
             
-            // 1. ADMINISTRADORES
+            // 1. ADMINISTRADORES: Ven absolutamente todo
             if ($request->filled('buscar_termino')) {
                 $termino = $request->input('buscar_termino');
                 $query->where(function ($q) use ($termino) {
@@ -34,18 +34,28 @@ class MonitoreoClimaRiegoController extends Controller
 
         } elseif ($user->rol === 'dueno') {
             
-            // 2. DUEÑO: Ve los registros de los sectores registrados a su user_id
+            // 2. DUEÑO: Solo ve los registros pertenecientes A SUS SECTORES
+            // Consultamos únicamente los sectores que le pertenecen a este user_id
             $sectoresDueno = SectorCaracteristica::where('user_id', $user->id)
                 ->get(['invernadero', 'sector']);
 
             if ($sectoresDueno->isEmpty()) {
                 $query->whereRaw('1 = 0');
             } else {
-                $query->where(function ($q) use ($sectoresDueno) {
+                // Para no ver lo de otros dueños, filtramos que los sectores coincidan 
+                // Y que el registro pertenezca a un sector creado bajo este dueño
+                $query->where(function ($q) use ($sectoresDueno, $user) {
                     foreach ($sectoresDueno as $par) {
-                        $q->orWhere(function ($sub) use ($par) {
+                        $q->orWhere(function ($sub) use ($par, $user) {
                             $sub->where('invernadero', trim($par->invernadero))
-                                ->where('sector', trim($par->sector));
+                                ->where('sector', trim($par->sector))
+                                // Amarra que el creador del registro coincida con el dueño o sus asignados
+                                ->whereHas('user', function ($u) use ($user) {
+                                    $u->where('id', $user->id)
+                                      ->orWhereHas('operadorSectores', function ($os) use ($user) {
+                                          $os->whereIn('sector', SectorCaracteristica::where('user_id', $user->id)->pluck('sector'));
+                                      });
+                                });
                         });
                     }
                 });
@@ -53,18 +63,29 @@ class MonitoreoClimaRiegoController extends Controller
 
         } elseif (str_contains($user->rol, 'operador')) {
             
-            // 3. OPERADOR: Ve los registros de sus sectores asignados en OperadorSector
+            // 3. OPERADOR: Solo ve sus sectores asignados filtrando los sectores del dueño correspondiente
             $sectoresOperador = OperadorSector::where('user_id', $user->id)
                 ->get(['invernadero', 'sector']);
 
             if ($sectoresOperador->isEmpty()) {
                 $query->whereRaw('1 = 0');
             } else {
-                $query->where(function ($queryPrincipal) use ($sectoresOperador) {
+                // Buscamos a qué dueño le pertenecen estos sectores asignados
+                $dueñosIds = SectorCaracteristica::whereIn('sector', $sectoresOperador->pluck('sector'))
+                    ->whereIn('invernadero', $sectoresOperador->pluck('invernadero'))
+                    ->pluck('user_id')
+                    ->unique();
+
+                $query->where(function ($queryPrincipal) use ($sectoresOperador, $dueñosIds) {
                     foreach ($sectoresOperador as $par) {
-                        $queryPrincipal->orWhere(function ($sub) use ($par) {
+                        $queryPrincipal->orWhere(function ($sub) use ($par, $dueñosIds) {
                             $sub->where('invernadero', trim($par->invernadero))
-                                ->where('sector', trim($par->sector));
+                                ->where('sector', trim($par->sector))
+                                ->whereIn('user_id', function ($q) use ($dueñosIds) {
+                                    $q->select('id')->from('users')
+                                      ->whereIn('id', $dueñosIds)
+                                      ->orWhereIn('id', DB::table('operador_sectores')->whereIn('user_id', $dueñosIds)->pluck('user_id'));
+                                });
                         });
                     }
                 });
