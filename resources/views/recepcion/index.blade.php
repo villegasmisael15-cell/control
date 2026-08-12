@@ -531,19 +531,23 @@
     </div>
 
     <!-- MODAL EXPORTACIÓN -->
-  <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50">
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl mx-4 overflow-hidden">
-        <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
-            <h3 class="text-lg font-bold flex items-center gap-2">
+ <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4">
+    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl mx-auto overflow-hidden my-auto max-h-[90vh] flex flex-col">
+        
+        <!-- Encabezado -->
+        <div class="bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shrink-0">
+            <h3 class="text-base sm:text-lg font-bold flex items-center gap-2">
                 <i class="fa-solid fa-plane-departure"></i> Registrar Exportación
             </h3>
             <button type="button" onclick="cerrarModalExportacion()" class="text-white/80 hover:text-white text-xl cursor-pointer">
                 <i class="fa-solid fa-xmark"></i>
             </button>
         </div>
-        <form action="{{ route('recepcion.storeExportacion') }}" method="POST" class="p-6 space-y-4">
+
+        <form action="{{ route('recepcion.storeExportacion') }}" method="POST" class="p-4 sm:p-6 space-y-4 overflow-y-auto">
             @csrf
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
                     <input type="number" name="semana_exportacion" id="semana_exportacion_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
@@ -554,15 +558,15 @@
                 </div>
             </div>
 
-            <!-- Tabla dinámica de embarques -->
-            <div class="overflow-x-auto max-h-64 border border-gray-200 rounded-xl mt-3">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-blue-50 text-blue-900 font-bold uppercase text-xs sticky top-0">
+            <!-- Tabla dinámica con scroll horizontal en móviles -->
+            <div class="overflow-x-auto max-h-64 border border-gray-200 rounded-xl mt-3 shadow-inner">
+                <table class="w-full text-left text-sm min-w-[650px]">
+                    <thead class="bg-blue-50 text-blue-900 font-bold uppercase text-xs sticky top-0 z-10">
                         <tr>
-                            <th class="p-3">Dueño del Sector</th>
-                            <th class="p-3">Invernadero y Sector</th>
-                            <th class="p-3 w-32">Cajas</th>
-                            <th class="p-3 w-36">Peso (Kg)</th>
+                            <th class="p-3 min-w-[180px]">Dueño del Sector</th>
+                            <th class="p-3 min-w-[200px]">Invernadero y Sector</th>
+                            <th class="p-3 w-28">Cajas</th>
+                            <th class="p-3 w-32">Peso (Kg)</th>
                             <th class="p-3 w-12 text-center">Acción</th>
                         </tr>
                     </thead>
@@ -572,14 +576,15 @@
                 </table>
             </div>
 
-            <div class="flex justify-between items-center pt-2">
-                <button type="button" onclick="agregarRenglonEmbarque()" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition flex items-center gap-2 cursor-pointer shadow-sm">
+            <!-- Botones adaptados a móvil -->
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                <button type="button" onclick="agregarRenglonEmbarque()" class="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-sm">
                     <i class="fa-solid fa-plus"></i> Agregar Embarque
                 </button>
 
-                <div class="flex justify-end gap-3">
-                    <button type="button" onclick="cerrarModalExportacion()" class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
-                    <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Embarque(s)</button>
+                <div class="flex w-full sm:w-auto justify-end gap-2 sm:gap-3">
+                    <button type="button" onclick="cerrarModalExportacion()" class="flex-1 sm:flex-none px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
+                    <button type="submit" class="flex-1 sm:flex-none px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Embarque(s)</button>
                 </div>
             </div>
         </form>
@@ -891,7 +896,7 @@
             modal.classList.add('hidden');
         }
 
-        function agregarRenglonEmbarque() {
+      function agregarRenglonEmbarque() {
             const body = document.getElementById('body-embarques');
             if (!body) return;
 
@@ -903,24 +908,24 @@
 
             const filaHTML = `
                 <tr id="fila-embarque-${index}">
-                    <td class="p-2">
-                        <select name="embarques[${index}][productor_id]" onchange="actualizarSectoresRenglon(${index})" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none bg-white focus:border-blue-500">
+                    <td class="p-2 min-w-[180px]">
+                        <select name="embarques[${index}][productor_id]" onchange="actualizarSectoresRenglon(${index})" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none bg-white focus:border-blue-500 truncate">
                             ${opcionesProductores}
                         </select>
                     </td>
-                    <td class="p-2">
-                        <select name="embarques[${index}][sector_registro]" id="select-sector-${index}" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none bg-white focus:border-blue-500">
+                    <td class="p-2 min-w-[200px]">
+                        <select name="embarques[${index}][sector_registro]" id="select-sector-${index}" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none bg-white focus:border-blue-500 truncate">
                             <option value="" disabled selected>-- Elija Dueño Primero --</option>
                         </select>
                     </td>
-                    <td class="p-2">
+                    <td class="p-2 w-28">
                         <input type="number" name="embarques[${index}][cajas_exportadas]" placeholder="0" min="0" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none font-semibold focus:border-blue-500">
                     </td>
-                    <td class="p-2">
+                    <td class="p-2 w-32">
                         <input type="number" name="embarques[${index}][peso_exportacion]" placeholder="0.00" step="any" min="0" required class="w-full border border-gray-300 rounded-lg p-2 text-xs outline-none focus:border-blue-500">
                     </td>
-                    <td class="p-2 text-center">
-                        <button type="button" onclick="eliminarRenglonEmbarque(${index})" class="text-red-500 hover:text-red-700 text-base cursor-pointer">
+                    <td class="p-2 w-12 text-center">
+                        <button type="button" onclick="eliminarRenglonEmbarque(${index})" class="text-red-500 hover:text-red-700 text-base cursor-pointer p-1">
                             <i class="fa-solid fa-trash-can"></i>
                         </button>
                     </td>
