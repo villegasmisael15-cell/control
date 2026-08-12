@@ -172,10 +172,11 @@
                                     {{ \Carbon\Carbon::parse($nacional->fecha_nacional)->format('d/m/Y') }}
                                 </td>
                                 <td class="px-4 py-3 font-medium text-gray-800">{{ $nacional->productor->name ?? 'N/A' }}</td>
-                                <td class="px-4 py-3 font-medium text-gray-600">
-                                    <span class="bg-emerald-50 text-emerald-800 text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-200">
+                                <td class="px-2 sm:px-4 py-3 font-medium text-gray-600">
+                                    <span class="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 text-[11px] sm:text-xs px-2.5 py-1 rounded-md font-semibold border border-emerald-200 whitespace-normal text-left break-words">
                                         {{ $invNac }} — {{ $nacional->sector_registro }}
                                     </span>
+                                </td>
                                 </td>
                                 <td class="px-3 py-3 text-center bg-emerald-50/20 font-semibold text-gray-900">
                                     <div>{{ number_format($nacional->cajas_comerciales_vigentes) }}</div>
@@ -426,207 +427,207 @@
     </main>
 
     <!-- MODAL NACIONAL -->
-   <div id="modal-nacional" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4">
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-5xl mx-auto overflow-hidden my-auto max-h-[95vh] flex flex-col">
-        
-        <!-- Encabezado -->
-        <div class="bg-amber-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shrink-0">
-            <h3 id="modal-nacional-titulo" class="text-base sm:text-lg font-bold flex items-center gap-2">
-                <i class="fa-solid fa-house-chimney"></i> Registrar Entrada Nacional
-            </h3>
-            <button type="button" onclick="cerrarModalNacional()" class="text-white/80 hover:text-white text-xl cursor-pointer transition">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
-        </div>
+    <div id="modal-nacional" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-5xl mx-auto overflow-hidden my-auto max-h-[95vh] flex flex-col">
 
-        <form action="{{ route('recepcion.storeNacional') }}" method="POST" id="form-modal-nacional" class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-grow max-h-[calc(95vh-120px)] scrollbar-thin scrollbar-thumb-gray-300">
-            @csrf
-            <input type="hidden" name="es_rechazo_operativo" id="es_rechazo_operativo" value="0">
-
-            <!-- Fechas y Semanas (Datos Generales) -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
-                    <input type="number" name="semana_nacional" id="semana_nacional_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha de Recepción</label>
-                    <input type="text" name="fecha_nacional" id="fecha_nacional_input" placeholder="Seleccione la fecha..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 bg-gray-50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                </div>
+            <!-- Encabezado -->
+            <div class="bg-amber-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shrink-0">
+                <h3 id="modal-nacional-titulo" class="text-base sm:text-lg font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-house-chimney"></i> Registrar Entrada Nacional
+                </h3>
+                <button type="button" onclick="cerrarModalNacional()" class="text-white/80 hover:text-white text-xl cursor-pointer transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
 
-            <!-- CONTENEDOR 1: TABLA DINÁMICA PARA ENTRADA NACIONAL MÚLTIPLE -->
-            <div id="contenedor-captura-multiple-nacional" class="space-y-3">
-                <div class="overflow-x-auto max-h-72 border border-gray-200 rounded-xl mt-3 shadow-inner">
-                    <table class="w-full text-left text-sm min-w-[750px]">
-                        <thead class="bg-amber-50 text-amber-900 font-bold uppercase text-xs sticky top-0 z-10">
-                            <tr>
-                                <th class="p-3 min-w-[170px]">Dueño del Sector</th>
-                                <th class="p-3 min-w-[180px]">Invernadero y Sector</th>
-                                @php $rolActual = trim(auth()->user()->rol); @endphp
-                                
-                                @if($rolActual !== 'usuario_rechazo')
+            <form action="{{ route('recepcion.storeNacional') }}" method="POST" id="form-modal-nacional" class="p-4 sm:p-6 space-y-4 overflow-y-auto flex-grow max-h-[calc(95vh-120px)] scrollbar-thin scrollbar-thumb-gray-300">
+                @csrf
+                <input type="hidden" name="es_rechazo_operativo" id="es_rechazo_operativo" value="0">
+
+                <!-- Fechas y Semanas (Datos Generales) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
+                        <input type="number" name="semana_nacional" id="semana_nacional_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha de Recepción</label>
+                        <input type="text" name="fecha_nacional" id="fecha_nacional_input" placeholder="Seleccione la fecha..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 bg-gray-50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR 1: TABLA DINÁMICA PARA ENTRADA NACIONAL MÚLTIPLE -->
+                <div id="contenedor-captura-multiple-nacional" class="space-y-3">
+                    <div class="overflow-x-auto max-h-72 border border-gray-200 rounded-xl mt-3 shadow-inner">
+                        <table class="w-full text-left text-sm min-w-[750px]">
+                            <thead class="bg-amber-50 text-amber-900 font-bold uppercase text-xs sticky top-0 z-10">
+                                <tr>
+                                    <th class="p-3 min-w-[170px]">Dueño del Sector</th>
+                                    <th class="p-3 min-w-[180px]">Invernadero y Sector</th>
+                                    @php $rolActual = trim(auth()->user()->rol); @endphp
+
+                                    @if($rolActual !== 'usuario_rechazo')
                                     <th class="p-2 text-center bg-emerald-100/60 text-emerald-900 w-24">Cajas Com.</th>
                                     <th class="p-2 text-center bg-emerald-100/60 text-emerald-900 w-28">Kg Com.</th>
-                                @endif
+                                    @endif
 
-                                @if($rolActual !== 'usuario_comercial' && $rolActual !== 'operador' && !str_contains($rolActual, 'operador,usuario_comercial') && !str_contains($rolActual, 'usuario_comercial,operador'))
+                                    @if($rolActual !== 'usuario_comercial' && $rolActual !== 'operador' && !str_contains($rolActual, 'operador,usuario_comercial') && !str_contains($rolActual, 'usuario_comercial,operador'))
                                     <th class="p-2 text-center bg-red-100/60 text-red-900 w-24">Cajas Rec.</th>
                                     <th class="p-2 text-center bg-red-100/60 text-red-900 w-28">Kg Rec.</th>
-                                @endif
+                                    @endif
+                                    <th class="p-3 w-12 text-center">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="body-nacionales" class="divide-y divide-gray-200 bg-white">
+                                <!-- Las filas múltiples se agregan dinámicamente con JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
+                        <button type="button" onclick="agregarRenglonNacional()" class="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                            <i class="fa-solid fa-plus"></i> Agregar Entrada Nacional
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR 2: FORMULARIO INDIVIDUAL DE RECHAZO OPERATIVO (INTACTO) -->
+                <div id="contenedor-captura-individual-rechazo" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dueño del Sector</label>
+                        <select name="productor_id" id="productor_select" onchange="filtrarDatosPorOperador()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
+                            <option value="" disabled selected>-- Selecciona un dueño --</option>
+                            @foreach($productores as $productor)
+                            <option value="{{ $productor->id }}" data-sectores='{!! json_encode($productor->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}'>
+                                {{ $productor->name }}
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div id="contenedor-embarque-origen" class="hidden mt-3 drop-shadow-sm">
+                        <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Embarque de Exportación de Origen (Rastreo)</label>
+                        <select name="recepcion_exportacion_id" id="recepcion_exportacion_select" class="w-full border border-blue-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-blue-50/40 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium">
+                            <option value="" selected>-- Selecciona el embarque origen --</option>
+                            @foreach($embarquesExportacion as $embarque)
+                            <option class="opcion-embarque hidden" value="{{ $embarque->id }}" data-operador="{{ $embarque->productor_id }}" data-fecha="{{ $embarque->fecha_exportacion }}">
+                                Fecha: {{ \Carbon\Carbon::parse($embarque->fecha_exportacion)->format('d/m/Y') }} — Cajas Env: {{ $embarque->cajas_exportacion }} (Semana #{{ $embarque->semana_exportacion }})
+                            </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div id="contenedor-sector-registro" class="hidden mt-3">
+                        <label class="block text-xs font-bold text-amber-700 uppercase mb-1">Invernadero y Sector</label>
+                        <select name="sector_registro" id="sector_registro_select" class="w-full border border-amber-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-amber-50/50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium">
+                        </select>
+                    </div>
+
+                    <hr class="border-gray-200 my-2">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        @if($rolActual !== 'usuario_rechazo')
+                        <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
+                            <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
+                                <i class="fa-solid fa-basket-shopping"></i> Comercializar
+                            </h4>
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">Cajas Comerciales</label>
+                                <input type="number" name="cajas_comercializar" id="cajas_com" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">Peso Comercial (Kg)</label>
+                                <input type="number" name="peso_comercializar" id="peso_com" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
+                            </div>
+                        </div>
+                        @endif
+
+                        @if($rolActual !== 'usuario_comercial' && $rolActual !== 'operador' && !str_contains($rolActual, 'operador,usuario_comercial') && !str_contains($rolActual, 'usuario_comercial,operador'))
+                        <div class="space-y-3 bg-red-50/40 p-4 rounded-xl border border-red-100">
+                            <h4 class="text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-1">
+                                <i class="fa-solid fa-ban"></i> Procesado (Rechazo)
+                            </h4>
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">Cajas de Rechazo</label>
+                                <input type="number" name="cajas_rechazo_procesado" id="cajas_rec" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-600 mb-1">Peso Rechazo (Kg)</label>
+                                <input type="number" name="peso_rechazo_procesado" id="peso_rec" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
+                            </div>
+                        </div>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Botones Generales de Envío -->
+                <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
+                    <button type="button" onclick="cerrarModalNacional()" class="px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
+                    <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- MODAL EXPORTACIÓN -->
+    <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4">
+        <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl mx-auto overflow-hidden my-auto max-h-[90vh] flex flex-col">
+
+            <!-- Encabezado -->
+            <div class="bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shrink-0">
+                <h3 class="text-base sm:text-lg font-bold flex items-center gap-2">
+                    <i class="fa-solid fa-plane-departure"></i> Registrar Exportación
+                </h3>
+                <button type="button" onclick="cerrarModalExportacion()" class="text-white/80 hover:text-white text-xl cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form action="{{ route('recepcion.storeExportacion') }}" method="POST" class="p-4 sm:p-6 space-y-4 overflow-y-auto">
+                @csrf
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
+                        <input type="number" name="semana_exportacion" id="semana_exportacion_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha de Envío</label>
+                        <input type="text" name="fecha_exportacion" id="fecha_exportacion_input" placeholder="Seleccione la fecha..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+                    </div>
+                </div>
+
+                <!-- Tabla dinámica con scroll horizontal en móviles -->
+                <div class="overflow-x-auto max-h-64 border border-gray-200 rounded-xl mt-3 shadow-inner">
+                    <table class="w-full text-left text-sm min-w-[650px]">
+                        <thead class="bg-blue-50 text-blue-900 font-bold uppercase text-xs sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 min-w-[180px]">Dueño del Sector</th>
+                                <th class="p-3 min-w-[200px]">Invernadero y Sector</th>
+                                <th class="p-3 w-28">Cajas</th>
+                                <th class="p-3 w-32">Peso (Kg)</th>
                                 <th class="p-3 w-12 text-center">Acción</th>
                             </tr>
                         </thead>
-                        <tbody id="body-nacionales" class="divide-y divide-gray-200 bg-white">
-                            <!-- Las filas múltiples se agregan dinámicamente con JS -->
+                        <tbody id="body-embarques" class="divide-y divide-gray-200 bg-white">
+                            <!-- Las filas se cargan vía JavaScript -->
                         </tbody>
                     </table>
                 </div>
 
+                <!-- Botones adaptados a móvil -->
                 <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
-                    <button type="button" onclick="agregarRenglonNacional()" class="w-full sm:w-auto px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                        <i class="fa-solid fa-plus"></i> Agregar Entrada Nacional
+                    <button type="button" onclick="agregarRenglonEmbarque()" class="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-sm">
+                        <i class="fa-solid fa-plus"></i> Agregar Embarque
                     </button>
-                </div>
-            </div>
 
-            <!-- CONTENEDOR 2: FORMULARIO INDIVIDUAL DE RECHAZO OPERATIVO (INTACTO) -->
-            <div id="contenedor-captura-individual-rechazo" class="hidden space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Dueño del Sector</label>
-                    <select name="productor_id" id="productor_select" onchange="filtrarDatosPorOperador()" class="w-full border border-gray-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-white focus:border-amber-500 focus:ring-1 focus:ring-amber-500">
-                        <option value="" disabled selected>-- Selecciona un dueño --</option>
-                        @foreach($productores as $productor)
-                        <option value="{{ $productor->id }}" data-sectores='{!! json_encode($productor->sectorCaracteristicas->map(fn($s) => ["invernadero" => $s->invernadero, "sector" => $s->sector])) !!}'>
-                            {{ $productor->name }}
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div id="contenedor-embarque-origen" class="hidden mt-3 drop-shadow-sm">
-                    <label class="block text-xs font-bold text-blue-700 uppercase mb-1">Embarque de Exportación de Origen (Rastreo)</label>
-                    <select name="recepcion_exportacion_id" id="recepcion_exportacion_select" class="w-full border border-blue-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-blue-50/40 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 font-medium">
-                        <option value="" selected>-- Selecciona el embarque origen --</option>
-                        @foreach($embarquesExportacion as $embarque)
-                        <option class="opcion-embarque hidden" value="{{ $embarque->id }}" data-operador="{{ $embarque->productor_id }}" data-fecha="{{ $embarque->fecha_exportacion }}">
-                            Fecha: {{ \Carbon\Carbon::parse($embarque->fecha_exportacion)->format('d/m/Y') }} — Cajas Env: {{ $embarque->cajas_exportacion }} (Semana #{{ $embarque->semana_exportacion }})
-                        </option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div id="contenedor-sector-registro" class="hidden mt-3">
-                    <label class="block text-xs font-bold text-amber-700 uppercase mb-1">Invernadero y Sector</label>
-                    <select name="sector_registro" id="sector_registro_select" class="w-full border border-amber-300 rounded-lg p-2.5 text-sm outline-none text-gray-800 bg-amber-50/50 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 font-medium">
-                    </select>
-                </div>
-
-                <hr class="border-gray-200 my-2">
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    @if($rolActual !== 'usuario_rechazo')
-                    <div class="space-y-3 bg-emerald-50/40 p-4 rounded-xl border border-emerald-100">
-                        <h4 class="text-xs font-bold text-emerald-800 uppercase tracking-wider flex items-center gap-1">
-                            <i class="fa-solid fa-basket-shopping"></i> Comercializar
-                        </h4>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Cajas Comerciales</label>
-                            <input type="number" name="cajas_comercializar" id="cajas_com" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Peso Comercial (Kg)</label>
-                            <input type="number" name="peso_comercializar" id="peso_com" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 bg-white">
-                        </div>
+                    <div class="flex w-full sm:w-auto justify-end gap-2 sm:gap-3">
+                        <button type="button" onclick="cerrarModalExportacion()" class="flex-1 sm:flex-none px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
+                        <button type="submit" class="flex-1 sm:flex-none px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Embarque(s)</button>
                     </div>
-                    @endif
-
-                    @if($rolActual !== 'usuario_comercial' && $rolActual !== 'operador' && !str_contains($rolActual, 'operador,usuario_comercial') && !str_contains($rolActual, 'usuario_comercial,operador'))
-                    <div class="space-y-3 bg-red-50/40 p-4 rounded-xl border border-red-100">
-                        <h4 class="text-xs font-bold text-red-800 uppercase tracking-wider flex items-center gap-1">
-                            <i class="fa-solid fa-ban"></i> Procesado (Rechazo)
-                        </h4>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Cajas de Rechazo</label>
-                            <input type="number" name="cajas_rechazo_procesado" id="cajas_rec" placeholder="0" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none font-semibold text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
-                        </div>
-                        <div>
-                            <label class="block text-xs text-gray-600 mb-1">Peso Rechazo (Kg)</label>
-                            <input type="number" name="peso_rechazo_procesado" id="peso_rec" placeholder="0.00" step="0.01" min="0" oninput="calcularTotalesNacional()" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-white">
-                        </div>
-                    </div>
-                    @endif
                 </div>
-            </div>
-
-            <!-- Botones Generales de Envío -->
-            <div class="flex justify-end gap-3 pt-4 border-t border-gray-100 sticky bottom-0 bg-white z-10">
-                <button type="button" onclick="cerrarModalNacional()" class="px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
-                <button type="submit" class="px-5 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Registro</button>
-            </div>
-        </form>
-    </div>
-</div>
-    <!-- MODAL EXPORTACIÓN -->
- <div id="modal-exportacion" class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm hidden items-center justify-center z-50 p-2 sm:p-4">
-    <div class="bg-white rounded-2xl shadow-xl border border-gray-200 w-full max-w-4xl mx-auto overflow-hidden my-auto max-h-[90vh] flex flex-col">
-        
-        <!-- Encabezado -->
-        <div class="bg-blue-600 text-white px-4 sm:px-6 py-3 sm:py-4 flex justify-between items-center shrink-0">
-            <h3 class="text-base sm:text-lg font-bold flex items-center gap-2">
-                <i class="fa-solid fa-plane-departure"></i> Registrar Exportación
-            </h3>
-            <button type="button" onclick="cerrarModalExportacion()" class="text-white/80 hover:text-white text-xl cursor-pointer">
-                <i class="fa-solid fa-xmark"></i>
-            </button>
+            </form>
         </div>
-
-        <form action="{{ route('recepcion.storeExportacion') }}" method="POST" class="p-4 sm:p-6 space-y-4 overflow-y-auto">
-            @csrf
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Semana #</label>
-                    <input type="number" name="semana_exportacion" id="semana_exportacion_input" readonly placeholder="Auto" class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-500 bg-gray-100 font-bold cursor-not-allowed">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Fecha de Envío</label>
-                    <input type="text" name="fecha_exportacion" id="fecha_exportacion_input" placeholder="Seleccione la fecha..." required class="w-full border border-gray-300 rounded-lg p-2 text-sm outline-none text-gray-800 bg-gray-50 focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
-                </div>
-            </div>
-
-            <!-- Tabla dinámica con scroll horizontal en móviles -->
-            <div class="overflow-x-auto max-h-64 border border-gray-200 rounded-xl mt-3 shadow-inner">
-                <table class="w-full text-left text-sm min-w-[650px]">
-                    <thead class="bg-blue-50 text-blue-900 font-bold uppercase text-xs sticky top-0 z-10">
-                        <tr>
-                            <th class="p-3 min-w-[180px]">Dueño del Sector</th>
-                            <th class="p-3 min-w-[200px]">Invernadero y Sector</th>
-                            <th class="p-3 w-28">Cajas</th>
-                            <th class="p-3 w-32">Peso (Kg)</th>
-                            <th class="p-3 w-12 text-center">Acción</th>
-                        </tr>
-                    </thead>
-                    <tbody id="body-embarques" class="divide-y divide-gray-200 bg-white">
-                        <!-- Las filas se cargan vía JavaScript -->
-                    </tbody>
-                </table>
-            </div>
-
-            <!-- Botones adaptados a móvil -->
-            <div class="flex flex-col sm:flex-row justify-between items-center gap-3 pt-2">
-                <button type="button" onclick="agregarRenglonEmbarque()" class="w-full sm:w-auto px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-lg transition flex items-center justify-center gap-2 cursor-pointer shadow-sm">
-                    <i class="fa-solid fa-plus"></i> Agregar Embarque
-                </button>
-
-                <div class="flex w-full sm:w-auto justify-end gap-2 sm:gap-3">
-                    <button type="button" onclick="cerrarModalExportacion()" class="flex-1 sm:flex-none px-4 py-2 border border-gray-300 rounded-lg text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-100 transition cursor-pointer">Cancelar</button>
-                    <button type="submit" class="flex-1 sm:flex-none px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs sm:text-sm font-bold rounded-lg transition shadow cursor-pointer">Guardar Embarque(s)</button>
-                </div>
-            </div>
-        </form>
     </div>
-</div>
 
     <!-- MODAL RESTITUIDAS -->
     <div id="modalRestituidas" class="fixed inset-0 z-50 hidden overflow-y-auto bg-gray-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -761,18 +762,20 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
-   <script>
+    <script>
         let modoCaptura = 'recepcion';
 
         // Variable global para alimentar los selects de productores en la captura masiva
-        const productoresGlobal = {!! json_encode($productores->map(fn($p) => [
-            'id' => $p->id,
-            'name' => $p->name,
-            'sectores' => $p->sectorCaracteristicas->map(fn($s) => [
-                'invernadero' => $s->invernadero,
-                'sector' => $s->sector
-            ])
-        ])) !!};
+        const productoresGlobal = {
+            !!json_encode($productores - > map(fn($p) => [
+                'id' => $p - > id,
+                'name' => $p - > name,
+                'sectores' => $p - > sectorCaracteristicas - > map(fn($s) => [
+                    'invernadero' => $s - > invernadero,
+                    'sector' => $s - > sector
+                ])
+            ])) !!
+        };
 
         let contadorFilasEmbarque = 0;
         let contadorFilasNacional = 0;
