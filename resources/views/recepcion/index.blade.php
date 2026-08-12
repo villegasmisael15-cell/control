@@ -723,16 +723,14 @@
         let modoCaptura = 'recepcion';
 
         // Variable global para alimentar los selects de productores en la captura masiva
-        const productoresGlobal = @json($productores->map(function($p) {
-            return [
-                'id' => $p->id,
-                'name' => $p->name,
-                'sectores' => $p->sectorCaracteristicas->map(fn($s) => [
-                    'invernadero' => $s->invernadero,
-                    'sector' => $s->sector
-                ])
-            ];
-        }));
+        const productoresGlobal = {!! json_encode($productores->map(fn($p) => [
+    'id' => $p->id,
+    'name' => $p->name,
+    'sectores' => $p->sectorCaracteristicas->map(fn($s) => [
+        'invernadero' => $s->invernadero,
+        'sector' => $s->sector
+    ])
+])) !!};
 
         let contadorFilasEmbarque = 0;
 
