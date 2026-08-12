@@ -13,12 +13,14 @@ use App\Models\OperadorSector;
 
 class MonitoreoClimaRiegoController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
     {
         $query = MonitoreoClimaRiego::with('user')->orderBy('fecha', 'desc');
         $user = auth()->user();
 
         if (in_array($user->rol, ['administrador', 'admin_general'])) {
+            
+            // 1. ADMINISTRADORES: Ven absolutamente todo con búsqueda
             if ($request->filled('buscar_termino')) {
                 $termino = $request->input('buscar_termino');
                 $query->where(function ($q) use ($termino) {
@@ -29,41 +31,59 @@ class MonitoreoClimaRiegoController extends Controller
                         });
                 });
             }
+
         } elseif ($user->rol === 'dueno') {
-            $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
-                ->get()
-                ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
+            
+            // 2. DUEÑO: Solo ve los registros de sus propios sectores y sus propios operadores
+            $sectoresDueno = SectorCaracteristica::where('user_id', $user->id)
+                ->get(['invernadero', 'sector']);
 
-            $query->where(function ($q) use ($sectoresDueño) {
-                foreach ($sectoresDueño as $par) {
-                    $q->orWhere(function ($sub) use ($par) {
-                        $sub->where('invernadero', $par['invernadero'])
-                            ->where('sector', $par['sector']);
-                    });
-                }
-                if ($sectoresDueño->isEmpty()) {
-                    $q->whereRaw('1 = 0');
-                }
-            });
-     } elseif (str_contains($user->rol, 'operador')) {
-            // El operador ve todos los registros de los sectores que tiene asignados
+            if ($sectoresDueno->isEmpty()) {
+                $query->whereRaw('1 = 0'); // Si no tiene sectores, no ve nada
+            } else {
+                // Filtramos por Sus Sectores + Sus Operadores (o su propio registro)
+                $idsOperadores = User::where('dueno_id', $user->id)->pluck('id')->push($user->id);
+
+                $query->whereIn('user_id', $idsOperadores)
+                      ->where(function ($q) use ($sectoresDueno) {
+                          foreach ($sectoresDueno as $par) {
+                              $q->orWhere(function ($sub) use ($par) {
+                                  $sub->where('invernadero', trim($par->invernadero))
+                                      ->where('sector', trim($par->sector));
+                              });
+                          }
+                      });
+            }
+
+        } elseif (str_contains($user->rol, 'operador')) {
+            
+            // 3. OPERADOR: Ve únicamente los sectores asignados que pertenecen A SU DUEÑO VINCULADO
+            $duenoId = $user->dueno_id; // ID del dueño al que pertenece el operador
+
             $sectoresOperador = OperadorSector::where('user_id', $user->id)
-                ->get()
-                ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
+                ->get(['invernadero', 'sector']);
 
-            $query->where(function ($queryPrincipal) use ($sectoresOperador) {
-                foreach ($sectoresOperador as $par) {
-                    $queryPrincipal->orWhere(function ($sub) use ($par) {
-                        $sub->where('invernadero', $par['invernadero'])
-                            ->where('sector', $par['sector']);
-                    });
-                }
-                if ($sectoresOperador->isEmpty()) {
-                    $queryPrincipal->whereRaw('1 = 0');
-                }
-            });
+            if ($sectoresOperador->isEmpty() || !$duenoId) {
+                $query->whereRaw('1 = 0'); // Si no tiene asignaciones, no ve nada
+            } else {
+                // Obtenemos todos los IDs que pertenecen a este mismo dueño
+                $idsMismoDueno = User::where('dueno_id', $duenoId)->pluck('id')->push($duenoId);
+
+                $query->whereIn('user_id', $idsMismoDueno)
+                      ->where(function ($queryPrincipal) use ($sectoresOperador) {
+                          foreach ($sectoresOperador as $par) {
+                              $queryPrincipal->orWhere(function ($sub) use ($par) {
+                                  $sub->where('invernadero', trim($par->invernadero))
+                                      ->where('sector', trim($par->sector));
+                              });
+                          }
+                      });
+            }
         }
 
+        // ==========================================
+        // FILTROS DE FECHA (SEMANA / MES) INTACTOS
+        // ==========================================
         $semana = $request->input('semana');
         $mes = $request->input('mes');
 
@@ -100,7 +120,6 @@ class MonitoreoClimaRiegoController extends Controller
 
         return view('monitoreo.index', compact('monitoreos'));
     }
-
     public function create()
     {
         $user = auth()->user();
