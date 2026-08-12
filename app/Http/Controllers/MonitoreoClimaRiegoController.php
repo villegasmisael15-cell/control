@@ -20,7 +20,7 @@ class MonitoreoClimaRiegoController extends Controller
 
         if (in_array($user->rol, ['administrador', 'admin_general'])) {
             
-            // 1. ADMINISTRADORES: Ven absolutamente todo con búsqueda
+            // 1. ADMINISTRADORES
             if ($request->filled('buscar_termino')) {
                 $termino = $request->input('buscar_termino');
                 $query->where(function ($q) use ($termino) {
@@ -34,55 +34,45 @@ class MonitoreoClimaRiegoController extends Controller
 
         } elseif ($user->rol === 'dueno') {
             
-            // 2. DUEÑO: Solo ve los registros de sus propios sectores y sus propios operadores
+            // 2. DUEÑO: Ve los registros de los sectores registrados a su user_id
             $sectoresDueno = SectorCaracteristica::where('user_id', $user->id)
                 ->get(['invernadero', 'sector']);
 
             if ($sectoresDueno->isEmpty()) {
-                $query->whereRaw('1 = 0'); // Si no tiene sectores, no ve nada
+                $query->whereRaw('1 = 0');
             } else {
-                // Filtramos por Sus Sectores + Sus Operadores (o su propio registro)
-                $idsOperadores = User::where('dueno_id', $user->id)->pluck('id')->push($user->id);
-
-                $query->whereIn('user_id', $idsOperadores)
-                      ->where(function ($q) use ($sectoresDueno) {
-                          foreach ($sectoresDueno as $par) {
-                              $q->orWhere(function ($sub) use ($par) {
-                                  $sub->where('invernadero', trim($par->invernadero))
-                                      ->where('sector', trim($par->sector));
-                              });
-                          }
-                      });
+                $query->where(function ($q) use ($sectoresDueno) {
+                    foreach ($sectoresDueno as $par) {
+                        $q->orWhere(function ($sub) use ($par) {
+                            $sub->where('invernadero', trim($par->invernadero))
+                                ->where('sector', trim($par->sector));
+                        });
+                    }
+                });
             }
 
         } elseif (str_contains($user->rol, 'operador')) {
             
-            // 3. OPERADOR: Ve únicamente los sectores asignados que pertenecen A SU DUEÑO VINCULADO
-            $duenoId = $user->dueno_id; // ID del dueño al que pertenece el operador
-
+            // 3. OPERADOR: Ve los registros de sus sectores asignados en OperadorSector
             $sectoresOperador = OperadorSector::where('user_id', $user->id)
                 ->get(['invernadero', 'sector']);
 
-            if ($sectoresOperador->isEmpty() || !$duenoId) {
-                $query->whereRaw('1 = 0'); // Si no tiene asignaciones, no ve nada
+            if ($sectoresOperador->isEmpty()) {
+                $query->whereRaw('1 = 0');
             } else {
-                // Obtenemos todos los IDs que pertenecen a este mismo dueño
-                $idsMismoDueno = User::where('dueno_id', $duenoId)->pluck('id')->push($duenoId);
-
-                $query->whereIn('user_id', $idsMismoDueno)
-                      ->where(function ($queryPrincipal) use ($sectoresOperador) {
-                          foreach ($sectoresOperador as $par) {
-                              $queryPrincipal->orWhere(function ($sub) use ($par) {
-                                  $sub->where('invernadero', trim($par->invernadero))
-                                      ->where('sector', trim($par->sector));
-                              });
-                          }
-                      });
+                $query->where(function ($queryPrincipal) use ($sectoresOperador) {
+                    foreach ($sectoresOperador as $par) {
+                        $queryPrincipal->orWhere(function ($sub) use ($par) {
+                            $sub->where('invernadero', trim($par->invernadero))
+                                ->where('sector', trim($par->sector));
+                        });
+                    }
+                });
             }
         }
 
         // ==========================================
-        // FILTROS DE FECHA (SEMANA / MES) INTACTOS
+        // FILTROS DE FECHA (SEMANA / MES)
         // ==========================================
         $semana = $request->input('semana');
         $mes = $request->input('mes');
