@@ -15,7 +15,7 @@ class RecepcionController extends Controller
     /**
      * Muestra la pantalla principal con las tablas filtradas por semana y restricciones de dueño.
      */
-   public function index(Request $request)
+  public function index(Request $request)
     {
         $semanaInput = $request->filled('semana') ? $request->semana : date('Y-\WW');
         $partes = explode('-W', $semanaInput);
@@ -32,12 +32,26 @@ class RecepcionController extends Controller
             ->orderBy('name', 'asc')
             ->get();
 
+        // Mapeo seguro en PHP para enviar a JavaScript sin errores de compilación en Blade
+        $productoresFormatted = $productores->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'sectores' => $p->sectorCaracteristicas->map(function ($s) {
+                    return [
+                        'invernadero' => $s->invernadero,
+                        'sector' => $s->sector,
+                    ];
+                })->values()->toArray(),
+            ];
+        })->values()->toArray();
+
         // Consultas base
         $nacionalQuery = RecepcionNacional::with(['productor']);
         $exportacionQuery = RecepcionExportacion::with(['productor']);
         $pendientesQuery = RecepcionExportacion::with(['productor'])->where('pendientes', '>', 0);
 
-        // RESTRICCIÓN POR ROL: Si es un dueño puro (que no sea admin), filtra estrictamente por sus sectores.
+        // RESTRICCIÓN POR ROL: Si es un dueño puro (que no sea admin), filtra strictly por sus sectores.
         // Si es administrador (incluso participativo), NO se le restringe nada y ve todo.
         if ($user->rol === 'dueno' && !str_contains($user->rol, 'administrador')) {
             $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
@@ -89,6 +103,7 @@ class RecepcionController extends Controller
             'recepcionesNacionales'      => $recepcionesNacionales,
             'recepcionesExportaciones'   => $recepcionesExportaciones,
             'productores'                => $productores,
+            'productoresFormatted'       => $productoresFormatted,
             'embarquesExportacion'       => $embarquesExportacion,
             'embarquesPendientesDeCajas' => $embarquesPendientesDeCajas,
             'semanaActiva'               => $semanaInput,
