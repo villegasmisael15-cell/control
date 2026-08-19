@@ -43,16 +43,15 @@ class RegisteredUserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
-        
         // 1. Validación adaptada a los roles y requerimientos
         $request->validate([
-            'name'                  => ['required', 'string', 'max:255'],
-            'email'                 => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-            'password'              => ['required', 'confirmed', Rules\Password::defaults()],
-            'rol'                   => ['required', 'string', 'in:dueno,operador,usuario_comercial,usuario_rechazo'],
-            'dueno_id'              => ['required_if:rol,operador', 'nullable', 'exists:users,id'],
-            'seleccion_sectores'    => ['required_if:rol,operador', 'nullable', 'array'],
-            'invernaderos_dueno'    => ['required_if:rol,dueno', 'nullable', 'array'],
+            'name'                => ['required', 'string', 'max:255'],
+            'email'               => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
+            'password'            => ['required', 'confirmed', Rules\Password::defaults()],
+            'rol'                 => ['required', 'string', 'in:dueno,operador,usuario_comercial,usuario_rechazo'],
+            'dueno_id'            => ['required_if:rol,operador', 'nullable', 'exists:users,id'],
+            'seleccion_sectores'  => ['required_if:rol,operador', 'nullable', 'array'],
+            'invernaderos_dueno'  => ['required_if:rol,dueno', 'nullable', 'array'],
         ]);
 
         // 2. Creación del usuario con su respectivo rol
@@ -63,7 +62,7 @@ class RegisteredUserController extends Controller
             'rol'      => $request->rol,
         ]);
 
-        // 3. Si el usuario es DUEÑO, guardamos TODOS sus invernaderos y sectores sin omitir ninguno
+        // 3. Si el usuario es DUEÑO, guardamos sus invernaderos y sectores de forma segura
         if ($request->rol === 'dueno' && $request->has('invernaderos_dueno')) {
             foreach ($request->invernaderos_dueno as $inv) {
                 $nombreInvernadero = trim($inv['nombre'] ?? '');
@@ -78,12 +77,17 @@ class RegisteredUserController extends Controller
                         if (!empty($limpio)) {
                             $sectorFormateado = (stripos($limpio, 'Sector') === false) ? 'Sector ' . $limpio : $limpio;
 
-                            SectorCaracteristica::create([
-                                'user_id'     => $user->id,
-                                'invernadero' => $nombreInvernadero,
-                                'sector'      => $sectorFormateado,
-                                'variedad'    => null, 
-                            ]);
+                            // firstOrCreate evita duplicados y respeta la combinación (user_id, invernadero, sector)
+                            SectorCaracteristica::firstOrCreate(
+                                [
+                                    'user_id'     => $user->id,
+                                    'invernadero' => $nombreInvernadero,
+                                    'sector'      => $sectorFormateado,
+                                ],
+                                [
+                                    'variedad'    => null,
+                                ]
+                            );
                         }
                     }
                 }
@@ -98,7 +102,7 @@ class RegisteredUserController extends Controller
                     $invernadero = trim($partes[0]);
                     $sector = trim($partes[1]);
 
-                    OperadorSector::create([
+                    OperadorSector::firstOrCreate([
                         'user_id'     => $user->id,
                         'dueno_id'    => $request->dueno_id,
                         'invernadero' => $invernadero,
