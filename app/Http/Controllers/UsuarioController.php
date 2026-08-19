@@ -148,8 +148,10 @@ class UsuarioController extends Controller
     }
 
     // Eliminar un usuario permanentemente
-   public function destroy(User $user): RedirectResponse
+   public function destroy($id): RedirectResponse
     {
+        $user = User::findOrFail($id);
+
         // 1. Verificación de permisos de administrador
         $rolAdmin = auth()->user()->rol;
         if (!str_contains($rolAdmin, 'admin') && !str_contains($rolAdmin, 'administrador')) {
@@ -158,16 +160,15 @@ class UsuarioController extends Controller
 
         // 2. Prevenir autoeliminación
         if (auth()->id() === $user->id) {
-            return back()->with('error', 'No puedes eliminar tu propia cuenta de administrador.');
+            return back()->with('error', 'No puedes eliminar tu propia cuenta.');
         }
 
         DB::beginTransaction();
 
         try {
-            // Desactivar temporalmente revisión de foreign keys para evitar bloqueos
             DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-            // Limpiar relaciones directas
+            // Limpiar sectores relacionados
             DB::table('sector_caracteristicas')->where('user_id', $user->id)->delete();
             DB::table('operador_sectores')->where('user_id', $user->id)->orWhere('dueno_id', $user->id)->delete();
 
@@ -175,9 +176,7 @@ class UsuarioController extends Controller
             $nombreEliminado = $user->name;
             $user->delete();
 
-            // Reactivar revisión de foreign keys
             DB::statement('SET FOREIGN_KEY_CHECKS=1;');
-
             DB::commit();
 
             return redirect()->route('usuarios.index')->with('success', "El usuario {$nombreEliminado} fue eliminado correctamente.");

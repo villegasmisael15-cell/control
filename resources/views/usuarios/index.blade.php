@@ -13,13 +13,11 @@
 
     <nav class="bg-emerald-600 text-white shadow-md">
         <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
-            <!-- Logotipo compacto -->
             <div class="flex items-center min-w-0">
                 <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
                 <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
             </div>
 
-            <!-- Acciones adaptadas con truncamiento de texto -->
             <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
                 <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
                     <i class="fa-solid fa-user text-[10px]"></i>
@@ -63,9 +61,7 @@
                             <th class="py-4 px-6">Fecha de Registro</th>
                             <th class="py-4 px-6 text-center">Rol Actual</th>
                             <th class="py-4 px-6 text-center">Cambiar Permisos</th>
-                            @if(str_contains(auth()->user()->rol, 'admin'))
                             <th class="py-4 px-6 text-center">Acción</th>
-                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-gray-700 text-sm">
@@ -108,22 +104,21 @@
                                 @endif
                             </td>
 
-                            {{-- Botón de Eliminar que abre el Modal Personalizado --}}
-                            @if(str_contains(auth()->user()->rol, 'admin'))
                             <td class="py-4 px-6 text-center">
                                 @if(auth()->id() !== $user->id)
-                                <form id="form-delete-{{ $user->id }}" action="{{ route('usuarios.destroy', $user->id) }}" method="POST" class="inline-block">
+                                <button type="button" onclick="abrirModalModalDirecto({{ $user->id }}, '{{ addslashes($user->name) }}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition cursor-pointer" title="Eliminar Usuario">
+                                    <i class="fa-solid fa-trash-can text-sm"></i>
+                                </button>
+
+                                <!-- Formulario invisible específico para este usuario -->
+                                <form id="form-delete-user-{{ $user->id }}" action="{{ url('/usuarios/' . $user->id) }}" method="POST" class="hidden">
                                     @csrf
                                     @method('DELETE')
-                                    <button type="button" onclick="abrirModalEliminar('form-delete-{{ $user->id }}', '{{ addslashes($user->name) }}')" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition cursor-pointer" title="Eliminar Usuario">
-                                        <i class="fa-solid fa-trash-can text-sm"></i>
-                                    </button>
                                 </form>
                                 @else
                                 <span class="text-xs text-gray-400">-</span>
                                 @endif
                             </td>
-                            @endif
                         </tr>
                         @endforeach
                     </tbody>
@@ -132,9 +127,9 @@
         </div>
     </main>
 
-    <!-- MODAL PERSONALIZADO DE CONFIRMACIÓN -->
-    <div id="modalConfirmarEliminar" class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4 transition-opacity">
-        <div id="modalContenidoEliminar" class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md p-6 transform scale-95 opacity-0 transition-all duration-200 flex flex-col items-center text-center">
+    <!-- MODAL ELEGANTE DE CONFIRMACIÓN -->
+    <div id="modalConfirmarEliminar" class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs hidden items-center justify-center z-50 p-4">
+        <div id="modalContenidoEliminar" class="bg-white rounded-2xl shadow-2xl border border-gray-100 w-full max-w-md p-6 flex flex-col items-center text-center">
             
             <div class="w-14 h-14 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4 text-2xl shadow-inner">
                 <i class="fa-solid fa-triangle-exclamation"></i>
@@ -142,14 +137,14 @@
 
             <h3 class="text-lg font-bold text-gray-900">¿Eliminar usuario?</h3>
             <p class="text-gray-500 text-sm mt-2">
-                ¿Estás seguro de que deseas eliminar permanentemente a <span id="nombreUsuarioEliminar" class="font-bold text-gray-800"></span>? Esta acción no se puede deshacer.
+                ¿Estás seguro de que deseas eliminar permanentemente a <span id="nombreUsuarioModal" class="font-bold text-gray-800"></span>? Esta acción borrará sus accesos y sectores asignados.
             </p>
 
             <div class="flex items-center justify-center gap-3 w-full mt-6">
-                <button type="button" onclick="cerrarModalEliminar()" class="w-1/2 py-2.5 px-4 border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition cursor-pointer">
+                <button type="button" onclick="cerrarModalModalDirecto()" class="w-1/2 py-2.5 px-4 border border-gray-300 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition cursor-pointer">
                     Cancelar
                 </button>
-                <button type="button" id="btnConfirmarEliminar" class="w-1/2 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition shadow-md shadow-red-200 cursor-pointer">
+                <button type="button" onclick="ejecutarEliminacion()" class="w-1/2 py-2.5 px-4 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded-xl transition shadow-md shadow-red-200 cursor-pointer">
                     Sí, eliminar
                 </button>
             </div>
@@ -160,45 +155,35 @@
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
-    <!-- SCRIPT PARA CONTROLAR EL MODAL -->
     <script>
-        let formularioActivoId = null;
+        let idParaEliminar = null;
 
-        function abrirModalEliminar(formId, nombre) {
-            formularioActivoId = formId;
-            document.getElementById('nombreUsuarioEliminar').textContent = nombre;
+        function abrirModalModalDirecto(id, nombre) {
+            idParaEliminar = id;
+            document.getElementById('nombreUsuarioModal').textContent = nombre;
 
             const modal = document.getElementById('modalConfirmarEliminar');
-            const contenido = document.getElementById('modalContenidoEliminar');
-
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-
-            setTimeout(() => {
-                contenido.classList.remove('scale-95', 'opacity-0');
-                contenido.classList.add('scale-100', 'opacity-100');
-            }, 10);
         }
 
-        function cerrarModalEliminar() {
+        function cerrarModalModalDirecto() {
             const modal = document.getElementById('modalConfirmarEliminar');
-            const contenido = document.getElementById('modalContenidoEliminar');
-
-            contenido.classList.remove('scale-100', 'opacity-100');
-            contenido.classList.add('scale-95', 'opacity-0');
-
-            setTimeout(() => {
-                modal.classList.remove('flex');
-                modal.classList.add('hidden');
-                formularioActivoId = null;
-            }, 200);
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+            idParaEliminar = null;
         }
 
-        document.getElementById('btnConfirmarEliminar').addEventListener('click', function() {
-            if (formularioActivoId) {
-                document.getElementById(formularioActivoId).submit();
+        function ejecutarEliminacion() {
+            if (idParaEliminar) {
+                const formulario = document.getElementById('form-delete-user-' + idParaEliminar);
+                if (formulario) {
+                    formulario.submit();
+                } else {
+                    alert('Error al localizar el formulario del usuario.');
+                }
             }
-        });
+        }
     </script>
 
 </body>
