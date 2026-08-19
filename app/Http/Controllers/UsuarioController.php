@@ -148,15 +148,15 @@ class UsuarioController extends Controller
     }
 
     // Eliminar un usuario permanentemente
-    public function destroy(User $user): RedirectResponse
+   public function destroy(User $user): RedirectResponse
     {
-        // 1. Verificamos que el usuario autenticado sea administrador
+        // 1. Verificación de permisos de administrador
         $rolAdmin = auth()->user()->rol;
         if (!str_contains($rolAdmin, 'admin') && !str_contains($rolAdmin, 'administrador')) {
             abort(403, 'No tienes permisos de administrador para realizar esta acción.');
         }
 
-        // 2. Bloqueamos la autoeliminación
+        // 2. Prevenir autoeliminación
         if (auth()->id() === $user->id) {
             return back()->with('error', 'No puedes eliminar tu propia cuenta de administrador.');
         }
@@ -164,25 +164,27 @@ class UsuarioController extends Controller
         DB::beginTransaction();
 
         try {
-            // 3. Limpiamos sus relaciones previas de sectores asignados/creados
-            if (method_exists($user, 'sectorCaracteristicas')) {
-                $user->sectorCaracteristicas()->delete();
-            }
+            // Desactivar temporalmente revisión de foreign keys para evitar bloqueos
+            DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-            if (method_exists($user, 'operadorSectores')) {
-                $user->operadorSectores()->delete();
-            }
+            // Limpiar relaciones directas
+            DB::table('sector_caracteristicas')->where('user_id', $user->id)->delete();
+            DB::table('operador_sectores')->where('user_id', $user->id)->orWhere('dueno_id', $user->id)->delete();
 
-            // 4. Eliminamos al usuario
+            // Eliminar al usuario
             $nombreEliminado = $user->name;
             $user->delete();
 
+            // Reactivar revisión de foreign keys
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
             DB::commit();
 
-            return back()->with('success', "El usuario {$nombreEliminado} fue eliminado correctamente del sistema.");
+            return redirect()->route('usuarios.index')->with('success', "El usuario {$nombreEliminado} fue eliminado correctamente.");
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Ocurrió un error al eliminar el usuario: ' . $e->getMessage());
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+            return redirect()->route('usuarios.index')->with('error', 'Error al eliminar usuario: ' . $e->getMessage());
         }
     }
 }
