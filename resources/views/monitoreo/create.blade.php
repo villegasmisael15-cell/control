@@ -43,14 +43,17 @@
                                 @foreach($sectores as $item)
                                 <option value="{{ $item->sector }}"
                                     data-invernadero="{{ $item->invernadero }}"
+                                    data-dueno="{{ $item->user_id }}"
                                     data-macetas="{{ $item->macetas_por_gotero ?? 1 }}"
                                     {{ old('sector') == $item->sector ? 'selected' : '' }}>
                                     {{ $item->invernadero }} — {{ $item->sector }}
                                 </option>
                                 @endforeach
                             </select>
-                            <!-- Campo oculto que enviará el invernadero -->
+
+                            <!-- Campos ocultos -->
                             <input type="hidden" name="invernadero" id="invernadero_hidden" value="{{ old('invernadero') }}">
+                            <input type="hidden" name="dueno_id" id="dueno_id_hidden" value="{{ old('dueno_id') }}">
                         </div>
                         @error('sector')
                         <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
@@ -359,7 +362,10 @@
         function actualizarInvernadero(selectElement) {
             const selectedOption = selectElement.options[selectElement.selectedIndex];
             const invernadero = selectedOption.getAttribute('data-invernadero') || '';
+            const duenoId = selectedOption.getAttribute('data-dueno') || '';
+
             document.getElementById('invernadero_hidden').value = invernadero;
+            document.getElementById('dueno_id_hidden').value = duenoId;
         }
 
         document.addEventListener("DOMContentLoaded", function() {

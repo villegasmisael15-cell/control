@@ -166,22 +166,24 @@ class MonitoreoClimaRiegoController extends Controller
                 }
             }
 
-            $idDuenoReal = $user->id;
-            if (!empty($sectorBuscado) && !empty($invernaderoBuscado)) {
-                $caracteristicaSector = SectorCaracteristica::where('sector', $sectorBuscado)
+            if ($user->rol === 'dueno') {
+                $idDuenoReal = $user->id;
+            } elseif ($request->filled('dueno_id')) {
+                $idDuenoReal = (int) $request->input('dueno_id');
+            } else {
+                $asignacion = OperadorSector::where('user_id', $user->id)
                     ->where('invernadero', $invernaderoBuscado)
+                    ->where('sector', $sectorBuscado)
                     ->first();
 
-                if ($caracteristicaSector && User::where('id', $caracteristicaSector->user_id)->exists()) {
-                    $idDuenoReal = $caracteristicaSector->user_id;
-                }
+                $idDuenoReal = $asignacion ? $asignacion->dueno_id : $user->id;
             }
 
             $request->merge([
                 'radiacion_hora' => now()->format('H:i:s'),
                 'user_id'        => $idDuenoReal
             ]);
-
+            
             $request->validate([
                 'fecha'                   => 'required|date',
                 'sector'                  => 'required|string|max:255',
