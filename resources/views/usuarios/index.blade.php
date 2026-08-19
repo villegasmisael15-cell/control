@@ -50,7 +50,7 @@
 
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800">Control de Usuarios y Accesos</h1>
-            <p class="text-gray-600 text-sm mt-1">Asigna roles a los usuarios registrados para controlar sus privilegios de lectura y escritura.</p>
+            <p class="text-gray-600 text-sm mt-1">Asigna roles o elimina cuentas de usuarios para controlar los privilegios en la plataforma.</p>
         </div>
 
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
@@ -63,6 +63,9 @@
                             <th class="py-4 px-6">Fecha de Registro</th>
                             <th class="py-4 px-6 text-center">Rol Actual</th>
                             <th class="py-4 px-6 text-center">Cambiar Permisos</th>
+                            @if(str_contains(auth()->user()->rol, 'admin'))
+                            <th class="py-4 px-6 text-center">Acción</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-gray-700 text-sm">
@@ -71,40 +74,56 @@
                             <td class="py-4 px-6 font-medium text-gray-900">{{ $user->name }}</td>
                             <td class="py-4 px-6 text-gray-600">{{ $user->email }}</td>
                             <td class="py-4 px-6 text-gray-500">{{ $user->created_at->format('d/m/Y H:i') }}</td>
-                           <td class="py-4 px-6 text-center">
-    {{-- Colores dinámicos seguros con str_contains --}}
-    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
-        @if(str_contains($user->rol, 'administrador')) bg-purple-100 text-purple-800
-        @elseif(str_contains($user->rol, 'admin_general')) bg-indigo-100 text-indigo-800
-        @elseif(str_contains($user->rol, 'dueno')) bg-emerald-100 text-emerald-800
-        @elseif(str_contains($user->rol, 'operador') && str_contains($user->rol, 'usuario_comercial')) bg-teal-100 text-teal-800
-        @elseif(str_contains($user->rol, 'operador')) bg-blue-100 text-blue-800
-        @elseif(str_contains($user->rol, 'usuario_comercial')) bg-amber-100 text-amber-800
-        @elseif(str_contains($user->rol, 'usuario_rechazo')) bg-rose-100 text-rose-800
-        @else bg-gray-100 text-gray-800 @endif">
-        {{ strtoupper(str_replace('_', ' ', $user->rol)) }}
-    </span>
-</td>
-<td class="py-4 px-6 text-center">
-    @if(auth()->id() !== $user->id)
-    <form action="{{ route('usuarios.cambiarRol', $user->id) }}" method="POST" class="inline-flex">
-        @csrf
-        @method('PATCH')
+                            <td class="py-4 px-6 text-center">
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    @if(str_contains($user->rol, 'administrador')) bg-purple-100 text-purple-800
+                                    @elseif(str_contains($user->rol, 'admin_general')) bg-indigo-100 text-indigo-800
+                                    @elseif(str_contains($user->rol, 'dueno')) bg-emerald-100 text-emerald-800
+                                    @elseif(str_contains($user->rol, 'operador') && str_contains($user->rol, 'usuario_comercial')) bg-teal-100 text-teal-800
+                                    @elseif(str_contains($user->rol, 'operador')) bg-blue-100 text-blue-800
+                                    @elseif(str_contains($user->rol, 'usuario_comercial')) bg-amber-100 text-amber-800
+                                    @elseif(str_contains($user->rol, 'usuario_rechazo')) bg-rose-100 text-rose-800
+                                    @else bg-gray-100 text-gray-800 @endif">
+                                    {{ strtoupper(str_replace('_', ' ', $user->rol)) }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                @if(auth()->id() !== $user->id)
+                                <form action="{{ route('usuarios.cambiarRol', $user->id) }}" method="POST" class="inline-flex">
+                                    @csrf
+                                    @method('PATCH')
 
-        <select name="rol" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg p-1.5 cursor-pointer">
-            <option value="operador" {{ trim($user->rol) === 'operador' ? 'selected' : '' }}>Operador</option>
-            <option value="operador,usuario_comercial" {{ trim($user->rol) === 'operador,usuario_comercial' ? 'selected' : '' }}>Operador, Usuario Comercial</option>
-            <option value="usuario_comercial" {{ trim($user->rol) === 'usuario_comercial' ? 'selected' : '' }}>Usuario Comercial</option>
-            <option value="dueno" {{ trim($user->rol) === 'dueno' ? 'selected' : '' }}>Dueño</option>
-            <option value="administrador" {{ trim($user->rol) === 'administrador' ? 'selected' : '' }}>Admin Participativo</option>
-            <option value="admin_general" {{ trim($user->rol) === 'admin_general' ? 'selected' : '' }}>Admin General</option>
-            <option value="usuario_rechazo" {{ trim($user->rol) === 'usuario_rechazo' ? 'selected' : '' }}>Rechazo</option>
-        </select>
-    </form>
-    @else
-    <span class="text-xs text-gray-400 italic">Usuario Actual (Tú)</span>
-    @endif
-</td>
+                                    <select name="rol" onchange="this.form.submit()" class="bg-gray-50 border border-gray-300 text-gray-700 text-xs rounded-lg p-1.5 cursor-pointer">
+                                        <option value="operador" {{ trim($user->rol) === 'operador' ? 'selected' : '' }}>Operador</option>
+                                        <option value="operador,usuario_comercial" {{ trim($user->rol) === 'operador,usuario_comercial' ? 'selected' : '' }}>Operador, Usuario Comercial</option>
+                                        <option value="usuario_comercial" {{ trim($user->rol) === 'usuario_comercial' ? 'selected' : '' }}>Usuario Comercial</option>
+                                        <option value="dueno" {{ trim($user->rol) === 'dueno' ? 'selected' : '' }}>Dueño</option>
+                                        <option value="administrador" {{ trim($user->rol) === 'administrador' ? 'selected' : '' }}>Admin Participativo</option>
+                                        <option value="admin_general" {{ trim($user->rol) === 'admin_general' ? 'selected' : '' }}>Admin General</option>
+                                        <option value="usuario_rechazo" {{ trim($user->rol) === 'usuario_rechazo' ? 'selected' : '' }}>Rechazo</option>
+                                    </select>
+                                </form>
+                                @else
+                                <span class="text-xs text-gray-400 italic">Usuario Actual (Tú)</span>
+                                @endif
+                            </td>
+
+                            {{-- Botón de Eliminar exclusivo para Administradores --}}
+                            @if(str_contains(auth()->user()->rol, 'admin'))
+                            <td class="py-4 px-6 text-center">
+                                @if(auth()->id() !== $user->id)
+                                <form action="{{ route('usuarios.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('¿Estás seguro de que deseas eliminar permanentemente a {{ $user->name }}? Esta acción no se puede deshacer.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 p-2 rounded-lg transition cursor-pointer" title="Eliminar Usuario">
+                                        <i class="fa-solid fa-trash-can text-sm"></i>
+                                    </button>
+                                </form>
+                                @else
+                                <span class="text-xs text-gray-400">-</span>
+                                @endif
+                            </td>
+                            @endif
                         </tr>
                         @endforeach
                     </tbody>

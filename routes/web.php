@@ -143,6 +143,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/recepcion/exportacion/{id}', [RecepcionController::class, 'destroyExportacion'])->name('recepcion.destroyExportacion');
         Route::delete('/suelo/{id}', [SueloMonitoreoController::class, 'destroy'])->name('suelo.destroy');
         Route::delete('/sanidad/{id}', [SanidadNutricionBitacoraController::class, 'destroy'])->name('sanidad.destroy');
+   Route::delete('/usuarios/{user}', [UsuarioController::class, 'destroy']) ->name('usuarios.destroy') ->middleware(['auth']);
     });
 
 }); // Cierre correcto del middleware global group

@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\SectorCaracteristica;
+use App\Models\OperadorSector;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use App\Rules\SectorUnico;
+use Illuminate\Http\RedirectResponse;
 
 class UsuarioController extends Controller
 {
@@ -29,13 +31,13 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'                  => ['required', 'string', 'max:255'],
-            'email'                 => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password'              => ['required', 'string', 'min:8'],
-            'rol'                   => ['required', 'string', 'in:dueno,operador,usuario_comercial,usuario_rechazo,admin_general'],
-            'dueno_id'              => ['required_if:rol,operador', 'nullable', 'exists:users,id'],
-            'seleccion_sectores'    => ['required_if:rol,operador', 'nullable', 'array'],
-            'invernaderos_dueno'    => ['required_if:rol,dueno', 'nullable', 'array'],
+            'name'                => ['required', 'string', 'max:255'],
+            'email'               => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password'            => ['required', 'string', 'min:8'],
+            'rol'                 => ['required', 'string', 'in:dueno,operador,usuario_comercial,usuario_rechazo,admin_general,administrador,operador,usuario_comercial'],
+            'dueno_id'            => ['required_if:rol,operador', 'nullable', 'exists:users,id'],
+            'seleccion_sectores'  => ['required_if:rol,operador', 'nullable', 'array'],
+            'invernaderos_dueno'  => ['required_if:rol,dueno', 'nullable', 'array'],
         ]);
 
         DB::beginTransaction();
@@ -49,7 +51,7 @@ class UsuarioController extends Controller
                 'rol'      => $request->rol,
             ]);
 
-            // 2. Si el rol es DUEÑO, registramos sus invernaderos y sectores en sector_caracteristica
+            // 2. Si el rol es DUEÑO, registramos sus invernaderos y sectores en sector_caracteristica de forma segura
             if ($request->rol === 'dueno' && $request->has('invernaderos_dueno')) {
                 foreach ($request->invernaderos_dueno as $inv) {
                     $nombreInvernadero = trim($inv['nombre'] ?? '');
@@ -63,14 +65,19 @@ class UsuarioController extends Controller
                             if (!empty($limpio)) {
                                 $sectorFormateado = (stripos($limpio, 'Sector') === false) ? 'Sector ' . $limpio : $limpio;
 
-                                SectorCaracteristica::create([
-                                    'user_id'            => $user->id,
-                                    'invernadero'        => $nombreInvernadero,
-                                    'sector'             => $sectorFormateado,
-                                    'superficie_m2'      => 1,
-                                    'numero_plantas'     => 1,
-                                    'macetas_por_gotero' => 1,
-                                ]);
+                                SectorCaracteristica::firstOrCreate(
+                                    [
+                                        'user_id'     => $user->id,
+                                        'invernadero' => $nombreInvernadero,
+                                        'sector'      => $sectorFormateado,
+                                    ],
+                                    [
+                                        'superficie_m2'      => 1,
+                                        'numero_plantas'     => 1,
+                                        'macetas_por_gotero' => 1,
+                                        'variedad'           => null,
+                                    ]
+                                );
                             }
                         }
                     }
@@ -82,7 +89,7 @@ class UsuarioController extends Controller
                 foreach ($request->seleccion_sectores as $item) {
                     $partes = explode('|', $item);
                     if (count($partes) === 2) {
-                        \App\Models\OperadorSector::create([
+                        OperadorSector::firstOrCreate([
                             'user_id'     => $user->id,
                             'dueno_id'    => $request->dueno_id,
                             'invernadero' => trim($partes[0]),
@@ -106,37 +113,76 @@ class UsuarioController extends Controller
         $usuario = User::findOrFail($id);
 
         $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $id],
-            'rol' => ['required', 'string', 'in:dueno,operador,usuario_comercial,usuario_rechazo,admin_general'],
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $id],
+            'rol'      => ['required', 'string', 'in:dueno,operador,usuario_comercial,usuario_rechazo,admin_general,administrador,operador,usuario_comercial'],
             'sectores' => ['nullable', 'string', new SectorUnico($id)], 
         ]);
 
         $usuario->update([
-            'name' => $request->name,
+            'name'  => $request->name,
             'email' => $request->email,
-            'rol' => $request->rol,
+            'rol'   => $request->rol,
         ]);
 
         return redirect()->route('usuarios.index')->with('success', 'Usuario actualizado con éxito.');
     }
 
     // Cambiar el rol de un usuario
- public function cambiarRol(Request $request, $id)
-{
-    $request->validate([
-        'rol' => 'required|string',
-    ]);
+    public function cambiarRol(Request $request, $id)
+    {
+        $request->validate([
+            'rol' => 'required|string',
+        ]);
 
-    $usuario = User::findOrFail($id);
+        $usuario = User::findOrFail($id);
 
-    if ($usuario->id === auth()->id()) {
-        return redirect()->back()->with('error', 'No puedes cambiar tu propio rol.');
+        if ($usuario->id === auth()->id()) {
+            return redirect()->back()->with('error', 'No puedes cambiar tu propio rol.');
+        }
+
+        $usuario->rol = trim($request->rol);
+        $usuario->save();
+
+        return redirect()->route('usuarios.index')->with('success', 'El rol del usuario se actualizó con éxito.');
     }
 
-    $usuario->rol = trim($request->rol);
-    $usuario->save();
+    // Eliminar un usuario permanentemente
+    public function destroy(User $user): RedirectResponse
+    {
+        // 1. Verificamos que el usuario autenticado sea administrador
+        $rolAdmin = auth()->user()->rol;
+        if (!str_contains($rolAdmin, 'admin') && !str_contains($rolAdmin, 'administrador')) {
+            abort(403, 'No tienes permisos de administrador para realizar esta acción.');
+        }
 
-    return redirect()->route('usuarios.index')->with('success', 'El rol del usuario se actualizó con éxito.');
-}
+        // 2. Bloqueamos la autoeliminación
+        if (auth()->id() === $user->id) {
+            return back()->with('error', 'No puedes eliminar tu propia cuenta de administrador.');
+        }
+
+        DB::beginTransaction();
+
+        try {
+            // 3. Limpiamos sus relaciones previas de sectores asignados/creados
+            if (method_exists($user, 'sectorCaracteristicas')) {
+                $user->sectorCaracteristicas()->delete();
+            }
+
+            if (method_exists($user, 'operadorSectores')) {
+                $user->operadorSectores()->delete();
+            }
+
+            // 4. Eliminamos al usuario
+            $nombreEliminado = $user->name;
+            $user->delete();
+
+            DB::commit();
+
+            return back()->with('success', "El usuario {$nombreEliminado} fue eliminado correctamente del sistema.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Ocurrió un error al eliminar el usuario: ' . $e->getMessage());
+        }
+    }
 }
