@@ -54,31 +54,24 @@ class MonitoreoClimaRiegoController extends Controller
                     });
             }
 
-        } elseif (str_contains($user->rol, 'operador')) {
+       } elseif (str_contains($user->rol, 'operador')) {
             
-            // 3. OPERADOR: Buscamos a qué dueño le pertenecen los sectores que tiene asignados
-            $sectoresOperador = OperadorSector::where('user_id', $user->id)
-                ->get()
-                ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
+            // 3. OPERADOR: Obtenemos directamente las asignaciones con su dueño, invernadero y sector
+            $asignacionesOperador = OperadorSector::where('user_id', $user->id)->get();
 
-            if ($sectoresOperador->isEmpty()) {
-                $query->whereRaw('1 = 0');
+            if ($asignacionesOperador->isEmpty()) {
+                $query->whereRaw('1 = 0'); // Si no tiene sectores asignados, no muestra nada
             } else {
-                // Identificamos el user_id del dueño original en sector_caracteristicas
-                $duenoIds = SectorCaracteristica::whereIn('sector', $sectoresOperador->pluck('sector'))
-                    ->whereIn('invernadero', $sectoresOperador->pluck('invernadero'))
-                    ->pluck('user_id')
-                    ->unique();
-
-                $query->whereIn('user_id', $duenoIds)
-                    ->where(function ($queryPrincipal) use ($sectoresOperador) {
-                        foreach ($sectoresOperador as $par) {
-                            $queryPrincipal->orWhere(function ($sub) use ($par) {
-                                $sub->where('invernadero', $par['invernadero'])
-                                    ->where('sector', $par['sector']);
-                            });
-                        }
-                    });
+                // Filtramos por la combinación exacta: dueno_id + invernadero + sector
+                $query->where(function ($q) use ($asignacionesOperador) {
+                    foreach ($asignacionesOperador as $asig) {
+                        $q->orWhere(function ($sub) use ($asig) {
+                            $sub->where('user_id', $asig->dueno_id)
+                                ->where('invernadero', trim($asig->invernadero))
+                                ->where('sector', trim($asig->sector));
+                        });
+                    }
+                });
             }
         }
 
@@ -183,7 +176,7 @@ class MonitoreoClimaRiegoController extends Controller
                 'radiacion_hora' => now()->format('H:i:s'),
                 'user_id'        => $idDuenoReal
             ]);
-            
+
             $request->validate([
                 'fecha'                   => 'required|date',
                 'sector'                  => 'required|string|max:255',
