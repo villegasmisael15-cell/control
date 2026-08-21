@@ -76,7 +76,7 @@
                     <option value="">Seleccione un Dueño...</option>
                     @foreach($duenos as $dueno)
                         <option value="{{ $dueno->id }}" {{ old('dueno_id') == $dueno->id ? 'selected' : '' }}>
-                            {{ $dueno->name }} ({{ $dueno->email }})
+                            {{ $dueno->name }} 
                         </option>
                     @endforeach
                 </select>
