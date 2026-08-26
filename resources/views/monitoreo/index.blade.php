@@ -183,28 +183,30 @@
                             </td>
 
                             {{-- COLUMNA DE ABEJORROS CON SEMÁFORO --}}
-                            <td class="py-3.5 px-4 bg-yellow-50/25">
+                            <td class="py-3.5 px-4 bg-yellow-50/20">
                                 @if(!is_null($row->abejorros_flores))
                                 <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
 
                                 @php
-                                $semaforo = strtoupper($row->abejorros_semaforo ?? '');
+                                // Obtenemos el valor que guardaste desde el JS
+                                $texto = strtoupper($row->abejorros_semaforo ?? '');
                                 @endphp
 
-                                @if(str_contains($semaforo, 'OPTIMO'))
+                                {{-- Evaluamos basándonos en lo que tu JS inyecta --}}
+                                @if(str_contains($texto, 'OPTIMO'))
                                 <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">ÓPTIMO</span>
-                                @elseif(str_contains($semaforo, 'MEDIO'))
+                                @elseif(str_contains($texto, 'MEDIO'))
                                 <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">MEDIO</span>
-                                @elseif(str_contains($semaforo, 'DEFICIENTE'))
+                                @elseif(str_contains($texto, 'DEFICIENTE'))
                                 <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">DEFICIENTE</span>
                                 @else
-                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-gray-100 text-gray-800">N/D</span>
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-gray-200 text-gray-600">SIN REGISTRO</span>
                                 @endif
+
                                 @else
                                 <span class="text-xs text-gray-400">N/D</span>
                                 @endif
                             </td>
-
                             <td class="py-3.5 px-4 text-center">
                                 <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $row->estatus_general === 'ÓPTIMO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $row->estatus_general }}
