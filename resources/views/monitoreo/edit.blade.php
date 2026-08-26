@@ -328,13 +328,13 @@
             if (!isNaN(abejorros)) {
                 if (abejorros >= 25 && abejorros <= 30) {
                     aSemaforoView.className = "w-full bg-emerald-100 border border-emerald-300 text-emerald-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                    aSemaforoView.value = "VERDE (25 - 30 flores)";
+                    aSemaforoView.value = "OPTIMO (25 - 30 flores)";
                 } else if (abejorros >= 20 && abejorros <= 24) {
                     aSemaforoView.className = "w-full bg-amber-100 border border-amber-300 text-amber-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                    aSemaforoView.value = "AMARILLO (20 - 24 flores)";
+                    aSemaforoView.value = "MEDIO (20 - 24 flores)";
                 } else {
                     aSemaforoView.className = "w-full bg-red-100 border border-red-300 text-red-800 rounded-lg px-2.5 py-2 text-sm font-bold text-center";
-                    aSemaforoView.value = "ROJO (Menor a 19 flores)";
+                    aSemaforoView.value = "DEFICIENTE (Menor a 19 flores)";
                 }
             } else {
                 aSemaforoView.className = "w-full bg-gray-200 border border-gray-300 text-gray-600 rounded-lg px-2.5 py-2 text-sm font-bold text-center";

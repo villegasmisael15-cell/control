@@ -186,12 +186,12 @@
                             <td class="py-3.5 px-4 bg-yellow-50/20">
                                 @if(!is_null($row->abejorros_flores))
                                 <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
-                                @if($row->abejorros_semaforo === 'VERDE')
-                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">Verde</span>
-                                @elseif($row->abejorros_semaforo === 'AMARILLO')
-                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">Amarillo</span>
-                                @elseif($row->abejorros_semaforo === 'ROJO')
-                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">Rojo</span>
+                                @if($row->abejorros_semaforo === 'OPTIMO')
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">OPTIMO</span>
+                                @elseif($row->abejorros_semaforo === 'MEDIO')
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">MEDIO</span>
+                                @elseif($row->abejorros_semaforo === 'DEFICIENTE')
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">DEFICIENTE</span>
                                 @endif
                                 @else
                                 <span class="text-xs text-gray-400">N/D</span>

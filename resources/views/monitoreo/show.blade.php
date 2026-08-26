@@ -215,12 +215,12 @@
                         <div class="flex justify-between items-center bg-white/60 p-2.5 rounded border border-yellow-100">
                             <span class="text-gray-500 text-sm">Semáforo Evaluado:</span>
                             <div>
-                                @if($monitoreo->abejorros_semaforo === 'VERDE')
-                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-emerald-100 text-emerald-800 border border-emerald-200">VERDE (25 - 30)</span>
-                                @elseif($monitoreo->abejorros_semaforo === 'AMARILLO')
-                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-amber-100 text-amber-800 border border-amber-200">AMARILLO (20 - 24)</span>
-                                @elseif($monitoreo->abejorros_semaforo === 'ROJO')
-                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-red-100 text-red-800 border border-red-200">ROJO (&lt; 19)</span>
+                                @if($monitoreo->abejorros_semaforo === 'OPTIMO')
+                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-emerald-100 text-emerald-800 border border-emerald-200">OPTIMO (25 - 30)</span>
+                                @elseif($monitoreo->abejorros_semaforo === 'MEDIO')
+                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-amber-100 text-amber-800 border border-amber-200">MEDIO (20 - 24)</span>
+                                @elseif($monitoreo->abejorros_semaforo === 'DEFICIENTE')
+                                <span class="px-2.5 py-1 inline-flex text-xs font-black rounded bg-red-100 text-red-800 border border-red-200">DEFICIENTE (&lt; 19)</span>
                                 @else
                                 <span class="text-xs text-gray-400">Sin evaluar</span>
                                 @endif
