@@ -182,31 +182,28 @@
                                 @endif
                             </td>
 
-                            {{-- COLUMNA DE ABEJORROS CON SEMÁFORO --}}
-                            <td class="py-3.5 px-4 bg-yellow-50/20">
-                                @if(!is_null($row->abejorros_flores))
-                                <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
+                           {{-- COLUMNA DE ABEJORROS CON SEMÁFORO AUTOMÁTICO --}}
+<td class="py-3.5 px-4 bg-yellow-50/20">
+    @if(!is_null($row->abejorros_flores))
+        <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
+        
+        @php 
+            $flores = (int) $row->abejorros_flores;
+        @endphp
 
-                                @php
-                                // Obtenemos el valor que guardaste desde el JS
-                                $texto = strtoupper($row->abejorros_semaforo ?? '');
-                                @endphp
+        {{-- Aplicamos exactamente la misma lógica de tus rangos de JavaScript --}}
+        @if($flores >= 25 && $flores <= 30)
+            <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">ÓPTIMO</span>
+        @elseif($flores >= 20 && $flores <= 24)
+            <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">MEDIO</span>
+        @else
+            <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">DEFICIENTE</span>
+        @endif
 
-                                {{-- Evaluamos basándonos en lo que tu JS inyecta --}}
-                                @if(str_contains($texto, 'OPTIMO'))
-                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">ÓPTIMO</span>
-                                @elseif(str_contains($texto, 'MEDIO'))
-                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">MEDIO</span>
-                                @elseif(str_contains($texto, 'DEFICIENTE'))
-                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">DEFICIENTE</span>
-                                @else
-                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-gray-200 text-gray-600">SIN REGISTRO</span>
-                                @endif
-
-                                @else
-                                <span class="text-xs text-gray-400">N/D</span>
-                                @endif
-                            </td>
+    @else
+        <span class="text-xs text-gray-400">N/D</span>
+    @endif
+</td>
                             <td class="py-3.5 px-4 text-center">
                                 <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $row->estatus_general === 'ÓPTIMO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
                                     {{ $row->estatus_general }}
