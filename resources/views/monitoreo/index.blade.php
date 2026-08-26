@@ -181,38 +181,25 @@
                                 <span class="text-xs text-gray-400">N/D</span>
                                 @endif
                             </td>
-                            {{-- COLUMNA DE ABEJORROS CON SEMÁFORO VISUAL --}}
-                            <td class="py-3.5 px-4 bg-yellow-50/20">
+
+                            {{-- COLUMNA DE ABEJORROS CON SEMÁFORO --}}
+                            <td class="py-3.5 px-4 bg-yellow-50/25">
                                 @if(!is_null($row->abejorros_flores))
-                                <div class="flex items-center gap-2">
-                                    <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
+                                <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
 
-                                    @php
-                                    $semaforo = strtoupper($row->abejorros_semaforo ?? '');
-                                    @endphp
+                                @php
+                                $semaforo = strtoupper($row->abejorros_semaforo ?? '');
+                                @endphp
 
-                                    @if(str_contains($semaforo, 'OPTIMO'))
-                                    {{-- Semáforo Verde --}}
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                        ÓPTIMO
-                                    </span>
-                                    @elseif(str_contains($semaforo, 'MEDIO'))
-                                    {{-- Semáforo Amarillo / Ambar --}}
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800">
-                                        <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                                        MEDIO
-                                    </span>
-                                    @elseif(str_contains($semaforo, 'DEFICIENTE'))
-                                    {{-- Semáforo Rojo --}}
-                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-bold rounded-full bg-red-100 text-red-800">
-                                        <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                        DEFICIENTE
-                                    </span>
-                                    @else
-                                    <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gray-100 text-gray-600">N/D</span>
-                                    @endif
-                                </div>
+                                @if(str_contains($semaforo, 'OPTIMO'))
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">ÓPTIMO</span>
+                                @elseif(str_contains($semaforo, 'MEDIO'))
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">MEDIO</span>
+                                @elseif(str_contains($semaforo, 'DEFICIENTE'))
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">DEFICIENTE</span>
+                                @else
+                                <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-gray-100 text-gray-800">N/D</span>
+                                @endif
                                 @else
                                 <span class="text-xs text-gray-400">N/D</span>
                                 @endif
