@@ -232,26 +232,38 @@
                <div class="w-full">
                     @php
                         $estatus = $monitoreo->estatus_general;
-                        // Clases dinámicas según el nuevo semáforo de 5 estados
                         $boxClass = 'bg-gray-100 border-gray-300 text-gray-800';
                         $textClass = 'text-gray-700';
+                        $accionInmediata = 'Sin acciones definidas.';
 
                         if ($estatus === 'ÓPTIMO') {
                             $boxClass = 'bg-emerald-100 border-emerald-300';
                             $textClass = 'text-emerald-800';
-                        } elseif ($estatus === 'BAJO' || $estatus === 'MOD. ALTO') {
+                            $accionInmediata = 'Acción: Mantener condiciones estables y estrategia actual.';
+                        } elseif ($estatus === 'BAJO') {
                             $boxClass = 'bg-amber-100 border-amber-300';
                             $textClass = 'text-amber-800';
-                        } elseif ($estatus === 'MUY BAJO' || $estatus === 'ALTO') {
+                            $accionInmediata = 'Acción: Monitorear ventilas. Abrir progresivamente si hay producción activa.';
+                        } elseif ($estatus === 'MOD. ALTO') {
+                            $boxClass = 'bg-amber-100 border-amber-300';
+                            $textClass = 'text-amber-800';
+                            $accionInmediata = 'Acción: Vigilar riego. Asegurar humedad constante en sustrato.';
+                        } elseif ($estatus === 'MUY BAJO') {
                             $boxClass = 'bg-red-100 border-red-300';
                             $textClass = 'text-red-800';
+                            $accionInmediata = 'Acción: Ventilar / Reducir humedad relativa inmediatamente.';
+                        } elseif ($estatus === 'ALTO') {
+                            $boxClass = 'bg-red-100 border-red-300';
+                            $textClass = 'text-red-800';
+                            $accionInmediata = 'Acción: Nebulizar / Sombrear. Activar fogs o pantallas térmicas.';
                         }
                     @endphp
-                    <div class="{{ $boxClass }} rounded-xl border p-6 flex flex-col justify-center items-center shadow-sm transition duration-300">
+                    <div class="{{ $boxClass }} rounded-xl border p-6 flex flex-col justify-center items-center shadow-sm transition duration-300 text-center">
                         <span class="text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Diagnóstico Automático del Sistema</span>
                         <div class="text-3xl font-black {{ $textClass }}">
                             {{ $estatus }}
                         </div>
+                        <span class="block text-xs font-semibold mt-2 {{ $textClass }} opacity-90">{{ $accionInmediata }}</span>
                         <p class="text-[11px] text-gray-500 mt-2 text-center max-w-sm">Análisis computado a partir del balance bioclimático y los rangos operativos de la guía de DPV (0.8 - 1.2 kPa).</p>
                     </div>
                 </div>

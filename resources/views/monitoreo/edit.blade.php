@@ -257,27 +257,37 @@
                 const eBox = document.getElementById('estatus_box');
                 const eText = document.getElementById('estatus_text');
                 
+                let estadoTitulo = "";
+                let accionInmediata = "";
+
                 if (dpv < 0.4) {
                     eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center transition duration-300";
-                    eText.className = "text-2xl font-black text-red-800";
-                    eText.innerText = "MUY BAJO (< 0.4 kPa)";
+                    eText.className = "text-2xl font-black text-red-800 text-center";
+                    estadoTitulo = "MUY BAJO (< 0.4 kPa)";
+                    accionInmediata = "Acción: Ventilar / Reducir humedad relativa inmediatamente.";
                 } else if (dpv >= 0.4 && dpv <= 0.8) {
                     eBox.className = "bg-amber-100 rounded-xl border border-amber-300 p-6 flex flex-col justify-center items-center transition duration-300";
-                    eText.className = "text-2xl font-black text-amber-800";
-                    eText.innerText = "BAJO (0.4 - 0.8 kPa)";
+                    eText.className = "text-2xl font-black text-amber-800 text-center";
+                    estadoTitulo = "BAJO (0.4 - 0.8 kPa)";
+                    accionInmediata = "Acción: Monitorear ventilas. Abrir progresivamente si hay producción activa.";
                 } else if (dpv > 0.8 && dpv <= 1.2) {
                     eBox.className = "bg-emerald-100 rounded-xl border border-emerald-300 p-6 flex flex-col justify-center items-center transition duration-300";
-                    eText.className = "text-2xl font-black text-emerald-800";
-                    eText.innerText = "ÓPTIMO (0.8 - 1.2 kPa)";
+                    eText.className = "text-2xl font-black text-emerald-800 text-center";
+                    estadoTitulo = "ÓPTIMO (0.8 - 1.2 kPa)";
+                    accionInmediata = "Acción: Mantener condiciones estables y estrategia actual.";
                 } else if (dpv > 1.2 && dpv <= 1.6) {
                     eBox.className = "bg-amber-100 rounded-xl border border-amber-300 p-6 flex flex-col justify-center items-center transition duration-300";
-                    eText.className = "text-2xl font-black text-amber-800";
-                    eText.innerText = "MOD. ALTO (1.2 - 1.6 kPa)";
+                    eText.className = "text-2xl font-black text-amber-800 text-center";
+                    estadoTitulo = "MOD. ALTO (1.2 - 1.6 kPa)";
+                    accionInmediata = "Acción: Vigilar riego. Asegurar humedad constante en sustrato.";
                 } else {
                     eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center transition duration-300";
-                    eText.className = "text-2xl font-black text-red-800";
-                    eText.innerText = "ALTO (> 1.6 kPa)";
+                    eText.className = "text-2xl font-black text-red-800 text-center";
+                    estadoTitulo = "ALTO (> 1.6 kPa)";
+                    accionInmediata = "Acción: Nebulizar / Sombrear. Activar fogs o pantallas térmicas.";
                 }
+
+                eText.innerHTML = `${estadoTitulo} <span class="block text-xs font-medium mt-2 opacity-90">${accionInmediata}</span>`;
             }
 
             if (!isNaN(volEnt) && !isNaN(volSal) && volEnt > 0) {
