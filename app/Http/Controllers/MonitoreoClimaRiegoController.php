@@ -603,6 +603,9 @@ class MonitoreoClimaRiegoController extends Controller
         $lux     = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
         $ceEntrada = $historico->pluck('ce_entrada')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
         $ceSalida  = $historico->pluck('ce_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+        $phEntrada = $historico->pluck('ph_entrada')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+        $phSalida  = $historico->pluck('ph_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+        $difPh     = $historico->pluck('diferencia_ph')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
         // 4. Datos necesarios para alimentar los selectores
         $dueños = User::whereIn('rol', ['dueno', 'administrador', 'admin_general'])->orderBy('name')->get();
 
@@ -630,7 +633,7 @@ class MonitoreoClimaRiegoController extends Controller
             ->orderBy('anio_mes', 'desc')
             ->pluck('anio_mes');
 
-return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'ceEntrada', 'ceSalida', 'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'));    }
+return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'ceEntrada', 'ceSalida', 'phEntrada', 'phSalida', 'difPh', 'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'));  }
 
     private function enviarAlertaAdministradores($invernadero, $sector, $valor, $tipo = 'drenaje')
     {

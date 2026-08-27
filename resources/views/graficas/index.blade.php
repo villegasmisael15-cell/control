@@ -189,6 +189,23 @@
                 </div>
             </div>
 
+            <!-- NUEVA GRÁFICA: Comparativa pH Entrada, pH Salida y Diferencia -->
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col md:col-span-2">
+                <div class="flex items-start gap-3 border-b border-gray-100 pb-3 mb-4">
+                    <div class="p-2 bg-indigo-50 rounded-lg text-indigo-600">
+                        <i class="fa-solid fa-vials text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-800">Comportamiento del pH (pH Entrada, pH Salida y Diferencial)</h3>
+                        <p class="text-xs text-gray-500">Monitoreo simultáneo de la acidez/alcalinidad en el riego, drenaje y su variación</p>
+                    </div>
+                </div>
+                <div class="relative w-full h-[280px]">
+                    <canvas id="chartPHComparativa"></canvas>
+                </div>
+            </div>
+
+
         </div>
     </main>
 
@@ -210,6 +227,9 @@
             const datosLux = {!! json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!};
             const datosCEEntrada = {!! json_encode(array_values($ceEntrada), JSON_NUMERIC_CHECK) !!};
             const datosCESalida = {!! json_encode(array_values($ceSalida), JSON_NUMERIC_CHECK) !!};
+            const datosPHEntrada = {!! json_encode(array_values($phEntrada), JSON_NUMERIC_CHECK) !!};
+            const datosPHSalida = {!! json_encode(array_values($phSalida), JSON_NUMERIC_CHECK) !!};
+            const datosDifPH = {!! json_encode(array_values($difPh), JSON_NUMERIC_CHECK) !!};
 
             // 1. Gráfica: DPV
             new Chart(document.getElementById('chartDPV'), {
@@ -307,7 +327,49 @@
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });
+
+
+            // 6. Gráfica Combinada: pH Entrada, pH Salida y Diferencia
+            new Chart(document.getElementById('chartPHComparativa'), {
+                type: 'line',
+                data: {
+                    labels: etiquetasFechas,
+                    datasets: [
+                        {
+                            label: 'pH Entrada',
+                            data: datosPHEntrada,
+                            borderColor: '#6366f1', // Indigo
+                            backgroundColor: 'rgba(99, 102, 241, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            fill: false
+                        },
+                        {
+                            label: 'pH Salida',
+                            data: datosPHSalida,
+                            borderColor: '#ec4899', // Pink
+                            backgroundColor: 'rgba(236, 72, 153, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            fill: false
+                        },
+                        {
+                            label: 'Dif. pH (Salida - Entrada)',
+                            data: datosDifPH,
+                            borderColor: '#8b5cf6', // Violet
+                            backgroundColor: 'rgba(139, 92, 246, 0.05)',
+                            borderWidth: 2,
+                            borderDash: [4, 4], // Línea punteada para diferenciar la diferencia
+                            tension: 0.2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
         };
+
+
     </script>
 </body>
 
