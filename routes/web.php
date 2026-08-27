@@ -11,6 +11,7 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SueloMonitoreoController;
 use App\Http\Controllers\SanidadNutricionBitacoraController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\SensorController;
 
 // Redireccionar la raíz al login si no está autenticado, o al dashboard si ya inició sesión
 Route::get('/', function () {
@@ -50,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/reportes/{id}/descargar-pdf', [ReporteController::class, 'descargarPDF'])->name('reportes.pdf');
     Route::get('/sanidad/pdf/{id}', [SanidadNutricionBitacoraController::class, 'pdf'])->name('sanidad.pdf');
     Route::post('/condensacion/guardar', [RecepcionController::class, 'guardarCondensacion'])->name('condensacion.guardar');
+    Route::post('/sensores/guardar', [SensorController::class, 'almacenar']);
 
     // 1. RUTAS PÚBLICAS (Para Administradores y Operadores)
     Route::get('/monitoreo/{id}/editar', [MonitoreoClimaRiegoController::class, 'edit'])->name('monitoreo.edit');
