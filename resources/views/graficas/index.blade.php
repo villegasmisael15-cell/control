@@ -160,6 +160,22 @@
 
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col md:col-span-2">
                 <div class="flex items-start gap-3 border-b border-gray-100 pb-3 mb-4">
+                    <div class="p-2 bg-teal-50 rounded-lg text-teal-600">
+                        <i class="fa-solid fa-water text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-800">Comparativa de Conductividad Eléctrica (CE Entrada vs CE Salida)</h3>
+                        <p class="text-xs text-gray-500">Comportamiento simultáneo de los niveles de sales en el riego y en el drenaje</p>
+                    </div>
+                </div>
+                <div class="relative w-full h-[280px]">
+                    <canvas id="chartCEComparativa"></canvas>
+                </div>
+            </div>
+
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 flex flex-col md:col-span-2">
+                <div class="flex items-start gap-3 border-b border-gray-100 pb-3 mb-4">
                     <div class="p-2 bg-purple-50 rounded-lg text-purple-600">
                         <i class="fa-solid fa-flask text-xl"></i>
                     </div>
@@ -192,6 +208,8 @@
             const datosDrenaje = {!! json_encode(array_values($drenaje), JSON_NUMERIC_CHECK) !!};
             const datosCE = {!! json_encode(array_values($difCe), JSON_NUMERIC_CHECK) !!};
             const datosLux = {!! json_encode(array_values($lux), JSON_NUMERIC_CHECK) !!};
+            const datosCEEntrada = {!! json_encode(array_values($ceEntrada), JSON_NUMERIC_CHECK) !!};
+            const datosCESalida = {!! json_encode(array_values($ceSalida), JSON_NUMERIC_CHECK) !!};
 
             // 1. Gráfica: DPV
             new Chart(document.getElementById('chartDPV'), {
@@ -257,6 +275,35 @@
                         tension: 0.2,
                         fill: true
                     }]
+                },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // 5. Gráfica Combinada: CE Entrada vs CE Salida
+            new Chart(document.getElementById('chartCEComparativa'), {
+                type: 'line',
+                data: {
+                    labels: etiquetasFechas,
+                    datasets: [
+                        {
+                            label: 'CE Entrada',
+                            data: datosCEEntrada,
+                            borderColor: '#0d9488', // Teal
+                            backgroundColor: 'rgba(13, 148, 136, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            fill: true
+                        },
+                        {
+                            label: 'CE Salida',
+                            data: datosCESalida,
+                            borderColor: '#f59e0b', // Amber/Orange
+                            backgroundColor: 'rgba(245, 158, 11, 0.05)',
+                            borderWidth: 2,
+                            tension: 0.2,
+                            fill: true
+                        }
+                    ]
                 },
                 options: { responsive: true, maintainAspectRatio: false }
             });

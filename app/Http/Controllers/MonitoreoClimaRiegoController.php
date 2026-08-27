@@ -13,13 +13,13 @@ use App\Models\OperadorSector;
 
 class MonitoreoClimaRiegoController extends Controller
 {
-   public function index(Request $request)
+    public function index(Request $request)
     {
         $query = MonitoreoClimaRiego::with('user')->orderBy('fecha', 'desc');
         $user = auth()->user();
 
         if (in_array($user->rol, ['administrador', 'admin_general'])) {
-            
+
             // 1. ADMINISTRADORES: Ven todos los registros de todos los dueños
             if ($request->filled('buscar_termino')) {
                 $termino = $request->input('buscar_termino');
@@ -31,9 +31,8 @@ class MonitoreoClimaRiegoController extends Controller
                         });
                 });
             }
-
         } elseif ($user->rol === 'dueno') {
-            
+
             // 2. DUEÑO: Ve ÚNICAMENTE los registros cuyo user_id sea SU PROPIO ID
             $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
                 ->get()
@@ -53,9 +52,8 @@ class MonitoreoClimaRiegoController extends Controller
                         }
                     });
             }
+        } elseif (str_contains($user->rol, 'operador')) {
 
-       } elseif (str_contains($user->rol, 'operador')) {
-            
             // 3. OPERADOR: Obtenemos directamente las asignaciones con su dueño, invernadero y sector
             $asignacionesOperador = OperadorSector::where('user_id', $user->id)->get();
 
@@ -138,7 +136,7 @@ class MonitoreoClimaRiegoController extends Controller
         }
 
         return view('monitoreo.create', compact('sectores'));
-    }   
+    }
 
     public function store(Request $request)
     {
@@ -209,14 +207,14 @@ class MonitoreoClimaRiegoController extends Controller
                 }
             }
 
-           $dpv = null;
+            $dpv = null;
             $estatus_general = 'SIN DATOS CLIMA';
 
             if ($request->filled('temperatura') && $request->filled('humedad')) {
                 $temp = $request->temperatura;
                 $hum = $request->humedad;
                 $dpv = round((0.61078 * exp((17.27 * $temp) / ($temp + 237.3))) * (1 - $hum / 100), 2);
-                
+
                 // Lógica de los 5 estados de DPV
                 if ($dpv < 0.4) {
                     $estatus_general = 'MUY BAJO';
@@ -291,7 +289,6 @@ class MonitoreoClimaRiegoController extends Controller
             }
 
             return redirect()->route('monitoreo.index')->with('status', '¡Registro guardado con éxito!');
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => true,
@@ -433,7 +430,7 @@ class MonitoreoClimaRiegoController extends Controller
             $temp = $request->temperatura;
             $hum = $request->humedad;
             $dpv = round((0.61078 * exp((17.27 * $temp) / ($temp + 237.3))) * (1 - $hum / 100), 2);
-            
+
             // Lógica de los 5 estados de DPV
             if ($dpv < 0.4) {
                 $estatus_general = 'MUY BAJO';
@@ -518,7 +515,7 @@ class MonitoreoClimaRiegoController extends Controller
         return redirect()->route('monitoreo.index')->with('status', 'El registro ha sido eliminado.');
     }
 
-   public function graficas(Request $request)
+    public function graficas(Request $request)
     {
         $query = MonitoreoClimaRiego::query();
         $user = auth()->user();
@@ -589,8 +586,8 @@ class MonitoreoClimaRiegoController extends Controller
         if ($request->filled('mes')) {
             $mesInput = $request->input('mes'); // Formato esperado: "YYYY-MM"
             $query->whereYear('fecha', '=', substr($mesInput, 0, 4))
-                  ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
-            
+                ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
+
             $historicoReciente = $query->orderBy('fecha', 'asc')->get();
         } else {
             $historicoReciente = $query->orderBy('fecha', 'desc')->take(15)->get()->reverse();
@@ -604,10 +601,11 @@ class MonitoreoClimaRiegoController extends Controller
         $drenaje = $historico->pluck('porcentaje_drenaje')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
         $difCe   = $historico->pluck('diferencia_ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
         $lux     = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-
+        $ceEntrada = $historico->pluck('ce_entrada')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+        $ceSalida  = $historico->pluck('ce_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
         // 4. Datos necesarios para alimentar los selectores
         $dueños = User::whereIn('rol', ['dueno', 'administrador', 'admin_general'])->orderBy('name')->get();
-        
+
         $invernaderos = [];
         if ($request->filled('dueno_id')) {
             $invernaderos = SectorCaracteristica::where('user_id', $request->dueno_id)
@@ -632,8 +630,7 @@ class MonitoreoClimaRiegoController extends Controller
             ->orderBy('anio_mes', 'desc')
             ->pluck('anio_mes');
 
-        return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'));
-    }
+return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'ceEntrada', 'ceSalida', 'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'));    }
 
     private function enviarAlertaAdministradores($invernadero, $sector, $valor, $tipo = 'drenaje')
     {
@@ -739,4 +736,4 @@ class MonitoreoClimaRiegoController extends Controller
             }
         }
     }
-}   
+}
