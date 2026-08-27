@@ -209,14 +209,26 @@ class MonitoreoClimaRiegoController extends Controller
                 }
             }
 
-            $dpv = null;
+           $dpv = null;
             $estatus_general = 'SIN DATOS CLIMA';
 
             if ($request->filled('temperatura') && $request->filled('humedad')) {
                 $temp = $request->temperatura;
                 $hum = $request->humedad;
                 $dpv = round((0.61078 * exp((17.27 * $temp) / ($temp + 237.3))) * (1 - $hum / 100), 2);
-                $estatus_general = ($dpv >= 0.8 && $dpv <= 1.4) ? 'ÓPTIMO' : 'REVISAR CLIMA';
+                
+                // Lógica de los 5 estados de DPV
+                if ($dpv < 0.4) {
+                    $estatus_general = 'MUY BAJO';
+                } elseif ($dpv >= 0.4 && $dpv <= 0.8) {
+                    $estatus_general = 'BAJO';
+                } elseif ($dpv > 0.8 && $dpv <= 1.2) {
+                    $estatus_general = 'ÓPTIMO';
+                } elseif ($dpv > 1.2 && $dpv <= 1.6) {
+                    $estatus_general = 'MOD. ALTO';
+                } else {
+                    $estatus_general = 'ALTO';
+                }
             }
 
             $porcentaje_drenaje = null;
@@ -421,7 +433,19 @@ class MonitoreoClimaRiegoController extends Controller
             $temp = $request->temperatura;
             $hum = $request->humedad;
             $dpv = round((0.61078 * exp((17.27 * $temp) / ($temp + 237.3))) * (1 - $hum / 100), 2);
-            $estatus_general = ($dpv >= 0.8 && $dpv <= 1.4) ? 'ÓPTIMO' : 'REVISAR CLIMA';
+            
+            // Lógica de los 5 estados de DPV
+            if ($dpv < 0.4) {
+                $estatus_general = 'MUY BAJO';
+            } elseif ($dpv >= 0.4 && $dpv <= 0.8) {
+                $estatus_general = 'BAJO';
+            } elseif ($dpv > 0.8 && $dpv <= 1.2) {
+                $estatus_general = 'ÓPTIMO';
+            } elseif ($dpv > 1.2 && $dpv <= 1.6) {
+                $estatus_general = 'MOD. ALTO';
+            } else {
+                $estatus_general = 'ALTO';
+            }
         }
 
         $porcentaje_drenaje = null;

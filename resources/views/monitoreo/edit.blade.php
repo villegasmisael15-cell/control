@@ -249,21 +249,34 @@
 
             let dpv = null;
 
-            if (!isNaN(temp) && !isNaN(hum)) {
+           if (!isNaN(temp) && !isNaN(hum)) {
                 const es = 0.61078 * Math.exp((17.27 * temp) / (temp + 237.3));
                 dpv = parseFloat((es * (1 - (hum / 100))).toFixed(2));
                 document.getElementById('dpv_view').value = dpv;
 
                 const eBox = document.getElementById('estatus_box');
                 const eText = document.getElementById('estatus_text');
-                if (dpv >= 0.8 && dpv <= 1.4) {
+                
+                if (dpv < 0.4) {
+                    eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center transition duration-300";
+                    eText.className = "text-2xl font-black text-red-800";
+                    eText.innerText = "MUY BAJO (< 0.4 kPa)";
+                } else if (dpv >= 0.4 && dpv <= 0.8) {
+                    eBox.className = "bg-amber-100 rounded-xl border border-amber-300 p-6 flex flex-col justify-center items-center transition duration-300";
+                    eText.className = "text-2xl font-black text-amber-800";
+                    eText.innerText = "BAJO (0.4 - 0.8 kPa)";
+                } else if (dpv > 0.8 && dpv <= 1.2) {
                     eBox.className = "bg-emerald-100 rounded-xl border border-emerald-300 p-6 flex flex-col justify-center items-center transition duration-300";
                     eText.className = "text-2xl font-black text-emerald-800";
-                    eText.innerText = "ÓPTIMO";
+                    eText.innerText = "ÓPTIMO (0.8 - 1.2 kPa)";
+                } else if (dpv > 1.2 && dpv <= 1.6) {
+                    eBox.className = "bg-amber-100 rounded-xl border border-amber-300 p-6 flex flex-col justify-center items-center transition duration-300";
+                    eText.className = "text-2xl font-black text-amber-800";
+                    eText.innerText = "MOD. ALTO (1.2 - 1.6 kPa)";
                 } else {
                     eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center transition duration-300";
                     eText.className = "text-2xl font-black text-red-800";
-                    eText.innerText = "REVISAR CLIMA";
+                    eText.innerText = "ALTO (> 1.6 kPa)";
                 }
             }
 

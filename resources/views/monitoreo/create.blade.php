@@ -272,14 +272,26 @@
                 const dpv = parseFloat((es * (1 - (hum / 100))).toFixed(2));
                 document.getElementById('dpv_view').value = dpv;
 
-                if (dpv >= 0.8 && dpv <= 1.4) {
+              if (dpv < 0.4) {
+                    eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center transition duration-300";
+                    eText.className = "text-2xl font-black text-red-800";
+                    eText.innerText = "MUY BAJO (< 0.4 kPa)";
+                } else if (dpv >= 0.4 && dpv <= 0.8) {
+                    eBox.className = "bg-amber-100 rounded-xl border border-amber-300 p-6 flex flex-col justify-center items-center transition duration-300";
+                    eText.className = "text-2xl font-black text-amber-800";
+                    eText.innerText = "BAJO (0.4 - 0.8 kPa)";
+                } else if (dpv > 0.8 && dpv <= 1.2) {
                     eBox.className = "bg-emerald-100 rounded-xl border border-emerald-300 p-6 flex flex-col justify-center items-center transition duration-300";
                     eText.className = "text-2xl font-black text-emerald-800";
-                    eText.innerText = "ÓPTIMO";
+                    eText.innerText = "ÓPTIMO (0.8 - 1.2 kPa)";
+                } else if (dpv > 1.2 && dpv <= 1.6) {
+                    eBox.className = "bg-amber-100 rounded-xl border border-amber-300 p-6 flex flex-col justify-center items-center transition duration-300";
+                    eText.className = "text-2xl font-black text-amber-800";
+                    eText.innerText = "MOD. ALTO (1.2 - 1.6 kPa)";
                 } else {
                     eBox.className = "bg-red-100 rounded-xl border border-red-300 p-6 flex flex-col justify-center items-center transition duration-300";
                     eText.className = "text-2xl font-black text-red-800";
-                    eText.innerText = "REVISAR CLIMA";
+                    eText.innerText = "ALTO (> 1.6 kPa)";
                 }
             } else {
                 document.getElementById('dpv_view').value = "";

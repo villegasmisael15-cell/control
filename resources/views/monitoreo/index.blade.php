@@ -182,34 +182,47 @@
                                 @endif
                             </td>
 
-                           {{-- COLUMNA DE ABEJORROS CON SEMÁFORO AUTOMÁTICO --}}
-<td class="py-3.5 px-4 bg-yellow-50/20">
-    @if(!is_null($row->abejorros_flores))
-        <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
-        
-        @php 
-            $flores = (int) $row->abejorros_flores;
-        @endphp
+                            {{-- COLUMNA DE ABEJORROS CON SEMÁFORO AUTOMÁTICO --}}
+                            <td class="py-3.5 px-4 bg-yellow-50/20">
+                                @if(!is_null($row->abejorros_flores))
+                                <span class="font-bold text-xs">{{ $row->abejorros_flores }}</span>
 
-        {{-- Aplicamos exactamente la misma lógica de tus rangos de JavaScript --}}
-        @if($flores >= 25 && $flores <= 30)
-            <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">ÓPTIMO</span>
-        @elseif($flores >= 20 && $flores <= 24)
-            <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">MEDIO</span>
-        @else
-            <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">DEFICIENTE</span>
-        @endif
+                                @php
+                                $flores = (int) $row->abejorros_flores;
+                                @endphp
 
-    @else
-        <span class="text-xs text-gray-400">N/D</span>
-    @endif
-</td>
+                                {{-- Aplicamos exactamente la misma lógica de tus rangos de JavaScript --}}
+                                @if($flores >= 25 && $flores <= 30)
+                                    <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-emerald-100 text-emerald-800">ÓPTIMO</span>
+                                    @elseif($flores >= 20 && $flores <= 24)
+                                        <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-amber-100 text-amber-800">MEDIO</span>
+                                        @else
+                                        <span class="ml-1 px-1.5 py-0.5 inline-flex text-[10px] font-bold rounded bg-red-100 text-red-800">DEFICIENTE</span>
+                                        @endif
+
+                                        @else
+                                        <span class="text-xs text-gray-400">N/D</span>
+                                        @endif
+                            </td>
                             <td class="py-3.5 px-4 text-center">
-                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $row->estatus_general === 'ÓPTIMO' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800' }}">
-                                    {{ $row->estatus_general }}
+                                @php
+                                $estatus = $row->estatus_general;
+                                // Definimos los colores según el estado del DPV
+                                $clasesEstatus = 'bg-gray-100 text-gray-800'; // Default
+
+                                if ($estatus === 'ÓPTIMO') {
+                                $clasesEstatus = 'bg-emerald-100 text-emerald-800 font-bold';
+                                } elseif ($estatus === 'BAJO' || $estatus === 'MOD. ALTO') {
+                                $clasesEstatus = 'bg-amber-100 text-amber-800 font-bold';
+                                } elseif ($estatus === 'MUY BAJO' || $estatus === 'ALTO') {
+                                $clasesEstatus = 'bg-red-100 text-red-800 font-bold';
+                                }
+                                @endphp
+
+                                <span class="px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $clasesEstatus }}">
+                                    {{ $estatus }}
                                 </span>
                             </td>
-
                             <!-- 🛠️ BOTONES DE ACCIÓN -->
                             <td class="py-3.5 px-4 text-center">
                                 <div class="inline-flex items-center justify-center gap-2">
