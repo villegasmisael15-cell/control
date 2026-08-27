@@ -57,47 +57,45 @@
             <form method="GET" action="{{ route('graficas.index') }}" class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
                 <input type="hidden" name="modulo" value="{{ $modulo ?? 'hidroponia' }}">
 
-                @if(($modulo ?? 'hidroponia') === 'hidroponia')
-                    @can('es-administrador')
-                    <!-- 1. Seleccionar Dueño -->
-                    <div class="flex flex-col gap-1 w-full sm:w-auto">
-                        <label for="dueno_id" class="text-xs font-bold text-gray-700 uppercase">Dueño / Operador:</label>
-                        <select name="dueno_id" id="dueno_id" onchange="document.getElementById('invernadero').value=''; document.getElementById('buscar_sector').value=''; this.form.submit()"
-                            class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
-                            <option value="">Seleccione un dueño</option>
-                            @foreach($dueños ?? [] as $d)
-                            <option value="{{ $d->id }}" {{ request('dueno_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                @can('es-administrador')
+                <!-- 1. Seleccionar Dueño -->
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                    <label for="dueno_id" class="text-xs font-bold text-gray-700 uppercase">Dueño / Operador:</label>
+                    <select name="dueno_id" id="dueno_id" onchange="document.getElementById('invernadero').value=''; document.getElementById('buscar_sector').value=''; this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <option value="">Seleccione un dueño</option>
+                        @foreach($dueños ?? [] as $d)
+                        <option value="{{ $d->id }}" {{ request('dueno_id') == $d->id ? 'selected' : '' }}>{{ $d->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-                    <!-- 2. Seleccionar Invernadero -->
-                    <div class="flex flex-col gap-1 w-full sm:w-auto">
-                        <label for="invernadero" class="text-xs font-bold text-gray-700 uppercase">Invernadero:</label>
-                        <select name="invernadero" id="invernadero" onchange="document.getElementById('buscar_sector').value=''; this.form.submit()"
-                            class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                            {{ !request('dueno_id') ? 'disabled' : '' }}>
-                            <option value="">Seleccione invernadero</option>
-                            @foreach($invernaderos ?? [] as $inv)
-                            <option value="{{ $inv }}" {{ request('invernadero') === $inv ? 'selected' : '' }}>{{ $inv }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                <!-- 2. Seleccionar Invernadero -->
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                    <label for="invernadero" class="text-xs font-bold text-gray-700 uppercase">Invernadero:</label>
+                    <select name="invernadero" id="invernadero" onchange="document.getElementById('buscar_sector').value=''; this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        {{ !request('dueno_id') ? 'disabled' : '' }}>
+                        <option value="">Seleccione invernadero</option>
+                        @foreach($invernaderos ?? [] as $inv)
+                        <option value="{{ $inv }}" {{ request('invernadero') === $inv ? 'selected' : '' }}>{{ $inv }}</option>
+                        @endforeach
+                    </select>
+                </div>
 
-                    <!-- 3. Seleccionar Sector -->
-                    <div class="flex flex-col gap-1 w-full sm:w-auto">
-                        <label for="buscar_sector" class="text-xs font-bold text-gray-700 uppercase">Sector:</label>
-                        <select name="buscar_sector" id="buscar_sector" onchange="this.form.submit()"
-                            class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                            {{ !request('invernadero') ? 'disabled' : '' }}>
-                            <option value="">Seleccione sector</option>
-                            @foreach($sectores ?? [] as $sec)
-                            <option value="{{ $sec }}" {{ request('buscar_sector') === $sec ? 'selected' : '' }}>{{ $sec }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    @endcan
-                @endif
+                <!-- 3. Seleccionar Sector -->
+                <div class="flex flex-col gap-1 w-full sm:w-auto">
+                    <label for="buscar_sector" class="text-xs font-bold text-gray-700 uppercase">Sector:</label>
+                    <select name="buscar_sector" id="buscar_sector" onchange="this.form.submit()"
+                        class="bg-gray-50 border border-gray-300 rounded-lg px-3 py-1.5 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                        {{ !request('invernadero') ? 'disabled' : '' }}>
+                        <option value="">Seleccione sector</option>
+                        @foreach($sectores ?? [] as $sec)
+                        <option value="{{ $sec }}" {{ request('buscar_sector') === $sec ? 'selected' : '' }}>{{ $sec }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                @endcan
 
                 <!-- 4. Filtrar por Mes con Desplegable en Español -->
                 <div class="flex flex-col gap-1 w-full sm:w-auto">
