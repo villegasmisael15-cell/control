@@ -515,125 +515,186 @@ class MonitoreoClimaRiegoController extends Controller
         return redirect()->route('monitoreo.index')->with('status', 'El registro ha sido eliminado.');
     }
 
-    public function graficas(Request $request)
+   public function graficas(Request $request)
     {
-        $query = MonitoreoClimaRiego::query();
+        // 0. Determinamos qué módulo se quiere ver: 'hidroponia' o 'suelo'
+        $modulo = $request->input('modulo', 'hidroponia');
         $user = auth()->user();
 
-        // 1. Control de accesos por rol
-        if ($user->rol === 'operador') {
-            $sectoresOperador = OperadorSector::where('user_id', $user->id)
-                ->get()
-                ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
+        if ($modulo === 'suelo') {
+            // --- MÓDULO DE SUELO ---
+            $query = \App\Models\SueloMonitoreo::query();
 
-            $query->where(function ($q) use ($sectoresOperador) {
-                foreach ($sectoresOperador as $par) {
-                    $q->orWhere(function ($sub) use ($par) {
-                        $sub->where('invernadero', $par['invernadero'])
-                            ->where('sector', $par['sector']);
-                    });
+            // Control de accesos de suelo por rol
+            if (in_array($user->rol, ['administrador', 'admin_general'])) {
+                if ($request->filled('buscar_termino')) {
+                    $termino = $request->input('buscar_termino');
+                    $query->where('sector', 'LIKE', '%' . $termino . '%');
                 }
-                if ($sectoresOperador->isEmpty()) {
-                    $q->whereRaw('1 = 0');
-                }
-            });
-        } elseif ($user->rol === 'dueno') {
-            $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
-                ->get()
-                ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
+            } elseif ($user->rol === 'dueno') {
+                $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
+                    ->pluck('sector')->map(fn($item) => trim($item))->toArray();
+                $query->whereIn('sector', $sectoresDueño);
+            } elseif ($user->rol === 'operador') {
+                $sectoresOperador = OperadorSector::where('user_id', $user->id)
+                    ->pluck('sector')->map(fn($item) => trim($item))->toArray();
+                $query->whereIn('sector', $sectoresOperador);
+            }
 
-            $query->where(function ($q) use ($sectoresDueño) {
-                foreach ($sectoresDueño as $par) {
-                    $q->orWhere(function ($sub) use ($par) {
-                        $sub->where('invernadero', $par['invernadero'])
-                            ->where('sector', $par['sector']);
-                    });
-                }
-                if ($sectoresDueño->isEmpty()) {
-                    $q->whereRaw('1 = 0');
-                }
-            });
+            // Filtro por mes o últimos 15 registros
+            if ($request->filled('mes')) {
+                $mesInput = $request->input('mes');
+                $query->whereYear('fecha', '=', substr($mesInput, 0, 4))
+                      ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
+                $historico = $query->orderBy('fecha', 'asc')->get();
+            } else {
+                $historico = $query->orderBy('fecha', 'desc')->take(15)->get()->reverse();
+            }
+
+            // Extracción de variables específicas para las gráficas de Suelo
+            $fechas      = $historico->pluck('fecha')->map(fn($f) => Carbon::parse($f)->format('d/m'))->toArray();
+            $dpv         = $historico->pluck('dpv')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $tensiometro = $historico->pluck('lectura_tensiometro')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $radiacion   = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $ce          = $historico->pluck('ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $ph          = $historico->pluck('ph')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+
+            // Meses disponibles para el filtro de suelo
+            $mesesDisponibles = \App\Models\SueloMonitoreo::whereNotNull('fecha')
+                ->selectRaw('DATE_FORMAT(fecha, "%Y-%m") as anio_mes')
+                ->distinct()
+                ->orderBy('anio_mes', 'desc')
+                ->pluck('anio_mes');
+
+            return view('graficas.index', compact(
+                'modulo', 'fechas', 'dpv', 'tensiometro', 'radiacion', 'ce', 'ph', 'mesesDisponibles'
+            ));
+
         } else {
-            // Filtros en cascada para Administradores / Admin General
-            if ($request->filled('dueno_id')) {
-                $sectoresDelDueno = SectorCaracteristica::where('user_id', $request->dueno_id)
+            // --- MÓDULO DE HIDROPONÍA (Tu código original intacto) ---
+            $query = MonitoreoClimaRiego::query();
+
+            // 1. Control de accesos por rol
+            if ($user->rol === 'operador') {
+                $sectoresOperador = OperadorSector::where('user_id', $user->id)
                     ->get()
                     ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
 
-                $query->where(function ($q) use ($sectoresDelDueno) {
-                    foreach ($sectoresDelDueno as $par) {
+                $query->where(function ($q) use ($sectoresOperador) {
+                    foreach ($sectoresOperador as $par) {
                         $q->orWhere(function ($sub) use ($par) {
                             $sub->where('invernadero', $par['invernadero'])
                                 ->where('sector', $par['sector']);
                         });
                     }
-                    if ($sectoresDelDueno->isEmpty()) {
+                    if ($sectoresOperador->isEmpty()) {
                         $q->whereRaw('1 = 0');
                     }
                 });
+            } elseif ($user->rol === 'dueno') {
+                $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
+                    ->get()
+                    ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
+
+                $query->where(function ($q) use ($sectoresDueño) {
+                    foreach ($sectoresDueño as $par) {
+                        $q->orWhere(function ($sub) use ($par) {
+                            $sub->where('invernadero', $par['invernadero'])
+                                ->where('sector', $par['sector']);
+                        });
+                    }
+                    if ($sectoresDueño->isEmpty()) {
+                        $q->whereRaw('1 = 0');
+                    }
+                });
+            } else {
+                // Filtros en cascada para Administradores / Admin General
+                if ($request->filled('dueno_id')) {
+                    $sectoresDelDueno = SectorCaracteristica::where('user_id', $request->dueno_id)
+                        ->get()
+                        ->map(fn($item) => ['invernadero' => trim($item->invernadero), 'sector' => trim($item->sector)]);
+
+                    $query->where(function ($q) use ($sectoresDelDueno) {
+                        foreach ($sectoresDelDueno as $par) {
+                            $q->orWhere(function ($sub) use ($par) {
+                                $sub->where('invernadero', $par['invernadero'])
+                                    ->where('sector', $par['sector']);
+                            });
+                        }
+                        if ($sectoresDelDueno->isEmpty()) {
+                            $q->whereRaw('1 = 0');
+                        }
+                    });
+                }
+
+                if ($request->filled('invernadero')) {
+                    $query->where('invernadero', $request->input('invernadero'));
+                }
+
+                if ($request->filled('buscar_sector')) {
+                    $query->where('sector', $request->input('buscar_sector'));
+                }
             }
 
-            if ($request->filled('invernadero')) {
-                $query->where('invernadero', $request->input('invernadero'));
+            // 2. Filtro por mes o últimos 15 registros
+            if ($request->filled('mes')) {
+                $mesInput = $request->input('mes'); // Formato esperado: "YYYY-MM"
+                $query->whereYear('fecha', '=', substr($mesInput, 0, 4))
+                    ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
+
+                $historicoReciente = $query->orderBy('fecha', 'asc')->get();
+            } else {
+                $historicoReciente = $query->orderBy('fecha', 'desc')->take(15)->get()->reverse();
             }
 
-            if ($request->filled('buscar_sector')) {
-                $query->where('sector', $request->input('buscar_sector'));
+            $historico = $historicoReciente;
+
+            // 3. Extracción de variables para las gráficas
+            $fechas  = $historico->pluck('fecha')->map(fn($f) => Carbon::parse($f)->format('d/m'))->toArray();
+            $dpv     = $historico->pluck('dpv')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $drenaje = $historico->pluck('porcentaje_drenaje')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $difCe   = $historico->pluck('diferencia_ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $lux     = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $ceEntrada = $historico->pluck('ce_entrada')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $ceSalida  = $historico->pluck('ce_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $phEntrada = $historico->pluck('ph_entrada')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $phSalida  = $historico->pluck('ph_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+            $difPh     = $historico->pluck('diferencia_ph')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
+
+            // 4. Datos necesarios para alimentar los selectores
+            $dueños = User::whereIn('rol', ['dueno', 'administrador', 'admin_general'])->orderBy('name')->get();
+
+            $invernaderos = [];
+            if ($request->filled('dueno_id')) {
+                $invernaderos = SectorCaracteristica::where('user_id', $request->dueno_id)
+                    ->whereNotNull('invernadero')
+                    ->distinct()
+                    ->pluck('invernadero');
             }
-        }
 
-        // 2. Filtro por mes o últimos 15 registros
-        if ($request->filled('mes')) {
-            $mesInput = $request->input('mes'); // Formato esperado: "YYYY-MM"
-            $query->whereYear('fecha', '=', substr($mesInput, 0, 4))
-                ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
+            $sectores = [];
+            if ($request->filled('dueno_id') && $request->filled('invernadero')) {
+                $sectores = SectorCaracteristica::where('user_id', $request->dueno_id)
+                    ->where('invernadero', $request->invernadero)
+                    ->whereNotNull('sector')
+                    ->distinct()
+                    ->pluck('sector');
+            }
 
-            $historicoReciente = $query->orderBy('fecha', 'asc')->get();
-        } else {
-            $historicoReciente = $query->orderBy('fecha', 'desc')->take(15)->get()->reverse();
-        }
-
-        $historico = $historicoReciente;
-
-        // 3. Extracción de variables para las gráficas
-        $fechas  = $historico->pluck('fecha')->map(fn($f) => Carbon::parse($f)->format('d/m'))->toArray();
-        $dpv     = $historico->pluck('dpv')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        $drenaje = $historico->pluck('porcentaje_drenaje')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        $difCe   = $historico->pluck('diferencia_ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        $lux     = $historico->pluck('radiacion_lectura')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        $ceEntrada = $historico->pluck('ce_entrada')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        $ceSalida  = $historico->pluck('ce_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        $phEntrada = $historico->pluck('ph_entrada')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        $phSalida  = $historico->pluck('ph_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        $difPh     = $historico->pluck('diferencia_ph')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-        // 4. Datos necesarios para alimentar los selectores
-        $dueños = User::whereIn('rol', ['dueno', 'administrador', 'admin_general'])->orderBy('name')->get();
-
-        $invernaderos = [];
-        if ($request->filled('dueno_id')) {
-            $invernaderos = SectorCaracteristica::where('user_id', $request->dueno_id)
-                ->whereNotNull('invernadero')
+            // Corrección segura para los meses disponibles
+            $mesesDisponibles = MonitoreoClimaRiego::whereNotNull('fecha')
+                ->selectRaw('DATE_FORMAT(fecha, "%Y-%m") as anio_mes')
                 ->distinct()
-                ->pluck('invernadero');
+                ->orderBy('anio_mes', 'desc')
+                ->pluck('anio_mes');
+
+            return view('graficas.index', compact(
+                'modulo', 'fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'ceEntrada', 'ceSalida', 'phEntrada', 'phSalida', 'difPh', 
+                'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'
+            ));
         }
+    }
 
-        $sectores = [];
-        if ($request->filled('dueno_id') && $request->filled('invernadero')) {
-            $sectores = SectorCaracteristica::where('user_id', $request->dueno_id)
-                ->where('invernadero', $request->invernadero)
-                ->whereNotNull('sector')
-                ->distinct()
-                ->pluck('sector');
-        }
-
-        // Corrección segura para los meses disponibles
-        $mesesDisponibles = MonitoreoClimaRiego::whereNotNull('fecha')
-            ->selectRaw('DATE_FORMAT(fecha, "%Y-%m") as anio_mes')
-            ->distinct()
-            ->orderBy('anio_mes', 'desc')
-            ->pluck('anio_mes');
-
-return view('graficas.index', compact('fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'ceEntrada', 'ceSalida', 'phEntrada', 'phSalida', 'difPh', 'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'));  }
 
     private function enviarAlertaAdministradores($invernadero, $sector, $valor, $tipo = 'drenaje')
     {
