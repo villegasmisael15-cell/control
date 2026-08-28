@@ -152,6 +152,23 @@
             </div>
             @endif
 
+          @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
+            <div class="p-6 flex-grow">
+                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 text-xl mb-4">
+                    <i class="fa-solid fa-microchip"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Telemetría e IoT</h3>
+                <p class="text-gray-600 text-sm leading-relaxed">Monitoreo en tiempo real de báscula (HX711), temperatura ambiental y variables físicas transmitidas por dispositivos ESP32.</p>
+            </div>
+            <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
+                <a href="{{ route('telemetria.index') }}" class="text-sm text-cyan-600 hover:text-cyan-700 font-bold flex items-center gap-1">
+                    Ver lecturas <i class="fa-solid fa-arrow-right text-xs"></i>
+                </a>
+            </div>
+        </div>
+        @endif
+
             <!-- MÓDULO: CONTROL DE USUARIOS (Acceso: EXCLUSIVAMENTE Administrador / Admin General) -->
             @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">

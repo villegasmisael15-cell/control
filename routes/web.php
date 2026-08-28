@@ -11,6 +11,7 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SueloMonitoreoController;
 use App\Http\Controllers\SanidadNutricionBitacoraController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use app\Http\Controllers\SensorController;
 
 // Redireccionar la raíz al login si no está autenticado, o al dashboard si ya inició sesión
 Route::get('/', function () {
@@ -21,7 +22,7 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Vista del Dashboard Principal (MODIFICADA: Resuelve el tablero vacío del admin_general)
-   Route::get('/dashboard', function () {
+    Route::get('/dashboard', function () {
         $user = auth()->user();
 
         if ($user->rol === 'admin_general') {
@@ -70,7 +71,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Buscamos el primer registro pendiente incluyendo invernadero y sector
         $pendiente = \App\Models\SectorCaracteristica::where('user_id', $user->id)
-            ->where(function($query) {
+            ->where(function ($query) {
                 $query->whereNull('variedad')->orWhere('variedad', '');
             })
             ->first();
@@ -92,7 +93,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             'superficie_m2'      => 'required|integer|min:1',
             'variedad'           => 'required|string|max:255',
             'numero_plantas'     => 'required|integer|min:1',
-            'macetas_por_gotero' => 'required|integer|min:1', 
+            'macetas_por_gotero' => 'required|integer|min:1',
             'fecha_trasplante'   => 'required|date',
         ]);
 
@@ -109,7 +110,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 'superficie_m2'      => $request->superficie_m2,
                 'variedad'           => $request->variedad,
                 'numero_plantas'     => $request->numero_plantas,
-                'macetas_por_gotero' => $request->macetas_por_gotero, 
+                'macetas_por_gotero' => $request->macetas_por_gotero,
                 'fecha_trasplante'   => $request->fecha_trasplante
             ]
         );
@@ -121,7 +122,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/suelo', [SueloMonitoreoController::class, 'index'])->name('suelo.index');
     Route::get('/suelo/nuevo', [SueloMonitoreoController::class, 'create'])->name('suelo.create');
     Route::post('/suelo/guardar', [SueloMonitoreoController::class, 'store'])->name('suelo.store');
-    
+
     Route::get('/reportes', [ReporteController::class, 'index'])->name('reportes.index');
     Route::put('/reportes/{id}/actualizar', [ReporteController::class, 'update'])->name('reportes.update');
     Route::put('/reportes/{recepcion_id}', [ReporteController::class, 'update'])->name('reportes.update_recepcion');
@@ -143,8 +144,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/recepcion/exportacion/{id}', [RecepcionController::class, 'destroyExportacion'])->name('recepcion.destroyExportacion');
         Route::delete('/suelo/{id}', [SueloMonitoreoController::class, 'destroy'])->name('suelo.destroy');
         Route::delete('/sanidad/{id}', [SanidadNutricionBitacoraController::class, 'destroy'])->name('sanidad.destroy');
-Route::delete('/usuarios/{user}', [UsuarioController::class, 'destroy'])  ->name('usuarios.destroy')  ->middleware(['auth']);    });
+        Route::delete('/usuarios/{user}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy')->middleware(['auth']);
+        Route::get('/telemetria', [SensorController::class, 'index'])->name('telemetria.index');
+        Route::get('/telemetria', [SensorController::class, 'index'])->name('telemetria.index')->middleware('auth');
 
+    });
 }); // Cierre correcto del middleware global group
 
 // Las rutas de autenticación de Breeze (Login, Registro, etc.) se cargan aquí:
