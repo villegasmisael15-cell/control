@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route; // <--- 1. Importa la fachada Route
 use App\Models\User;
 
 class AppServiceProvider extends ServiceProvider
@@ -25,5 +26,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('es-administrador', function (User $user) {
             return $user->rol === 'administrador' || $user->rol === 'admin_general';
         });
+
+        // 2. Registramos explícitamente el archivo de rutas de la API con su prefijo
+        Route::prefix('api')
+             ->middleware('api')
+             ->group(base_path('routes/api.php'));
     }
 }
