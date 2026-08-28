@@ -515,30 +515,57 @@ class MonitoreoClimaRiegoController extends Controller
         return redirect()->route('monitoreo.index')->with('status', 'El registro ha sido eliminado.');
     }
 
-   public function graficas(Request $request)
+  public function graficas(Request $request)
     {
         // 0. Determinamos qué módulo se quiere ver: 'hidroponia' o 'suelo'
         $modulo = $request->input('modulo', 'hidroponia');
         $user = auth()->user();
 
+        // 1. Datos comunes para alimentar los selectores (Dueños, Invernaderos, Sectores)
+        $dueños = User::whereIn('rol', ['dueno', 'administrador', 'admin_general'])->orderBy('name')->get();
+
+        $invernaderos = [];
+        if ($request->filled('dueno_id')) {
+            $invernaderos = SectorCaracteristica::where('user_id', $request->dueno_id)
+                ->whereNotNull('invernadero')
+                ->distinct()
+                ->pluck('invernadero');
+        }
+
+        $sectores = [];
+        if ($request->filled('dueno_id') && $request->filled('invernadero')) {
+            $sectores = SectorCaracteristica::where('user_id', $request->dueno_id)
+                ->where('invernadero', $request->invernadero)
+                ->whereNotNull('sector')
+                ->distinct()
+                ->pluck('sector');
+        }
+
         if ($modulo === 'suelo') {
             // --- MÓDULO DE SUELO ---
             $query = \App\Models\SueloMonitoreo::query();
 
-            // Control de accesos de suelo por rol
-            if (in_array($user->rol, ['administrador', 'admin_general'])) {
-                if ($request->filled('buscar_termino')) {
-                    $termino = $request->input('buscar_termino');
-                    $query->where('sector', 'LIKE', '%' . $termino . '%');
-                }
+            // Control de accesos y filtros en cascada para Suelo
+            if ($user->rol === 'operador') {
+                $sectoresOperador = OperadorSector::where('user_id', $user->id)
+                    ->pluck('sector')->map(fn($item) => trim($item))->toArray();
+                $query->whereIn('sector', $sectoresOperador);
             } elseif ($user->rol === 'dueno') {
                 $sectoresDueño = SectorCaracteristica::where('user_id', $user->id)
                     ->pluck('sector')->map(fn($item) => trim($item))->toArray();
                 $query->whereIn('sector', $sectoresDueño);
-            } elseif ($user->rol === 'operador') {
-                $sectoresOperador = OperadorSector::where('user_id', $user->id)
-                    ->pluck('sector')->map(fn($item) => trim($item))->toArray();
-                $query->whereIn('sector', $sectoresOperador);
+            } else {
+                // Filtros en cascada para Administradores / Admin General
+                if ($request->filled('dueno_id')) {
+                    $sectoresDelDueno = SectorCaracteristica::where('user_id', $request->dueno_id)
+                        ->pluck('sector')->map(fn($item) => trim($item))->toArray();
+                    $query->whereIn('sector', $sectoresDelDueno);
+                }
+
+                // Si seleccionan un sector específico en el filtro
+                if ($request->filled('buscar_sector')) {
+                    $query->where('sector', $request->input('buscar_sector'));
+                }
             }
 
             // Filtro por mes o últimos 15 registros
@@ -567,11 +594,12 @@ class MonitoreoClimaRiegoController extends Controller
                 ->pluck('anio_mes');
 
             return view('graficas.index', compact(
-                'modulo', 'fechas', 'dpv', 'tensiometro', 'radiacion', 'ce', 'ph', 'mesesDisponibles'
+                'modulo', 'fechas', 'dpv', 'tensiometro', 'radiacion', 'ce', 'ph', 
+                'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'
             ));
 
         } else {
-            // --- MÓDULO DE HIDROPONÍA (Tu código original intacto) ---
+            // --- MÓDULO DE HIDROPONÍA ---
             $query = MonitoreoClimaRiego::query();
 
             // 1. Control de accesos por rol
@@ -660,26 +688,6 @@ class MonitoreoClimaRiegoController extends Controller
             $phEntrada = $historico->pluck('ph_entrada')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
             $phSalida  = $historico->pluck('ph_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
             $difPh     = $historico->pluck('diferencia_ph')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
-
-            // 4. Datos necesarios para alimentar los selectores
-            $dueños = User::whereIn('rol', ['dueno', 'administrador', 'admin_general'])->orderBy('name')->get();
-
-            $invernaderos = [];
-            if ($request->filled('dueno_id')) {
-                $invernaderos = SectorCaracteristica::where('user_id', $request->dueno_id)
-                    ->whereNotNull('invernadero')
-                    ->distinct()
-                    ->pluck('invernadero');
-            }
-
-            $sectores = [];
-            if ($request->filled('dueno_id') && $request->filled('invernadero')) {
-                $sectores = SectorCaracteristica::where('user_id', $request->dueno_id)
-                    ->where('invernadero', $request->invernadero)
-                    ->whereNotNull('sector')
-                    ->distinct()
-                    ->pluck('sector');
-            }
 
             // Corrección segura para los meses disponibles
             $mesesDisponibles = MonitoreoClimaRiego::whereNotNull('fecha')
