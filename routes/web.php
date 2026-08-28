@@ -11,7 +11,7 @@ use App\Http\Controllers\ReporteController;
 use App\Http\Controllers\SueloMonitoreoController;
 use App\Http\Controllers\SanidadNutricionBitacoraController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use app\Http\Controllers\SensorController;
+use App\Http\Controllers\SensorController;
 
 // Redireccionar la raíz al login si no está autenticado, o al dashboard si ya inició sesión
 Route::get('/', function () {
