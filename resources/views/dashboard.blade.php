@@ -159,7 +159,7 @@
                     <i class="fa-solid fa-microchip"></i>
                 </div>
                 <h3 class="text-lg font-bold text-gray-800 mb-2">Telemetría e IoT</h3>
-                <p class="text-gray-600 text-sm leading-relaxed">Monitoreo en tiempo real de báscula (HX711), temperatura ambiental y variables físicas transmitidas por dispositivos ESP32.</p>
+                <p class="text-gray-600 text-sm leading-relaxed">Monitoreo en tiempo real de variables físicas transmitidas por dispositivos ESP32.</p>
             </div>
             <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
                 <a href="{{ route('telemetria.index') }}" class="text-sm text-cyan-600 hover:text-cyan-700 font-bold flex items-center gap-1">

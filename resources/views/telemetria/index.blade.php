@@ -40,16 +40,16 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-cyan-600"></i> Telemetría y Báscula HX711
+                    <i class="fa-solid fa-microchip text-cyan-600"></i> Telemetría ESP32
                 </h1>
-                <p class="text-gray-600 text-sm mt-1">Monitoreo de peso en tiempo real transmitido por el ESP32.</p>
+                <p class="text-gray-600 text-sm mt-1">Monitoreo en tiempo real transmitido por el ESP32.</p>
             </div>
         </div>
 
         <!-- Tabla de Datos Recibidos -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-base">Registros Históricos de Peso</h3>
+                <h3 class="font-bold text-gray-800 text-base">Registros Históricos</h3>
 
                 @php
                     // Validar si el ESP32 sigue transmitiendo (último registro hace menos de 60 segundos / 1 minuto)
