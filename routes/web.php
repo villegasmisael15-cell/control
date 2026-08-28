@@ -145,9 +145,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/suelo/{id}', [SueloMonitoreoController::class, 'destroy'])->name('suelo.destroy');
         Route::delete('/sanidad/{id}', [SanidadNutricionBitacoraController::class, 'destroy'])->name('sanidad.destroy');
         Route::delete('/usuarios/{user}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy')->middleware(['auth']);
-        Route::get('/telemetria', [SensorController::class, 'index'])->name('telemetria.index');
-        Route::get('/telemetria', [SensorController::class, 'index'])->name('telemetria.index')->middleware('auth');
-
+        Route::get('/telemetria', [SensorController::class, 'index'])->name('telemetria.index')->middleware(['auth', 'verified']);
     });
 }); // Cierre correcto del middleware global group
 
