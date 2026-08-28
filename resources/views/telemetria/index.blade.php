@@ -42,9 +42,9 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-cyan-600"></i> Telemetría y Sensores IoT
+                    <i class="fa-solid fa-microchip text-cyan-600"></i> Telemetría y Báscula HX711
                 </h1>
-                <p class="text-gray-600 text-sm mt-1">Monitoreo de báscula (HX711) y variables ambientales en tiempo real.</p>
+                <p class="text-gray-600 text-sm mt-1">Monitoreo de peso en tiempo real transmitido por el ESP32.</p>
             </div>
             <div>
                 <a href="{{ url()->previous() }}" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg shadow-2xs transition flex items-center gap-2">
@@ -56,7 +56,7 @@
         <!-- Tabla de Datos Recibidos -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-base">Registros Históricos del ESP32</h3>
+                <h3 class="font-bold text-gray-800 text-base">Registros Históricos de Peso</h3>
                 <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
                 </span>
@@ -68,8 +68,6 @@
                         <tr class="bg-gray-50 text-gray-600 uppercase text-xs tracking-wider border-b border-gray-200">
                             <th class="py-3.5 px-6 font-semibold">ID Dispositivo</th>
                             <th class="py-3.5 px-6 font-semibold">Peso (kg)</th>
-                            <th class="py-3.5 px-6 font-semibold">Temp. Ambiente (°C)</th>
-                            <th class="py-3.5 px-6 font-semibold">Humedad (%)</th>
                             <th class="py-3.5 px-6 font-semibold">Fecha y Hora</th>
                         </tr>
                     </thead>
@@ -79,24 +77,18 @@
                             <td class="py-4 px-6 font-medium text-gray-900 flex items-center gap-2">
                                 <i class="fa-solid fa-wifi text-emerald-600 text-xs"></i> {{ $sensor->esp32_id ?? 'ESP32_INVERNADERO_1' }}
                             </td>
-                            <td class="py-4 px-6 font-bold text-cyan-700">
-                                {{ $sensor->peso ?? '0.00' }} kg
-                            </td>
-                            <td class="py-4 px-6">
-                                {{ $sensor->temp_ambiente ?? '--' }} °C
-                            </td>
-                            <td class="py-4 px-6">
-                                {{ $sensor->humedad_ambiente ?? '--' }} %
+                            <td class="py-4 px-6 font-bold text-cyan-700 text-base">
+                                {{ $sensor->peso_hx711 ?? '0.00' }} kg
                             </td>
                             <td class="py-4 px-6 text-gray-500 text-xs">
-                                {{ $sensor->created_at ? $sensor->created_at->format('d/m/Y H:i:s') : 'Hace un momento' }}
+                                {{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Hace un momento' }}
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="py-8 text-center text-gray-400">
+                            <td colspan="3" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                                <p>No hay registros de sensores guardados todavía.</p>
+                                <p>No hay registros de peso guardados todavía.</p>
                             </td>
                         </tr>
                         @endforelse
@@ -104,7 +96,7 @@
                 </table>
             </div>
 
-            <!-- Paginación si usas paginate() en tu controlador -->
+            <!-- Paginación -->
             @if(isset($sensores) && method_exists($sensores, 'links'))
             <div class="p-4 border-t border-gray-200 bg-gray-50">
                 {{ $sensores->links() }}
