@@ -19,7 +19,7 @@
                 <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
             </div>
 
-           <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+            <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
                 <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
                     <i class="fa-solid fa-user text-[10px]"></i>
                     <span class="truncate">{{ auth()->user()->name }}</span>
@@ -44,16 +44,32 @@
                 </h1>
                 <p class="text-gray-600 text-sm mt-1">Monitoreo de peso en tiempo real transmitido por el ESP32.</p>
             </div>
-            
         </div>
 
         <!-- Tabla de Datos Recibidos -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
                 <h3 class="font-bold text-gray-800 text-base">Registros Históricos de Peso</h3>
-                <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
-                </span>
+
+                @php
+                    // Validar si el ESP32 sigue transmitiendo (último registro hace menos de 60 segundos / 1 minuto)
+                    $ultimoRegistro = \App\Models\Sensor::latest()->first();
+                    $estaConectado = false;
+                    if ($ultimoRegistro && $ultimoRegistro->created_at) {
+                        $tiempoTranscurrido = \Carbon\Carbon::parse($ultimoRegistro->created_at)->diffInSeconds(now());
+                        $estaConectado = $tiempoTranscurrido <= 60;
+                    }
+                @endphp
+
+                @if($estaConectado)
+                    <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
+                    </span>
+                @else
+                    <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
+                    </span>
+                @endif
             </div>
 
             <div class="overflow-x-auto">
