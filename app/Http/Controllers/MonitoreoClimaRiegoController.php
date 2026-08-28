@@ -515,7 +515,7 @@ class MonitoreoClimaRiegoController extends Controller
         return redirect()->route('monitoreo.index')->with('status', 'El registro ha sido eliminado.');
     }
 
-  public function graficas(Request $request)
+ public function graficas(Request $request)
     {
         // 0. Determinamos qué módulo se quiere ver: 'hidroponia' o 'suelo'
         $modulo = $request->input('modulo', 'hidroponia');
@@ -545,7 +545,7 @@ class MonitoreoClimaRiegoController extends Controller
             // --- MÓDULO DE SUELO ---
             $query = \App\Models\SueloMonitoreo::query();
 
-            // Control de accesos y filtros en cascada para Suelo
+            // Control de accesos de suelo por rol
             if ($user->rol === 'operador') {
                 $sectoresOperador = OperadorSector::where('user_id', $user->id)
                     ->pluck('sector')->map(fn($item) => trim($item))->toArray();
@@ -561,11 +561,11 @@ class MonitoreoClimaRiegoController extends Controller
                         ->pluck('sector')->map(fn($item) => trim($item))->toArray();
                     $query->whereIn('sector', $sectoresDelDueno);
                 }
+            }
 
-                // Si seleccionan un sector específico en el filtro
-                if ($request->filled('buscar_sector')) {
-                    $query->where('sector', $request->input('buscar_sector'));
-                }
+            // Filtrar por el sector seleccionado en el desplegable
+            if ($request->filled('buscar_sector')) {
+                $query->where('sector', $request->input('buscar_sector'));
             }
 
             // Filtro por mes o últimos 15 registros
@@ -586,7 +586,7 @@ class MonitoreoClimaRiegoController extends Controller
             $ce          = $historico->pluck('ce')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
             $ph          = $historico->pluck('ph')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
 
-            // Meses disponibles para el filtro de suelo
+            // Meses disponibles específicos de la tabla de Suelo
             $mesesDisponibles = \App\Models\SueloMonitoreo::whereNotNull('fecha')
                 ->selectRaw('DATE_FORMAT(fecha, "%Y-%m") as anio_mes')
                 ->distinct()
@@ -689,7 +689,7 @@ class MonitoreoClimaRiegoController extends Controller
             $phSalida  = $historico->pluck('ph_salida')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
             $difPh     = $historico->pluck('diferencia_ph')->map(fn($val) => is_numeric($val) ? floatval($val) : 0)->toArray();
 
-            // Corrección segura para los meses disponibles
+            // Meses disponibles específicos de Hidroponía
             $mesesDisponibles = MonitoreoClimaRiego::whereNotNull('fecha')
                 ->selectRaw('DATE_FORMAT(fecha, "%Y-%m") as anio_mes')
                 ->distinct()
