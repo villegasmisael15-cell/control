@@ -44,11 +44,7 @@
                 </h1>
                 <p class="text-gray-600 text-sm mt-1">Monitoreo de peso en tiempo real transmitido por el ESP32.</p>
             </div>
-            <div>
-                <a href="{{ url()->previous() }}" class="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-sm font-semibold px-4 py-2 rounded-lg shadow-2xs transition flex items-center gap-2">
-                    <i class="fa-solid fa-arrow-left"></i> Volver al Panel
-                </a>
-            </div>
+            
         </div>
 
         <!-- Tabla de Datos Recibidos -->
