@@ -19,18 +19,16 @@
                 <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
             </div>
 
-            <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
-                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[110px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+           <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
+                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
                     <i class="fa-solid fa-user text-[10px]"></i>
                     <span class="truncate">{{ auth()->user()->name }}</span>
                 </span>
-
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-                    <button type="submit" class="bg-red-600 hover:bg-red-700 text-white font-bold px-2.5 sm:px-3 py-1.5 rounded-md transition flex items-center gap-1 shadow-2xs cursor-pointer whitespace-nowrap">
-                        <i class="fa-solid fa-right-from-bracket text-[10px]"></i> Salir
-                    </button>
-                </form>
+                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                    <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
+                    <span class="hidden xs:inline">Volver al Panel</span>
+                    <span class="inline xs:hidden">Panel</span>
+                </a>
             </div>
         </div>
     </nav>
