@@ -40,16 +40,16 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-cyan-600"></i> Telemetría y Todos los Sensores IoT
+                    <i class="fa-solid fa-microchip text-cyan-600"></i> Telemetría y Sensores del Invernadero
                 </h1>
-                <p class="text-gray-600 text-sm mt-1">Monitoreo detallado de todos los canales de hardware del ESP32.</p>
+                <p class="text-gray-600 text-sm mt-1">Monitoreo de variables ambientales, calidad de aire, agua y peso.</p>
             </div>
         </div>
 
         <!-- Tabla de Datos Recibidos -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-base">Registros Históricos Completos</h3>
+                <h3 class="font-bold text-gray-800 text-base">Registros Históricos</h3>
 
                 @php
                     $ultimoRegistro = \App\Models\Sensor::latest()->first();
@@ -75,67 +75,49 @@
                 <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
                     <thead>
                         <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                            <th class="py-3 px-3 font-semibold">ID Disp.</th>
-                            <th class="py-3 px-3 font-semibold">Temp Amb (°C)</th>
-                            <th class="py-3 px-3 font-semibold">Hum Amb (%)</th>
-                            <th class="py-3 px-3 font-semibold">eCO2 (ppm)</th>
-                            <th class="py-3 px-3 font-semibold">TVOC (ppb)</th>
-                            <th class="py-3 px-3 font-semibold">Luz (Lux)</th>
-                            <th class="py-3 px-3 font-semibold">Temp Infra (°C)</th>
-                            <th class="py-3 px-3 font-semibold">TDS</th>
-                            <th class="py-3 px-3 font-semibold">ADS3 A1</th>
-                            <th class="py-3 px-3 font-semibold">ADS3 A2</th>
-                            <th class="py-3 px-3 font-semibold">ADS3 A3</th>
-                            <th class="py-3 px-3 font-semibold">HE390</th>
-                            <th class="py-3 px-3 font-semibold">ADS4 A1</th>
-                            <th class="py-3 px-3 font-semibold">ADS4 A2</th>
-                            <th class="py-3 px-3 font-semibold">ADS4 A3</th>
-                            <th class="py-3 px-3 font-semibold">pH</th>
-                            <th class="py-3 px-3 font-semibold">ADS5 A1</th>
-                            <th class="py-3 px-3 font-semibold">ADS5 A2</th>
-                            <th class="py-3 px-3 font-semibold">ADS5 A3</th>
-                            <th class="py-3 px-3 font-semibold">DS18B20 (°C)</th>
-                            <th class="py-3 px-3 font-semibold text-cyan-700">Peso HX711 (kg)</th>
-                            <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
+                            <th class="py-3 px-4 font-semibold">Dispositivo</th>
+                            <th class="py-3 px-4 font-semibold text-cyan-700">Peso (kg)</th>
+                            <th class="py-3 px-4 font-semibold">Temp. Amb (°C)</th>
+                            <th class="py-3 px-4 font-semibold">Hum. Amb (%)</th>
+                            <th class="py-3 px-4 font-semibold">eCO2 (ppm)</th>
+                            <th class="py-3 px-4 font-semibold">TVOC (ppb)</th>
+                            <th class="py-3 px-4 font-semibold">Luz (Lux)</th>
+                            <th class="py-3 px-4 font-semibold">Temp. Infra (°C)</th>
+                            <th class="py-3 px-4 font-semibold">TDS</th>
+                            <th class="py-3 px-4 font-semibold">HE390</th>
+                            <th class="py-3 px-4 font-semibold text-emerald-700">pH</th>
+                            <th class="py-3 px-4 font-semibold">Temp. Suelo (°C)</th>
+                            <th class="py-3 px-4 font-semibold">Fecha y Hora</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 text-gray-700">
                         @forelse($sensores as $sensor)
                         <tr class="hover:bg-gray-50/80 transition">
-                            <td class="py-3 px-3 font-medium text-gray-900">
-                                {{ $sensor->esp32_id ?? 'ESP32_1' }}
+                            <td class="py-3.5 px-4 font-medium text-gray-900 flex items-center gap-1.5">
+                                <i class="fa-solid fa-wifi text-emerald-600 text-xs"></i> {{ $sensor->esp32_id ?? 'ESP32_1' }}
                             </td>
-                            <td class="py-3 px-3">{{ $sensor->temp_ambiente ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->humedad_ambiente ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->calidad_aire_eco2 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->calidad_aire_tvoc ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->luz_lux ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->temp_infrarrojo ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->tds_valor ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads3_a1 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads3_a2 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads3_a3 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->he390_valor ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads4_a1 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads4_a2 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads4_a3 ?? '--' }}</td>
-                            <td class="py-3 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads5_a1 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads5_a2 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->ads5_a3 ?? '--' }}</td>
-                            <td class="py-3 px-3">{{ $sensor->temp_ds18b20 ?? '--' }}</td>
-                            <td class="py-3 px-3 font-bold text-cyan-700 text-sm">
-                                {{ $sensor->peso_hx711 !== null ? number_format($sensor->peso_hx711, 2) : '0.00' }}
+                            <td class="py-3.5 px-4 font-bold text-cyan-700 text-sm">
+                                {{ $sensor->peso_hx711 !== null ? number_format($sensor->peso_hx711, 2) : '0.00' }} kg
                             </td>
-                            <td class="py-3 px-3 text-gray-500 text-[11px]">
+                            <td class="py-3.5 px-4">{{ $sensor->temp_ambiente !== null ? $sensor->temp_ambiente . ' °C' : '--' }}</td>
+                            <td class="py-3.5 px-4">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>
+                            <td class="py-3.5 px-4">{{ $sensor->calidad_aire_eco2 !== null ? $sensor->calidad_aire_eco2 : '--' }}</td>
+                            <td class="py-3.5 px-4">{{ $sensor->calidad_aire_tvoc !== null ? $sensor->calidad_aire_tvoc : '--' }}</td>
+                            <td class="py-3.5 px-4">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td>
+                            <td class="py-3.5 px-4">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
+                            <td class="py-3.5 px-4">{{ $sensor->tds_valor !== null ? $sensor->tds_valor : '--' }}</td>
+                            <td class="py-3.5 px-4">{{ $sensor->he390_valor !== null ? $sensor->he390_valor : '--' }}</td>
+                            <td class="py-3.5 px-4 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
+                            <td class="py-3.5 px-4">{{ $sensor->temp_ds18b20 !== null ? $sensor->temp_ds18b20 . ' °C' : '--' }}</td>
+                            <td class="py-3.5 px-4 text-gray-500 text-[11px]">
                                 {{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="22" class="py-8 text-center text-gray-400">
+                            <td colspan="13" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                                <p>No hay registros guardados todavía.</p>
+                                <p>No hay registros de sensores guardados todavía.</p>
                             </td>
                         </tr>
                         @endforelse
