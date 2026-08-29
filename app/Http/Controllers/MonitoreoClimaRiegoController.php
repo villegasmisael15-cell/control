@@ -742,7 +742,7 @@ class MonitoreoClimaRiegoController extends Controller
             }
         }
 
-        $ubicacion = "Dueño: " . $duenoNombre . " | Invernadero: " . ($invernadero ?? 'General') . " — Sector " . $sector;
+        $ubicacion = "Dueño: " . $duenoNombre . " | Invernadero: " . ($invernadero ?? 'General')."-" .$sector;
 
         if ($tipo === 'temperatura') {
             $titulo = '⚠️ Alerta de Temperatura Crítica';
