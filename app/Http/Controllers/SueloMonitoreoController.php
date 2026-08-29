@@ -356,7 +356,7 @@ class SueloMonitoreoController extends Controller
             }
         }
 
-        $ubicacion = "Dueño: " . $duenoNombre . " | Invernadero: " . ($invernadero ?: 'General') . " — Sector " . $sector;
+        $ubicacion = "Dueño: " . $duenoNombre . " | Invernadero: " . ($invernadero ?: 'General') . " — " . $sector;
 
         if ($tipo === 'tensiometro') {
             $titulo = '⚠️ Alerta de Tensiómetro en Suelo';
