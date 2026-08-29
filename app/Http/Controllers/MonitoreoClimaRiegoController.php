@@ -277,14 +277,14 @@ class MonitoreoClimaRiegoController extends Controller
 
             // Evaluar alerta de drenaje exclusiva para administrador
             if (!is_null($porcentaje_drenaje) && ($porcentaje_drenaje < 10 || $porcentaje_drenaje > 35)) {
-                $this->enviarAlertaAdministradores($request->invernadero, $request->sector, $porcentaje_drenaje, 'drenaje');
+                $this->enviarAlertaAdministradores($request->invernadero, $request->sector, $porcentaje_drenaje, 'drenaje', $idDuenoReal);
             }
 
-            // Evaluar alerta de temperatura exclusiva para administrador
+            // Evaluar alerta de temperatura
             if ($request->filled('temperatura')) {
                 $tempVal = $request->temperatura;
                 if ($tempVal > 35 || $tempVal < 4) {
-                    $this->enviarAlertaAdministradores($request->invernadero, $request->sector, $tempVal, 'temperatura');
+                    $this->enviarAlertaAdministradores($request->invernadero, $request->sector, $tempVal, 'temperatura', $idDuenoReal);
                 }
             }
 
@@ -490,13 +490,13 @@ class MonitoreoClimaRiegoController extends Controller
         ]));
 
         if (!is_null($porcentaje_drenaje) && ($porcentaje_drenaje < 10 || $porcentaje_drenaje > 35)) {
-            $this->enviarAlertaAdministradores($request->invernadero, $request->sector, $porcentaje_drenaje, 'drenaje');
+            $this->enviarAlertaAdministradores($request->invernadero, $request->sector, $porcentaje_drenaje, 'drenaje', $monitoreo->user_id);
         }
 
         if ($request->filled('temperatura')) {
             $tempVal = $request->temperatura;
             if ($tempVal > 35 || $tempVal < 4) {
-                $this->enviarAlertaAdministradores($request->invernadero, $request->sector, $tempVal, 'temperatura');
+                $this->enviarAlertaAdministradores($request->invernadero, $request->sector, $tempVal, 'temperatura', $monitoreo->user_id);
             }
         }
 
@@ -515,7 +515,7 @@ class MonitoreoClimaRiegoController extends Controller
         return redirect()->route('monitoreo.index')->with('status', 'El registro ha sido eliminado.');
     }
 
- public function graficas(Request $request)
+    public function graficas(Request $request)
     {
         // 0. Determinamos qué módulo se quiere ver: 'hidroponia' o 'suelo'
         $modulo = $request->input('modulo', 'hidroponia');
@@ -572,7 +572,7 @@ class MonitoreoClimaRiegoController extends Controller
             if ($request->filled('mes')) {
                 $mesInput = $request->input('mes');
                 $query->whereYear('fecha', '=', substr($mesInput, 0, 4))
-                      ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
+                    ->whereMonth('fecha', '=', substr($mesInput, 5, 2));
                 $historico = $query->orderBy('fecha', 'asc')->get();
             } else {
                 $historico = $query->orderBy('fecha', 'desc')->take(15)->get()->reverse();
@@ -594,10 +594,18 @@ class MonitoreoClimaRiegoController extends Controller
                 ->pluck('anio_mes');
 
             return view('graficas.index', compact(
-                'modulo', 'fechas', 'dpv', 'tensiometro', 'radiacion', 'ce', 'ph', 
-                'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'
+                'modulo',
+                'fechas',
+                'dpv',
+                'tensiometro',
+                'radiacion',
+                'ce',
+                'ph',
+                'dueños',
+                'invernaderos',
+                'sectores',
+                'mesesDisponibles'
             ));
-
         } else {
             // --- MÓDULO DE HIDROPONÍA ---
             $query = MonitoreoClimaRiego::query();
@@ -697,28 +705,51 @@ class MonitoreoClimaRiegoController extends Controller
                 ->pluck('anio_mes');
 
             return view('graficas.index', compact(
-                'modulo', 'fechas', 'dpv', 'drenaje', 'difCe', 'lux', 'ceEntrada', 'ceSalida', 'phEntrada', 'phSalida', 'difPh', 
-                'dueños', 'invernaderos', 'sectores', 'mesesDisponibles'
+                'modulo',
+                'fechas',
+                'dpv',
+                'drenaje',
+                'difCe',
+                'lux',
+                'ceEntrada',
+                'ceSalida',
+                'phEntrada',
+                'phSalida',
+                'difPh',
+                'dueños',
+                'invernaderos',
+                'sectores',
+                'mesesDisponibles'
             ));
         }
     }
 
 
-    private function enviarAlertaAdministradores($invernadero, $sector, $valor, $tipo = 'drenaje')
+    private function enviarAlertaAdministradores($invernadero, $sector, $valor, $tipo = 'drenaje', $duenoId = null)
     {
         $admins = User::where('rol', 'administrador')
             ->whereNotNull('fcm_token')
             ->get();
 
         $projectId = "unitasrubraalertas";
-        $ubicacion = "Invernadero " . ($invernadero ?? 'General') . " — Sector " . $sector;
+
+        // Obtener el nombre del dueño del sector/invernadero
+        $duenoNombre = 'No asignado';
+        if ($duenoId) {
+            $dueno = User::find($duenoId);
+            if ($dueno) {
+                $duenoNombre = $dueno->name;
+            }
+        }
+
+        $ubicacion = "Dueño: " . $duenoNombre . " | Invernadero: " . ($invernadero ?? 'General') . " — Sector " . $sector;
 
         if ($tipo === 'temperatura') {
             $titulo = '⚠️ Alerta de Temperatura Crítica';
-            $mensaje = "El " . $ubicacion . " registró una temperatura fuera de rango: " . $valor . "°C";
+            $mensaje = $ubicacion . " registró una temperatura fuera de rango: " . $valor . "°C";
         } else {
             $titulo = '⚠️ Alerta de Drenaje en Hidroponía';
-            $mensaje = "El " . $ubicacion . " registró un drenaje crítico de: " . $valor . "%";
+            $mensaje = $ubicacion . " registró un drenaje crítico de: " . $valor . "%";
         }
 
         foreach ($admins as $admin) {

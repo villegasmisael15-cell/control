@@ -150,7 +150,7 @@ class SueloMonitoreoController extends Controller
 
         // 1. Identificamos dinámicamente quién es el VERDADERO DUEÑO del sector enviado
         $caracteristicaSector = SectorCaracteristica::where('sector', $sectorBuscado)
-            ->when(!empty($invernaderoBuscado), function($q) use ($invernaderoBuscado) {
+            ->when(!empty($invernaderoBuscado), function ($q) use ($invernaderoBuscado) {
                 return $q->where('invernadero', $invernaderoBuscado);
             })
             ->first();
@@ -314,7 +314,7 @@ class SueloMonitoreoController extends Controller
         if ($request->filled('lectura_tensiometro')) {
             $valTensiometro = $request->lectura_tensiometro;
             if ($valTensiometro < 5 || $valTensiometro > 25) {
-                $this->enviarAlertaAdministradores($request->sector, $valTensiometro, 'tensiometro');
+                $this->enviarAlertaAdministradores($invernaderoBuscado, $request->sector, $valTensiometro, 'tensiometro', $idDuenoReal);
             }
         }
 
@@ -339,7 +339,7 @@ class SueloMonitoreoController extends Controller
     /**
      * Función privada para disparar la notificación push a los Administradores
      */
-    private function enviarAlertaAdministradores($sector, $valor, $tipo = 'tensiometro')
+    private function enviarAlertaAdministradores($invernadero, $sector, $valor, $tipo = 'tensiometro', $duenoId = null)
     {
         $admins = User::where('rol', 'administrador')
             ->whereNotNull('fcm_token')
@@ -347,12 +347,23 @@ class SueloMonitoreoController extends Controller
 
         $projectId = "unitasrubraalertas";
 
+        // Obtener el nombre del dueño del sector/invernadero
+        $duenoNombre = 'No asignado';
+        if ($duenoId) {
+            $dueno = User::find($duenoId);
+            if ($dueno) {
+                $duenoNombre = $dueno->name;
+            }
+        }
+
+        $ubicacion = "Dueño: " . $duenoNombre . " | Invernadero: " . ($invernadero ?: 'General') . " — Sector " . $sector;
+
         if ($tipo === 'tensiometro') {
             $titulo = '⚠️ Alerta de Tensiómetro en Suelo';
-            $mensaje = "El sector " . $sector . " registró un nivel de tensiómetro crítico: " . $valor;
+            $mensaje = $ubicacion . " registró un nivel de tensiómetro crítico: " . $valor;
         } else {
             $titulo = '⚠️ Alerta en Suelo';
-            $mensaje = "El sector " . $sector . " registró un valor crítico de: " . $valor;
+            $mensaje = $ubicacion . " registró un valor crítico de: " . $valor;
         }
 
         foreach ($admins as $admin) {
