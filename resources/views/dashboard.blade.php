@@ -42,11 +42,50 @@
             <p class="text-gray-600 text-sm mt-1">Bienvenido al sistema. Selecciona un módulo para comenzar a trabajar.</p>
         </div>
 
+        {{-- ⚙️ RECUADRO DE GESTIÓN / MODIFICACIÓN DE CARACTERÍSTICAS DE SECTORES --}}
+        @if(auth()->user()->rol !== 'admin_general')
+        @php
+        $user = auth()->user();
+        // Si es dueño o operador, buscamos sus sectores vinculados
+        $misSectores = \App\Models\SectorCaracteristica::where('user_id', $user->id)->get();
+        @endphp
+
+        @if($misSectores->count() > 0)
+        <div class="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+            <div class="bg-emerald-50 px-5 py-3 border-b border-emerald-100 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-emerald-800 font-bold text-sm">
+                    <i class="fa-solid fa-seedling"></i> Mis Sectores e Invernaderos Asignados
+                </div>
+                <span class="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded-full">
+                    {{ $misSectores->count() }} registrados
+                </span>
+            </div>
+            <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                @foreach($misSectores as $sec)
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-3.5 flex items-center justify-between gap-3 hover:border-emerald-300 transition">
+                    <div class="min-w-0">
+                        <span class="block text-xs font-bold text-emerald-700 uppercase truncate">
+                            <i class="fa-solid fa-house-chimney mr-1"></i>{{ $sec->invernadero }} — {{ $sec->sector }}
+                        </span>
+                        <span class="block text-[11px] text-gray-500 truncate mt-0.5">
+                            Variedad: <strong class="text-gray-700">{{ $sec->variedad ?? 'Sin definir' }}</strong>
+                        </span>
+                    </div>
+                    <a href="{{ route('sectores.editar', ['sector' => $sec->sector, 'invernadero' => $sec->invernadero]) }}" class="bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs shrink-0 flex items-center gap-1" title="Modificar datos de este sector">
+                        <i class="fa-solid fa-pen-to-square"></i> Editar
+                    </a>
+                </div>
+                @endforeach
+            </div>
+        </div>
+        @endif
+        @endif
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
-            <!-- MÓDULO: HIDROPONÍA (Acceso: Administrador, Operador, Dueño y Usuario Comercial) -->
+            <!-- MÓDULO: HIDROPONÍA -->
             @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' ))
-             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
                         <i class="fa-solid fa-cloud-sun-rain"></i>
@@ -62,7 +101,7 @@
             </div>
             @endif
 
-            <!-- MÓDULO: SUELO (Acceso: Administrador, Operador y Dueño) -->
+            <!-- MÓDULO: SUELO -->
             @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' ))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -80,7 +119,7 @@
             </div>
             @endif
 
-            <!-- MÓDULO: SANIDAD Y NUTRICIÓN (Acceso: Administrador, Operador y Dueño) -->
+            <!-- MÓDULO: SANIDAD Y NUTRICIÓN -->
             @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'dueno']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -98,7 +137,7 @@
             </div>
             @endif
 
-            <!-- MÓDULO: GRÁFICAS Y ANÁLISIS (Acceso: Administrador y Dueño) -->
+            <!-- MÓDULO: GRÁFICAS Y ANÁLISIS -->
             @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -116,7 +155,7 @@
             </div>
             @endif
 
-            <!-- MÓDULO: RECEPCIÓN (Acceso: Administrador, Dueño, Usuario Comercial y Usuario Rechazo) -->
+            <!-- MÓDULO: RECEPCIÓN -->
             @if(count(array_intersect(explode(',', auth()->user()->rol), ['administrador', 'admin_general', 'usuario_comercial', 'usuario_rechazo'])) > 0)
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -134,7 +173,7 @@
             </div>
             @endif
 
-            <!-- MÓDULO: REPORTES COMERCIALES (Acceso: Administrador, Operador y Dueño) -->
+            <!-- MÓDULO: REPORTES COMERCIALES -->
             @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'dueno']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
@@ -152,24 +191,25 @@
             </div>
             @endif
 
-          @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
-            <div class="p-6 flex-grow">
-                <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 text-xl mb-4">
-                    <i class="fa-solid fa-microchip"></i>
+            <!-- MÓDULO: TELEMETRÍA E IoT -->
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
+            <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
+                <div class="p-6 flex-grow">
+                    <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 text-xl mb-4">
+                        <i class="fa-solid fa-microchip"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">Telemetría e IoT</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed">Monitoreo en tiempo real de variables físicas transmitidas por dispositivos ESP32.</p>
                 </div>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Telemetría e IoT</h3>
-                <p class="text-gray-600 text-sm leading-relaxed">Monitoreo en tiempo real de variables físicas transmitidas por dispositivos ESP32.</p>
+                <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
+                    <a href="{{ route('telemetria.index') }}" class="text-sm text-cyan-600 hover:text-cyan-700 font-bold flex items-center gap-1">
+                        Ver lecturas <i class="fa-solid fa-arrow-right text-xs"></i>
+                    </a>
+                </div>
             </div>
-            <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
-                <a href="{{ route('telemetria.index') }}" class="text-sm text-cyan-600 hover:text-cyan-700 font-bold flex items-center gap-1">
-                    Ver lecturas <i class="fa-solid fa-arrow-right text-xs"></i>
-                </a>
-            </div>
-        </div>
-        @endif
+            @endif
 
-            <!-- MÓDULO: CONTROL DE USUARIOS (Acceso: EXCLUSIVAMENTE Administrador / Admin General) -->
+            <!-- MÓDULO: CONTROL DE USUARIOS -->
             @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">

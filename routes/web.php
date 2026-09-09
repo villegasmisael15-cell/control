@@ -61,20 +61,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/monitoreo/guardar', [MonitoreoClimaRiegoController::class, 'store'])->name('monitoreo.store');
     Route::post('/actualizar-fcm-token', [AuthenticatedSessionController::class, 'guardarTokenFcm'])->middleware('auth');
 
-    // 3. IMPLEMENTACIÓN: REGISTRO OBLIGATORIO DE CARACTERÍSTICAS DE SECTOR
-    Route::get('/sectores/configurar-inicial', function () {
+    // 3. IMPLEMENTACIÓN: REGISTRO OBLIGATORIO Y EDICIÓN DE CARACTERÍSTICAS DE SECTOR
+    Route::get('/sectores/configurar-inicial/{sector?}/{invernadero?}', function ($sector = null, $invernadero = null) {
         $user = auth()->user();
 
         if ($user->rol === 'admin_general') {
             return redirect('/dashboard');
         }
 
-        // Buscamos el primer registro pendiente incluyendo invernadero y sector
-        $pendiente = \App\Models\SectorCaracteristica::where('user_id', $user->id)
-            ->where(function ($query) {
-                $query->whereNull('variedad')->orWhere('variedad', '');
-            })
-            ->first();
+        // Si se pasan por la URL (desde el botón Editar del Dashboard), buscamos ese sector exacto
+        if ($sector && $invernadero) {
+            $pendiente = \App\Models\SectorCaracteristica::where('user_id', $user->id)
+                ->where('sector', $sector)
+                ->where('invernadero', $invernadero)
+                ->first();
+        } else {
+            // Si entra de forma normal, busca el primer registro pendiente
+            $pendiente = \App\Models\SectorCaracteristica::where('user_id', $user->id)
+                ->where(function ($query) {
+                    $query->whereNull('variedad')->orWhere('variedad', '');
+                })
+                ->first();
+        }
 
         if (!$pendiente) {
             return redirect('/dashboard');
@@ -83,14 +91,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         $sector = $pendiente->sector;
         $invernadero = $pendiente->invernadero;
 
-        return view('sectores.configurar_inicial', compact('sector', 'invernadero'));
-    })->name('sectores.configurar');
+        return view('sectores.configurar_inicial', compact('sector', 'invernadero', 'pendiente'));
+    })->name('sectores.editar');
 
     Route::post('/sectores/configurar-inicial', function (Request $request) {
         $request->validate([
             'invernadero'        => 'required|string',
             'sector'             => 'required|string',
-            'superficie_m2'      => 'required|integer|min:1',
+            'superficie_m2'      => 'required|numeric|min:1',
             'variedad'           => 'required|string|max:255',
             'numero_plantas'     => 'required|integer|min:1',
             'macetas_por_gotero' => 'required|integer|min:1',
@@ -115,8 +123,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ]
         );
 
-        // Al redirigir, si aún quedan pendientes en otros invernaderos, el middleware o la vista te mandará al siguiente de forma correcta
-        return redirect()->route('sectores.configurar')->with('status', 'Sector configurado correctamente.');
+        return redirect()->route('dashboard')->with('status', 'Sector configurado correctamente.');
     })->name('sectores.guardar_inicial');
 
     Route::get('/suelo', [SueloMonitoreoController::class, 'index'])->name('suelo.index');
