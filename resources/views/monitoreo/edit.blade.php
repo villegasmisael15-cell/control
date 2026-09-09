@@ -49,7 +49,6 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <!-- Campo oculto para enviar el invernadero seleccionado -->
                             <input type="hidden" name="invernadero" id="invernadero_hidden" value="{{ old('invernadero', $monitoreo->invernadero) }}">
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                                 <i class="fa-solid fa-chevron-down text-xs"></i>
@@ -96,16 +95,31 @@
 
                     <div class="bg-purple-50/50 p-4 rounded-xl border border-purple-200 space-y-3">
                         <h3 class="font-bold text-sm text-purple-700 border-b border-purple-200 pb-1"><i class="fa-solid fa-flask text-purple-500 mr-1"></i> Parámetros Químicos</h3>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-[11px] font-medium text-gray-600 mb-0.5">CE Ent</label>
-                                <input type="number" step="0.01" id="ce_entrada" name="ce_entrada" value="{{ $monitoreo->ce_entrada }}" required class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                        
+                        <!-- CE Entrada con Selector de Unidad -->
+                        <div>
+                            <div class="flex justify-between items-center mb-0.5">
+                                <label class="block text-[11px] font-medium text-gray-600">CE Ent</label>
+                                <select id="ce_entrada_unidad" class="text-[10px] bg-gray-100 border border-gray-300 rounded px-1 py-0.5 focus:outline-emerald-500">
+                                    <option value="mS" selected>mS</option>
+                                    <option value="uS">µS</option>
+                                </select>
                             </div>
-                            <div>
-                                <label class="block text-[11px] font-medium text-gray-600 mb-0.5">CE Sal</label>
-                                <input type="number" step="0.01" id="ce_salida" name="ce_salida" value="{{ $monitoreo->ce_salida }}" required class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm">
-                            </div>
+                            <input type="number" step="0.01" id="ce_entrada" name="ce_entrada" value="{{ $monitoreo->ce_entrada }}" required class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm">
                         </div>
+
+                        <!-- CE Salida con Selector de Unidad -->
+                        <div>
+                            <div class="flex justify-between items-center mb-0.5">
+                                <label class="block text-[11px] font-medium text-gray-600">CE Sal</label>
+                                <select id="ce_salida_unidad" class="text-[10px] bg-gray-100 border border-gray-300 rounded px-1 py-0.5 focus:outline-emerald-500">
+                                    <option value="mS" selected>mS</option>
+                                    <option value="uS">µS</option>
+                                </select>
+                            </div>
+                            <input type="number" step="0.01" id="ce_salida" name="ce_salida" value="{{ $monitoreo->ce_salida }}" required class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1 text-sm">
+                        </div>
+
                         <div class="grid grid-cols-2 gap-2">
                             <div>
                                 <label class="block text-[11px] font-medium text-gray-600 mb-0.5">pH Ent</label>
@@ -221,13 +235,18 @@
     <script>
         const inputs = [
             'temperatura', 'humedad', 'vol_riego_entrada', 'vol_drenaje_salida',
-            'ce_entrada', 'ce_salida', 'ph_entrada', 'ph_salida',
+            'ce_entrada', 'ce_entrada_unidad', 'ce_salida', 'ce_salida_unidad',
+            'ph_entrada', 'ph_salida',
             'peso_tarde_anterior', 'peso_manana', 'radiacion_lectura', 'abejorros_flores'
         ];
 
         inputs.forEach(id => {
             document.getElementById(id).addEventListener('input', calcularValores);
         });
+
+        // También escuchar cambios en los selectores de unidad de CE
+        document.getElementById('ce_entrada_unidad').addEventListener('change', calcularValores);
+        document.getElementById('ce_salida_unidad').addEventListener('change', calcularValores);
 
         window.addEventListener('DOMContentLoaded', () => {
             calcularValores();
@@ -238,8 +257,19 @@
             const hum = parseFloat(document.getElementById('humedad').value);
             const volEnt = parseFloat(document.getElementById('vol_riego_entrada').value);
             const volSal = parseFloat(document.getElementById('vol_drenaje_salida').value);
-            const ceEnt = parseFloat(document.getElementById('ce_entrada').value);
-            const ceSal = parseFloat(document.getElementById('ce_salida').value);
+            
+            let ceEnt = parseFloat(document.getElementById('ce_entrada').value);
+            const ceEntUnidad = document.getElementById('ce_entrada_unidad').value;
+            if (!isNaN(ceEnt) && ceEntUnidad === 'uS') {
+                ceEnt = ceEnt / 1000;
+            }
+
+            let ceSal = parseFloat(document.getElementById('ce_salida').value);
+            const ceSalUnidad = document.getElementById('ce_salida_unidad').value;
+            if (!isNaN(ceSal) && ceSalUnidad === 'uS') {
+                ceSal = ceSal / 1000;
+            }
+
             const phEnt = parseFloat(document.getElementById('ph_entrada').value);
             const phSal = parseFloat(document.getElementById('ph_salida').value);
             const pTarde = parseFloat(document.getElementById('peso_tarde_anterior').value);
@@ -370,6 +400,27 @@
             const invernadero = selectedOption.getAttribute('data-invernadero') || '';
             document.getElementById('invernadero_hidden').value = invernadero;
         }
+
+        // Conversión automática al actualizar el formulario si está en µS
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const ceEntInput = document.getElementById('ce_entrada');
+            const ceEntUnidad = document.getElementById('ce_entrada_unidad').value;
+            if (ceEntUnidad === 'uS' && ceEntInput.value !== '') {
+                let val = parseFloat(ceEntInput.value);
+                if (!isNaN(val)) {
+                    ceEntInput.value = val / 1000;
+                }
+            }
+
+            const ceSalInput = document.getElementById('ce_salida');
+            const ceSalUnidad = document.getElementById('ce_salida_unidad').value;
+            if (ceSalUnidad === 'uS' && ceSalInput.value !== '') {
+                let val = parseFloat(ceSalInput.value);
+                if (!isNaN(val)) {
+                    ceSalInput.value = val / 1000;
+                }
+            }
+        });
     </script>
 </body>
 

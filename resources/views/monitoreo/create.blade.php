@@ -260,7 +260,7 @@
             const volEntOriginal = parseFloat(document.getElementById('vol_riego_entrada').value);
             const volSal = parseFloat(document.getElementById('vol_drenaje_salida').value);
             let ceEnt = parseFloat(document.getElementById('ce_entrada').value);
-            
+
             const ceEntUnidad = document.getElementById('ce_entrada_unidad').value;
             if (!isNaN(ceEnt) && ceEntUnidad === 'uS') {
                 ceEnt = ceEnt / 1000;
@@ -423,6 +423,28 @@
             const selectElement = document.getElementById('sector');
             if (selectElement.selectedIndex > 0) {
                 actualizarInvernadero(selectElement);
+            }
+        });
+
+
+        // Conversión automática al enviar el formulario si está en µS
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const ceEntInput = document.getElementById('ce_entrada');
+            const ceEntUnidad = document.getElementById('ce_entrada_unidad').value;
+            if (ceEntUnidad === 'uS' && ceEntInput.value !== '') {
+                let val = parseFloat(ceEntInput.value);
+                if (!isNaN(val)) {
+                    ceEntInput.value = val / 1000;
+                }
+            }
+
+            const ceSalInput = document.getElementById('ce_salida');
+            const ceSalUnidad = document.getElementById('ce_salida_unidad').value;
+            if (ceSalUnidad === 'uS' && ceSalInput.value !== '') {
+                let val = parseFloat(ceSalInput.value);
+                if (!isNaN(val)) {
+                    ceSalInput.value = val / 1000;
+                }
             }
         });
     </script>
