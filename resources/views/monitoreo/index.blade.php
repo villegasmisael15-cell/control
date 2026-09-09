@@ -127,8 +127,8 @@
                     <thead>
                         <tr class="bg-gray-100 border-b border-gray-200 text-gray-700 uppercase tracking-wider text-[11px] font-bold">
                             <th class="py-3 px-4">Fecha</th>
-                            <th class="py-3 px-4">Sector</th>
                             <th class="py-3 px-4">Dueño</th>
+                            <th class="py-3 px-4">Sector</th>
                             <th class="py-3 px-4">DPV</th>
                             <th class="py-3 px-4 bg-blue-50/50">% Drenaje</th>
                             <th class="py-3 px-4 bg-amber-50/50">Dif. CE</th>
@@ -148,6 +148,13 @@
                                     <i class="fa-solid fa-eye text-xs text-gray-400"></i> {{ \Carbon\Carbon::parse($row->fecha)->format('d/m/Y') }}
                                 </a>
                             </td>
+
+                             <td class="py-3.5 px-4">
+                                <span class="text-xs text-gray-600 font-medium flex items-center gap-1">
+                                    <i class="fa-solid fa-user-tie text-emerald-600 text-[10px]"></i>
+                                    {{ $row->user ? $row->user->name : 'Sin operador asignado' }}
+                                </span>
+                            </td>
                             <td class="py-3.5 px-4">
                                 <span class="bg-gray-100 text-gray-800 text-xs px-2.5 py-1 rounded-md font-semibold flex flex-col gap-0.5 max-w-max">
                                     @if(!empty($row->invernadero))
@@ -156,12 +163,7 @@
                                     <span><i class="fa-solid fa-seedling mr-1 text-gray-400"></i>{{ $row->sector }}</span>
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4">
-                                <span class="text-xs text-gray-600 font-medium flex items-center gap-1">
-                                    <i class="fa-solid fa-user-tie text-emerald-600 text-[10px]"></i>
-                                    {{ $row->user ? $row->user->name : 'Sin operador asignado' }}
-                                </span>
-                            </td>
+                           
                             <td class="py-3.5 px-4 font-mono text-xs font-semibold">{{ $row->dpv }}</td>
                             <td class="py-3.5 px-4 bg-blue-50/20 font-semibold text-blue-600">{{ $row->porcentaje_drenaje }}%</td>
                             <td class="py-3.5 px-4 bg-amber-50/20 font-medium {{ $row->diferencia_ce > 0.5 ? 'text-amber-600' : '' }}">{{ $row->diferencia_ce }}</td>
