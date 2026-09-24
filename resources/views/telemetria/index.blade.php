@@ -34,43 +34,34 @@
     </nav>
 
     <!-- Contenido Principal -->
-    <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
+    <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow space-y-10">
         
         <!-- Cabecera de la sección -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-cyan-600"></i> Monitoreo por Dispositivos ESP32
+                    <i class="fa-solid fa-microchip text-cyan-600"></i> Panel de Telemetría Independiente
                 </h1>
-                <p class="text-gray-600 text-sm mt-1">Selecciona una sección para ver sus métricas y estado en tiempo real.</p>
+                <p class="text-gray-600 text-sm mt-1">Monitoreo separado por zonas de dispositivos ESP32.</p>
             </div>
         </div>
 
-        <!-- Pestañas de selección de Dispositivos / Zonas -->
-        <div class="flex flex-wrap gap-2 mb-6">
-            @foreach($dispositivos as $disp)
-                <a href="{{ route('telemetria.index', ['esp32' => $disp]) }}" 
-                   class="px-4 py-2.5 rounded-xl text-sm font-semibold transition flex items-center gap-2 shadow-2xs {{ $dispositivoSeleccionado === $disp ? 'bg-emerald-600 text-white shadow-md' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200' }}">
-                    <i class="fa-solid fa-tower-broadcast text-xs"></i> {{ $disp }}
-                </a>
-            @endforeach
-        </div>
-
-        <!-- Tabla de Datos Recibidos -->
+        <!-- ================= SECCIÓN 1: INVERNADERO 1 ================= -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-base">Registros de: <span class="text-emerald-600">{{ $dispositivoSeleccionado }}</span></h3>
+                <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+                    <i class="fa-solid id-card text-emerald-600"></i> INVERNADERO 1
+                </h3>
 
                 @php
-                    $ultimoRegistro = \App\Models\Sensor::where('esp32_id', $dispositivoSeleccionado)->latest()->first();
-                    $estaConectado = false;
-                    if ($ultimoRegistro && $ultimoRegistro->created_at) {
-                        $tiempoTranscurrido = \Carbon\Carbon::parse($ultimoRegistro->created_at)->diffInSeconds(now());
-                        $estaConectado = $tiempoTranscurrido <= 60;
+                    $ultimoInv = \App\Models\Sensor::where('esp32_id', 'INVERNADERO 1')->latest()->first();
+                    $conectadoInv = false;
+                    if ($ultimoInv && $ultimoInv->created_at) {
+                        $conectadoInv = \Carbon\Carbon::parse($ultimoInv->created_at)->diffInSeconds(now()) <= 60;
                     }
                 @endphp
 
-                @if($estaConectado)
+                @if($conectadoInv)
                     <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                         <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
                     </span>
@@ -82,105 +73,112 @@
             </div>
 
             <div class="overflow-x-auto">
-                @if($dispositivoSeleccionado === 'ENTRADA ELECTROVALVULAS')
-                    <!-- TABLA EXCLUSIVA PARA ENTRADA ELECTROVALVULAS (Solo pH y TDS) -->
-                    <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                                <th class="py-3 px-6 font-semibold">Dispositivo</th>
-                                <th class="py-3 px-6 font-semibold text-emerald-700">pH</th>
-                                <th class="py-3 px-6 font-semibold text-amber-700">TDS / Conductividad (mS/cm)</th>
-                                <th class="py-3 px-6 font-semibold">Fecha y Hora</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 text-gray-700">
-                            @forelse($sensores as $sensor)
-                            <tr class="hover:bg-gray-50/80 transition">
-                                <td class="py-4 px-6 font-medium text-gray-900 flex items-center gap-2">
-                                    <i class="fa-solid fa-wifi text-emerald-600 text-xs"></i> {{ $sensor->esp32_id }}
-                                </td>
-                                <td class="py-4 px-6 font-bold text-emerald-700 text-sm">
-                                    {{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}
-                                </td>
-                                <td class="py-4 px-6 font-bold text-amber-700 text-sm">
-                                    {{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}
-                                </td>
-                                <td class="py-4 px-6 text-gray-500 text-xs">
-                                    {{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="4" class="py-8 text-center text-gray-400">
-                                    <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                                    <p>No hay registros guardados para este dispositivo todavía.</p>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
+                            <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 1</th>
+                            <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 2</th>
+                            <th class="py-3 px-3 font-semibold text-emerald-700">pH</th>
+                            <th class="py-3 px-3 font-semibold text-amber-700">TDS / EC</th>
+                            <th class="py-3 px-3 font-semibold">Temp. Amb</th>
+                            <th class="py-3 px-3 font-semibold">Hum. Amb</th>
+                            <th class="py-3 px-3 font-semibold">Suelo</th>
+                            <th class="py-3 px-3 font-semibold">Temp. Suelo</th>
+                            <th class="py-3 px-3 font-semibold">Luz</th>
+                            <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 text-gray-700">
+                        @forelse($sensoresInvernadero as $sensor)
+                        <tr class="hover:bg-gray-50/80 transition">
+                            <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_2 !== null ? $sensor->peso_bascula_2 . ' kg' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
+                            <td class="py-3.5 px-3">{{ $sensor->temp_ambiente !== null ? $sensor->temp_ambiente . ' °C' : '--' }}</td>
+                            <td class="py-3.5 px-3">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>
+                            <td class="py-3.5 px-3">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
+                            <td class="py-3.5 px-3">{{ $sensor->temp_ds18b20 !== null ? $sensor->temp_ds18b20 . ' °C' : '--' }}</td>
+                            <td class="py-3.5 px-3">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td>
+                            <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="10" class="py-8 text-center text-gray-400">
+                                <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
+                                <p>No hay registros para Invernadero 1.</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if(isset($sensoresInvernadero) && method_exists($sensoresInvernadero, 'links'))
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                {{ $sensoresInvernadero->appends(['elec_page' => request('elec_page')])->links() }}
+            </div>
+            @endif
+        </div>
+
+
+        <!-- ================= SECCIÓN 2: ENTRADA ELECTROVALVULAS ================= -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
+                <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+                    <i class="fa-solid id-card text-emerald-600"></i> ENTRADA ELECTROVALVULAS
+                </h3>
+
+                @php
+                    $ultimoElec = \App\Models\Sensor::where('esp32_id', 'ENTRADA ELECTROVALVULAS')->latest()->first();
+                    $conectadoElec = false;
+                    if ($ultimoElec && $ultimoElec->created_at) {
+                        $conectadoElec = \Carbon\Carbon::parse($ultimoElec->created_at)->diffInSeconds(now()) <= 60;
+                    }
+                @endphp
+
+                @if($conectadoElec)
+                    <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
+                    </span>
                 @else
-                    <!-- TABLA COMPLETA PARA INVERNADERO 1 -->
-                    <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
-                        <thead>
-                            <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                                <th class="py-3 px-3 font-semibold">Dispositivo</th>
-                                <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 1</th>
-                                <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 2</th>
-                                <th class="py-3 px-3 font-semibold text-emerald-700">pH</th>
-                                <th class="py-3 px-3 font-semibold text-amber-700">TDS / EC</th>
-                                <th class="py-3 px-3 font-semibold">Temp. Amb</th>
-                                <th class="py-3 px-3 font-semibold">Hum. Amb</th>
-                                <th class="py-3 px-3 font-semibold">Suelo</th>
-                                <th class="py-3 px-3 font-semibold">Temp. Suelo</th>
-                                <th class="py-3 px-3 font-semibold">Luz</th>
-                                <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 text-gray-700">
-                            @forelse($sensores as $sensor)
-                            <tr class="hover:bg-gray-50/80 transition">
-                                <td class="py-3.5 px-3 font-medium text-gray-900 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-wifi text-emerald-600 text-xs"></i> {{ $sensor->esp32_id }}
-                                </td>
-                                <td class="py-3.5 px-3 font-bold text-cyan-700">
-                                    {{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}
-                                </td>
-                                <td class="py-3.5 px-3 font-bold text-cyan-700">
-                                    {{ $sensor->peso_bascula_2 !== null ? $sensor->peso_bascula_2 . ' kg' : '--' }}
-                                </td>
-                                <td class="py-3.5 px-3 font-semibold text-emerald-700">
-                                    {{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}
-                                </td>
-                                <td class="py-3.5 px-3 font-semibold text-amber-700">
-                                    {{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}
-                                </td>
-                                <td class="py-3.5 px-3">{{ $sensor->temp_ambiente !== null ? $sensor->temp_ambiente . ' °C' : '--' }}</td>
-                                <td class="py-3.5 px-3">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>
-                                <td class="py-3.5 px-3">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
-                                <td class="py-3.5 px-3">{{ $sensor->temp_ds18b20 !== null ? $sensor->temp_ds18b20 . ' °C' : '--' }}</td>
-                                <td class="py-3.5 px-3">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td>
-                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">
-                                    {{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="11" class="py-8 text-center text-gray-400">
-                                    <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                                    <p>No hay registros guardados para este dispositivo todavía.</p>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                    <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
+                    </span>
                 @endif
             </div>
 
-            <!-- Paginación -->
-            @if(isset($sensores) && method_exists($sensores, 'links'))
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
+                            <th class="py-3 px-6 font-semibold text-emerald-700">pH</th>
+                            <th class="py-3 px-6 font-semibold text-amber-700">TDS / Conductividad</th>
+                            <th class="py-3 px-6 font-semibold">Fecha y Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 text-gray-700">
+                        @forelse($sensoresElectrovalvulas as $sensor)
+                        <tr class="hover:bg-gray-50/80 transition">
+                            <td class="py-4 px-6 font-bold text-emerald-700 text-sm">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
+                            <td class="py-4 px-6 font-bold text-amber-700 text-sm">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
+                            <td class="py-4 px-6 text-gray-500 text-xs">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="3" class="py-8 text-center text-gray-400">
+                                <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
+                                <p>No hay registros para Entrada Electroválvulas.</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if(isset($sensoresElectrovalvulas) && method_exists($sensoresElectrovalvulas, 'links'))
             <div class="p-4 border-t border-gray-200 bg-gray-50">
-                {{ $sensores->links() }}
+                {{ $sensoresElectrovalvulas->appends(['inv_page' => request('inv_page')])->links() }}
             </div>
             @endif
         </div>
