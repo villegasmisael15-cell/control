@@ -21,7 +21,7 @@ class SensorController extends Controller
     {
         // Guardamos los datos mapeando todas las variantes posibles de nombres de llaves
         $id = DB::table('sensores_invernadero')->insertGetId([
-            'esp32_id'          => $request->input('esp32_id', 'ESP32_INVERNADERO_1'),
+            'esp32_id'          => $request->input('esp32_id', 'ENTRADA ELECTROVALVULAS'),
             'temp_ambient'      => $request->input('temp_ambient', $request->input('temp_aht')),
             'humedad_ambiente'  => $request->input('humedad_ambiente', $request->input('hum_aht')),
             'calidad_aire_eco2' => $request->input('calidad_aire_eco2', $request->input('eco2')),
