@@ -10,13 +10,14 @@ class SensorController extends Controller
 {
     public function index()
     {
-        // Recupera los registros ordenados del más reciente al más antiguo para la tabla
-        $sensores = Sensor::latest()->paginate(15); 
+        // Consultas separadas y independientes para cada sección de tu panel
+        $registrosElectrovolvulas = Sensor::where('esp32_id', 'ENTRADA ELECTROVALVULAS')->latest()->take(5)->get();
+        $registrosInvernadero1 = Sensor::where('esp32_id', 'INVERNADERO 1')->latest()->take(5)->get();
         
-        return view('telemetria.index', compact('sensores'));
+        return view('telemetria.index', compact('registrosElectrovolvulas', 'registrosInvernadero1'));
     }
 
-   public function almacenar(Request $request)
+    public function almacenar(Request $request)
     {
         // Forzamos a capturar el peso sin importar si el ESP32 manda 'peso' o 'peso_hx711'
         $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
@@ -24,7 +25,7 @@ class SensorController extends Controller
         // Guardamos los datos directamente en la tabla sensores_invernadero
         $id = DB::table('sensores_invernadero')->insertGetId([
             'esp32_id'          => $request->input('esp32_id', 'ESP32_INVERNADERO_1'),
-            'temp_ambiente'     => $request->input('temp_ambiente'),
+            'temp_ambient'      => $request->input('temp_ambient'),
             'humedad_ambiente'  => $request->input('humedad_ambiente'),
             'calidad_aire_eco2' => $request->input('calidad_aire_eco2'),
             'calidad_aire_tvoc' => $request->input('calidad_aire_tvoc'),
@@ -43,15 +44,18 @@ class SensorController extends Controller
             'ads5_a2'           => $request->input('ads5_a2'),
             'ads5_a3'           => $request->input('ads5_a3'),
             'temp_ds18b20'      => $request->input('temp_ds18b20'),
-            'peso_hx711'        => $pesoRecibido, // <--- Aquí guardamos asegurando que no vaya vacío
+            'peso_hx711'        => $pesoRecibido,
+            'peso_bascula_1'    => $request->input('peso_bascula_1'),
+            'peso_bascula_2'    => $request->input('peso_bascula_2'),
             'created_at'        => now(),
+            'updated_at'        => now(),
         ]);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Datos guardados correctamente',
             'id_registro' => $id,
-            'peso_guardado' => $pesoRecibido // Para que veas en la respuesta qué guardó
+            'peso_guardado' => $pesoRecibido
         ], 200);
     }
 }
