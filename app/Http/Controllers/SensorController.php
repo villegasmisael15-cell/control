@@ -10,15 +10,18 @@ class SensorController extends Controller
 {
     public function index()
     {
-        // Regresamos a la consulta original que alimenta la tabla general con paginación
+        // Recupera los registros ordenados del más reciente al más antiguo para la tabla
         $sensores = Sensor::latest()->paginate(15); 
         
         return view('telemetria.index', compact('sensores'));
     }
 
-    public function almacenar(Request $request)
+   public function almacenar(Request $request)
     {
-        // Guardado limpio con las columnas originales
+        // Forzamos a capturar el peso sin importar si el ESP32 manda 'peso' o 'peso_hx711'
+        $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
+
+        // Guardamos los datos directamente en la tabla sensores_invernadero
         $id = DB::table('sensores_invernadero')->insertGetId([
             'esp32_id'          => $request->input('esp32_id', 'ESP32_INVERNADERO_1'),
             'temp_ambiente'     => $request->input('temp_ambiente'),
@@ -40,15 +43,15 @@ class SensorController extends Controller
             'ads5_a2'           => $request->input('ads5_a2'),
             'ads5_a3'           => $request->input('ads5_a3'),
             'temp_ds18b20'      => $request->input('temp_ds18b20'),
-            'peso_hx711'        => $request->input('peso_hx711', $request->input('peso')),
+            'peso_hx711'        => $pesoRecibido, // <--- Aquí guardamos asegurando que no vaya vacío
             'created_at'        => now(),
-            'updated_at'        => now(),
         ]);
 
         return response()->json([
             'status' => 'success',
             'message' => 'Datos guardados correctamente',
-            'id_registro' => $id
+            'id_registro' => $id,
+            'peso_guardado' => $pesoRecibido // Para que veas en la respuesta qué guardó
         ], 200);
     }
 }

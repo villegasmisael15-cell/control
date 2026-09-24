@@ -20,13 +20,14 @@
             </div>
 
             <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
-                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 truncate" title="{{ auth()->user()->name ?? 'Usuario' }}">
+                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
                     <i class="fa-solid fa-user text-[10px]"></i>
-                    <span class="truncate">{{ auth()->user()->name ?? 'Usuario' }}</span>
+                    <span class="truncate">{{ auth()->user()->name }}</span>
                 </span>
-                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium whitespace-nowrap">
+                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
                     <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
-                    <span>Volver al Panel</span>
+                    <span class="hidden xs:inline">Volver al Panel</span>
+                    <span class="inline xs:hidden">Panel</span>
                 </a>
             </div>
         </div>
@@ -39,7 +40,7 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-cyan-600"></i> Telemetría y Sensores
+                    <i class="fa-solid fa-microchip text-cyan-600"></i> Telemetría y Sensores del Invernadero
                 </h1>
                 <p class="text-gray-600 text-sm mt-1">Monitoreo de variables ambientales, calidad de aire, agua y peso.</p>
             </div>
@@ -54,8 +55,8 @@
                     $ultimoRegistro = \App\Models\Sensor::latest()->first();
                     $estaConectado = false;
                     if ($ultimoRegistro && $ultimoRegistro->created_at) {
-                        $tiempoTranscurrido = \Carbon\Carbon::parse($ultimoRegistro->created_at)->diffInMinutes(now());
-                        $estaConectado = $tiempoTranscurrido <= 5;
+                        $tiempoTranscurrido = \Carbon\Carbon::parse($ultimoRegistro->created_at)->diffInSeconds(now());
+                        $estaConectado = $tiempoTranscurrido <= 60;
                     }
                 @endphp
 
@@ -75,7 +76,7 @@
                     <thead>
                         <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
                             <th class="py-3 px-4 font-semibold">Dispositivo</th>
-                            <th class="py-3 px-4 font-semibold text-cyan-700">Peso</th>
+                            <th class="py-3 px-4 font-semibold text-cyan-700">Peso (kg)</th>
                             <th class="py-3 px-4 font-semibold">Temp. Amb (°C)</th>
                             <th class="py-3 px-4 font-semibold">Hum. Amb (%)</th>
                             <th class="py-3 px-4 font-semibold">eCO2 (ppm)</th>
@@ -93,10 +94,10 @@
                         @forelse($sensores as $sensor)
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3.5 px-4 font-medium text-gray-900 flex items-center gap-1.5">
-                                <i class="fa-solid fa-wifi text-emerald-600 text-xs"></i> {{ $sensor->esp32_id ?? 'ESP32' }}
+                                <i class="fa-solid fa-wifi text-emerald-600 text-xs"></i> {{ $sensor->esp32_id ?? 'ESP32_1' }}
                             </td>
                             <td class="py-3.5 px-4 font-bold text-cyan-700 text-sm">
-                                {{ $sensor->peso_hx711 !== null ? $sensor->peso_hx711 : ($sensor->peso_bascula_1 ?? '0.00') }}
+                                {{ $sensor->peso_hx711 !== null ? number_format($sensor->peso_hx711, 2) : '0.00' }} kg
                             </td>
                             <td class="py-3.5 px-4">{{ $sensor->temp_ambiente !== null ? $sensor->temp_ambiente . ' °C' : '--' }}</td>
                             <td class="py-3.5 px-4">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>

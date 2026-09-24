@@ -9,10 +9,10 @@ class Sensor extends Model
 {
     use HasFactory;
 
-    // Nombre real de la tabla en tu base de datos
+    // Indicar explícitamente el nombre real de la tabla en tu base de datos
     protected $table = 'sensores_invernadero';
 
-    // Habilitar la asignación masiva para absolutamente todos los campos de ambos dispositivos
+    // Habilitar la asignación masiva para todos los campos que recibimos
     protected $fillable = [
         'esp32_id',
         'temp_ambiente',
@@ -34,10 +34,6 @@ class Sensor extends Model
         'ads5_a2',
         'ads5_a3',
         'temp_ds18b20',
-        'peso_hx711',
-        'peso_bascula_1',
-        'peso_bascula_2',
-        'peso_bascula_3',
-        'peso_bascula_4'
+        'peso_hx711'
     ];
 }
