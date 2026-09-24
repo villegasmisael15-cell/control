@@ -17,14 +17,16 @@ class SensorController extends Controller
         return view('telemetria.index', compact('sensoresInvernadero', 'sensoresElectrovalvulas'));
     }
 
-    public function almacenar(Request $request)
+   public function almacenar(Request $request)
     {
+        // Forzamos a capturar el peso genérico por compatibilidad
         $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
 
+        // Guardamos los datos mapeando exactamente los nombres de columnas de tu base de datos
         $id = DB::table('sensores_invernadero')->insertGetId([
             'esp32_id'          => $request->input('esp32_id', 'ESP32_INVERNADERO_1'),
-            'temp_ambiente'     => $request->input('temp_ambient', $request->input('temp_ambiente')),
-            'humedad_ambiente'  => $request->input('hum_ambient', $request->input('humedad_ambiente')),
+            'temp_ambiente'     => $request->input('temp_ambiente', $request->input('temp_ambient')),
+            'humedad_ambiente'  => $request->input('humedad_ambiente', $request->input('hum_ambient')),
             'calidad_aire_eco2' => $request->input('calidad_aire_eco2'),
             'calidad_aire_tvoc' => $request->input('calidad_aire_tvoc'),
             'luz_lux'           => $request->input('luz_lux'),
