@@ -10,19 +10,22 @@ class SensorController extends Controller
 {
     public function index()
     {
-        // Obtenemos los registros por separado para cada ESP32
-        $sensoresInvernadero = Sensor::where('esp32_id', 'INVERNADERO 1')->latest()->paginate(10, ['*'], 'inv_page');
-        $sensoresElectrovalvulas = Sensor::where('esp32_id', 'ENTRADA ELECTROVALVULAS')->latest()->paginate(10, ['*'], 'elec_page');
+        // Consultas flexibles para asegurar que encuentre los registros sin importar pequeñas variaciones de espacios
+        $sensoresInvernadero = Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])
+                                     ->latest()
+                                     ->paginate(10, ['*'], 'inv_page');
+                                     
+        $sensoresElectrovalvulas = Sensor::whereIn('esp32_id', ['ENTRADA ELECTROVALVULAS', 'ENTRADA_ELECTROVALVULAS'])
+                                         ->latest()
+                                         ->paginate(10, ['*'], 'elec_page');
         
         return view('telemetria.index', compact('sensoresInvernadero', 'sensoresElectrovalvulas'));
     }
 
-   public function almacenar(Request $request)
+    public function almacenar(Request $request)
     {
-        // Forzamos a capturar el peso genérico por compatibilidad
         $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
 
-        // Guardamos los datos mapeando exactamente los nombres de columnas de tu base de datos
         $id = DB::table('sensores_invernadero')->insertGetId([
             'esp32_id'          => $request->input('esp32_id', 'ESP32_INVERNADERO_1'),
             'temp_ambiente'     => $request->input('temp_ambiente', $request->input('temp_ambient')),
