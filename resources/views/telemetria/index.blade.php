@@ -56,7 +56,7 @@
                 </div>
                 @php
                     $ultimoElectro = \App\Models\Sensor::where('esp32_id', 'ENTRADA ELECTROVALVULAS')->latest()->first();
-                    $conectadoElectro = $ultimoElectro && $ultimoElectro->created_at && \Carbon\Carbon::parse($ultimoElectro->created_at)->diffInSeconds(now()) <= 60;
+                    $conectadoElectro = $ultimoElectro && $ultimoElectro->created_at && \Carbon\Carbon::parse($ultimoElectro->created_at)->diffInMinutes(now()) <= 5;
                 @endphp
                 @if($conectadoElectro)
                     <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
@@ -95,7 +95,6 @@
             </div>
         </div>
 
-
         <!-- ========================================== -->
         <!-- 2. SECCIÓN: INVERNADERO 1 -->
         <!-- ========================================== -->
@@ -107,7 +106,7 @@
                 </div>
                 @php
                     $ultimoInv1 = \App\Models\Sensor::where('esp32_id', 'INVERNADERO 1')->latest()->first();
-                    $conectadoInv1 = $ultimoInv1 && $ultimoInv1->created_at && \Carbon\Carbon::parse($ultimoInv1->created_at)->diffInSeconds(now()) <= 60;
+                    $conectadoInv1 = $ultimoInv1 && $ultimoInv1->created_at && \Carbon\Carbon::parse($ultimoInv1->created_at)->diffInMinutes(now()) <= 5;
                 @endphp
                 @if($conectadoInv1)
                     <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
@@ -161,7 +160,6 @@
                 </table>
             </div>
         </div>
-
 
         <!-- ========================================== -->
         <!-- 3. SECCIÓN: INVERNADERO 2 Y 3 (Próximamente) -->
