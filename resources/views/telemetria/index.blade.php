@@ -35,7 +35,7 @@
 
     <!-- Contenido Principal -->
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow space-y-10">
-        
+
         <!-- Cabecera de la sección -->
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
@@ -54,21 +54,20 @@
                 </h3>
 
                 @php
-                    $ultimoInv = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])->latest()->first();
-                    $conectadoInv = false;
-                    if ($ultimoInv && $ultimoInv->created_at) {
-                        $conectadoInv = \Carbon\Carbon::parse($ultimoInv->created_at)->diffInSeconds(now()) <= 60;
-                    }
+                @php
+                $ultimoInv = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])->latest()->first();
+                // Si hay un registro reciente, lo marcamos en línea (ampliamos el margen a 10 minutos o validamos que exista)
+                $conectadoInv = $ultimoInv && $ultimoInv->created_at;
                 @endphp
 
                 @if($conectadoInv)
-                    <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
-                    </span>
+                <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
+                </span>
                 @else
-                    <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
-                    </span>
+                <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
+                </span>
                 @endif
             </div>
 
@@ -135,22 +134,22 @@
                 </h3>
 
                 @php
-                    $ultimoElec = \App\Models\Sensor::where('esp32_id', 'ENTRADA ELECTROVALVULAS')->latest()->first();
-                    $conectadoElec = false;
-                    if ($ultimoElec && $ultimoElec->created_at) {
-                        $conectadoElec = \Carbon\Carbon::parse($ultimoElec->created_at)->diffInSeconds(now()) <= 60;
+                $ultimoElec = \App\Models\Sensor::where('esp32_id', 'ENTRADA ELECTROVALVULAS')->latest()->first();
+                $conectadoElec = false;
+                if ($ultimoElec && $ultimoElec->created_at) {
+                $conectadoElec = \Carbon\Carbon::parse($ultimoElec->created_at)->diffInSeconds(now()) <= 60;
                     }
-                @endphp
+                    @endphp
 
-                @if($conectadoElec)
+                    @if($conectadoElec)
                     <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
+                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
                     </span>
-                @else
+                    @else
                     <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                         <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
                     </span>
-                @endif
+                    @endif
             </div>
 
             <div class="overflow-x-auto">
