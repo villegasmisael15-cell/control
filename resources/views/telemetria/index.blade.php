@@ -47,7 +47,6 @@
         </div>
 
         <!-- ================= SECCIÓN 1: INVERNADERO 1 ================= -->
-       <!-- ================= SECCIÓN 1: INVERNADERO 1 ================= -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-8">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
                 <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
@@ -83,6 +82,9 @@
                             <th class="py-3 px-3 font-semibold text-amber-700">TDS / EC</th>
                             <th class="py-3 px-3 font-semibold text-blue-700">Temp. Amb</th>
                             <th class="py-3 px-3 font-semibold text-blue-600">Hum. Amb</th>
+                            <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR</th>
+                            <th class="py-3 px-3 font-semibold text-amber-600">Suelo (HW-390)</th>
+                            <th class="py-3 px-3 font-semibold text-green-700">Temp. Suelo</th>
                             <th class="py-3 px-3 font-semibold">eCO2</th>
                             <th class="py-3 px-3 font-semibold">TVOC</th>
                             <th class="py-3 px-3 font-semibold">Luz</th>
@@ -98,6 +100,9 @@
                             <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-blue-700">{{ $sensor->temp_ambiente !== null ? $sensor->temp_ambiente . ' °C' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-blue-600">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-amber-600">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-green-700">{{ $sensor->temp_ds18b20 !== null ? $sensor->temp_ds18b20 . ' °C' : '--' }}</td>
                             <td class="py-3.5 px-3">{{ $sensor->calidad_aire_eco2 !== null ? $sensor->calidad_aire_eco2 . ' ppm' : '--' }}</td>
                             <td class="py-3.5 px-3">{{ $sensor->calidad_aire_tvoc !== null ? $sensor->calidad_aire_tvoc . ' ppb' : '--' }}</td>
                             <td class="py-3.5 px-3">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td>
@@ -105,7 +110,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" class="py-8 text-center text-gray-400">
+                            <td colspan="13" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
                                 <p>No hay registros para Invernadero 1.</p>
                             </td>
