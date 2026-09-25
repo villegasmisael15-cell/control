@@ -54,7 +54,6 @@
                 </h3>
 
                 @php
-                @php
                 $ultimoInv = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])->latest()->first();
                 // Si hay un registro reciente, lo marcamos en línea (ampliamos el margen a 10 minutos o validamos que exista)
                 $conectadoInv = $ultimoInv && $ultimoInv->created_at;
