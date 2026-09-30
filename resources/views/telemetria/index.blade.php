@@ -55,8 +55,10 @@
 
                 @php
                 $ultimoInv = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])->latest()->first();
-                // Si hay un registro reciente, lo marcamos en línea (ampliamos el margen a 10 minutos o validamos que exista)
-                $conectadoInv = $ultimoInv && $ultimoInv->created_at;
+                $conectadoInv = false;
+                if ($ultimoInv && $ultimoInv->created_at) {
+                    $conectadoInv = \Carbon\Carbon::parse($ultimoInv->created_at)->diffInSeconds(now()) <= 60;
+                }
                 @endphp
 
                 @if($conectadoInv)
@@ -136,19 +138,19 @@
                 $ultimoElec = \App\Models\Sensor::where('esp32_id', 'ENTRADA ELECTROVALVULAS')->latest()->first();
                 $conectadoElec = false;
                 if ($ultimoElec && $ultimoElec->created_at) {
-                $conectadoElec = \Carbon\Carbon::parse($ultimoElec->created_at)->diffInSeconds(now()) <= 60;
-                    }
-                    @endphp
+                    $conectadoElec = \Carbon\Carbon::parse($ultimoElec->created_at)->diffInSeconds(now()) <= 60;
+                }
+                @endphp
 
-                    @if($conectadoElec)
-                    <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                @if($conectadoElec)
+                <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
-                    </span>
-                    @else
-                    <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
-                    </span>
-                    @endif
+                </span>
+                @else
+                <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
+                </span>
+                @endif
             </div>
 
             <div class="overflow-x-auto">
