@@ -164,9 +164,7 @@
                             <th class="py-3 px-3 font-semibold text-blue-700">Temp. Amb</th>
                             <th class="py-3 px-3 font-semibold text-blue-600">Hum. Amb</th>
                             <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR Obj</th>
-                            <th class="py-3 px-3 font-semibold text-purple-600">Temp. IR Amb</th>
                             <th class="py-3 px-3 font-semibold text-amber-600">Suelo (HW-390)</th>
-                            <th class="py-3 px-3 font-semibold">AQI</th>
                             <th class="py-3 px-3 font-semibold">eCO2</th>
                             <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
                         </tr>
@@ -182,8 +180,6 @@
                             <td class="py-3.5 px-3 font-medium text-blue-600">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-purple-600">{{ $sensor->temp_ir_ambiente !== null ? $sensor->temp_ir_ambiente . ' °C' : '--' }}</td>
-                            <td class="py-3.5 px-3 font-medium text-amber-600">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
-                            <td class="py-3.5 px-3">{{ $sensor->aqi !== null ? $sensor->aqi : '--' }}</td>
                             <td class="py-3.5 px-3">{{ $sensor->calidad_aire_eco2 !== null ? $sensor->calidad_aire_eco2 . ' ppm' : '--' }}</td>
                             <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
                         </tr>
