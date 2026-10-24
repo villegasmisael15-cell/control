@@ -12,7 +12,7 @@ use App\Http\Controllers\SueloMonitoreoController;
 use App\Http\Controllers\SanidadNutricionBitacoraController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\SensorController;
-
+use App\Http\Controllers\Api\InvernaderoController;
 // Redireccionar la raíz al login si no está autenticado, o al dashboard si ya inició sesión
 Route::get('/', function () {
     return Auth::check() ? redirect('/dashboard') : redirect('/register');
@@ -153,6 +153,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/sanidad/{id}', [SanidadNutricionBitacoraController::class, 'destroy'])->name('sanidad.destroy');
         Route::delete('/usuarios/{user}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy')->middleware(['auth']);
         Route::get('/telemetria', [SensorController::class, 'index'])->name('telemetria.index')->middleware(['auth', 'verified']);
+        Route::post('/invernadero2/store', [InvernaderoController::class, 'storeInvernadero2']);
     });
 }); // Cierre correcto del middleware global group
 
