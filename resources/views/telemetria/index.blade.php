@@ -13,43 +13,42 @@
 
     <!-- Navbar superior -->
     <nav class="bg-emerald-600 text-white shadow-md">
-        <div class="max-w-[95%] mx-auto px-3 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+        <div class="max-w-[98%] sm:max-w-[95%] mx-auto px-2 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
             <div class="flex items-center min-w-0">
-                <i class="fa-solid fa-leaf text-lg sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
-                <span class="font-bold text-sm sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
+                <i class="fa-solid fa-leaf text-base sm:text-2xl mr-1.5 sm:mr-2 text-emerald-200"></i>
+                <span class="font-bold text-xs sm:text-xl tracking-wider truncate">SISTEMA CONTROL</span>
             </div>
 
             <div class="flex items-center gap-1.5 sm:gap-3 text-xs shrink-0">
-                <span class="bg-emerald-700/80 px-2.5 py-1 rounded-md flex items-center gap-1 max-w-[120px] sm:max-w-none truncate" title="{{ auth()->user()->name }}">
+                <span class="bg-emerald-700/80 px-2 py-1 rounded-md hidden md:flex items-center gap-1 max-w-[150px] truncate" title="{{ auth()->user()->name }}">
                     <i class="fa-solid fa-user text-[10px]"></i>
                     <span class="truncate">{{ auth()->user()->name }}</span>
                 </span>
-                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-2xs whitespace-nowrap">
+                <a href="{{ route('dashboard') }}" class="bg-emerald-700 hover:bg-emerald-800 px-2.5 sm:px-3.5 py-1.5 rounded-md transition flex items-center gap-1 font-medium shadow-xs whitespace-nowrap">
                     <i class="fa-solid fa-circle-chevron-left text-[10px]"></i>
-                    <span class="hidden xs:inline">Volver al Panel</span>
-                    <span class="inline xs:hidden">Panel</span>
+                    <span class="inline">Volver al Panel</span>
                 </a>
             </div>
         </div>
     </nav>
 
     <!-- Contenido Principal -->
-    <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow space-y-10">
+    <main class="max-w-[98%] sm:max-w-[95%] mx-auto px-2 sm:px-4 py-4 sm:py-8 w-full flex-grow space-y-6 sm:space-y-10">
 
         <!-- Cabecera de la sección -->
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
-                <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-cyan-600"></i> Panel de Telemetría e Intervalos Inteligentes
+                <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-microchip text-cyan-600"></i> Panel de Telemetría
                 </h1>
-                <p class="text-gray-600 text-sm mt-1">Monitoreo independiente y gestión de ciclos de descanso por zona ESP32.</p>
+                <p class="text-gray-600 text-xs sm:text-sm mt-0.5">Monitoreo independiente y gestión de ciclos de descanso por zona ESP32.</p>
             </div>
         </div>
 
         <!-- ================= SECCIÓN 1: INVERNADERO 1 ================= -->
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-8">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
+            <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
+                <h3 class="font-bold text-gray-800 text-sm sm:text-base flex items-center gap-2">
                     <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 1
                 </h3>
 
@@ -62,11 +61,11 @@
                 @endphp
 
                 @if($conectadoInv)
-                <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
                 </span>
                 @else
-                <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
                 </span>
                 @endif
@@ -121,16 +120,16 @@
             </div>
 
             @if(isset($sensoresInvernadero) && method_exists($sensoresInvernadero, 'links'))
-            <div class="p-4 border-t border-gray-200 bg-gray-50">
+            <div class="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 overflow-x-auto">
                 {{ $sensoresInvernadero->appends(['inv_page' => request('inv_page')])->links() }}
             </div>
             @endif
         </div>
 
         <!-- ================= SECCIÓN 2: INVERNADERO 2 ================= -->
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-8">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
+            <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
+                <h3 class="font-bold text-gray-800 text-sm sm:text-base flex items-center gap-2">
                     <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 2
                 </h3>
 
@@ -143,11 +142,11 @@
                 @endphp
 
                 @if($conectadoInv2)
-                <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
                 </span>
                 @else
-                <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                     <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
                 </span>
                 @endif
@@ -196,20 +195,20 @@
             </div>
 
             @if(isset($sensoresInvernadero2) && method_exists($sensoresInvernadero2, 'links'))
-            <div class="p-4 border-t border-gray-200 bg-gray-50">
+            <div class="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 overflow-x-auto">
                 {{ $sensoresInvernadero2->appends(['inv2_page' => request('inv2_page')])->links() }}
             </div>
             @endif
         </div>
 
-        <!-- ================= SECCIÓN 3: INVERNADERO 3 (CON FORMULARIO DE HORARIOS DINÁMICOS) ================= -->
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-            <div class="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
-                <div class="flex items-center gap-2">
-                    <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+        <!-- ================= SECCIÓN 3: INVERNADERO 3 ================= -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
+            <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="font-bold text-gray-800 text-sm sm:text-base flex items-center gap-2">
                         <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 3
                     </h3>
-                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Dinámico Inteligente</span>
+                    <span class="text-[10px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Dinámico Inteligente</span>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -222,46 +221,46 @@
                     @endphp
 
                     @if($conectadoInv3)
-                    <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                         <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
                     </span>
                     @else
-                    <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
                         <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
                     </span>
                     @endif
                 </div>
             </div>
 
-            <!-- Formulario interactivo para cambiar horarios desde la vista -->
-            <div class="bg-amber-50 border-b border-amber-200 p-4">
-                <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-wrap items-center justify-between gap-4 text-xs">
+            <!-- Formulario interactivo adaptado para móviles -->
+            <div class="bg-amber-50 border-b border-amber-200 p-3 sm:p-4">
+                <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
                     @csrf
                     <input type="hidden" name="esp32_id" value="INVERNADERO 3">
                     
-                    <div class="flex flex-wrap items-center gap-3">
-                        <div class="flex items-center gap-1.5">
-                            <span class="font-semibold text-gray-700"><i class="fa-solid fa-clock text-emerald-600"></i> Inicio Activo:</span>
-                            <input type="time" name="hora_inicio" value="{{ isset($configInv3) && $configInv3->hora_inicio ? \Carbon\Carbon::parse($configInv3->hora_inicio)->format('H:i') : '08:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium">
+                    <div class="grid grid-cols-2 xs:grid-cols-4 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-clock text-emerald-600"></i> Inicio:</span>
+                            <input type="time" name="hora_inicio" value="{{ isset($configInv3) && $configInv3->hora_inicio ? \Carbon\Carbon::parse($configInv3->hora_inicio)->format('H:i') : '08:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium w-full sm:w-auto">
                         </div>
 
-                        <div class="flex items-center gap-1.5">
-                            <span class="font-semibold text-gray-700">Fin Activo:</span>
-                            <input type="time" name="hora_fin" value="{{ isset($configInv3) && $configInv3->hora_fin ? \Carbon\Carbon::parse($configInv3->hora_fin)->format('H:i') : '18:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Fin:</span>
+                            <input type="time" name="hora_fin" value="{{ isset($configInv3) && $configInv3->hora_fin ? \Carbon\Carbon::parse($configInv3->hora_fin)->format('H:i') : '18:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium w-full sm:w-auto">
                         </div>
 
-                        <div class="flex items-center gap-1.5">
-                            <span class="font-semibold text-gray-700">Activo (seg):</span>
-                            <input type="number" name="intervalo_activo_sec" value="{{ isset($configInv3) ? ($configInv3->intervalo_activo_ms / 1000) : 3 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-16 text-center font-medium">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Activo(s):</span>
+                            <input type="number" name="intervalo_activo_sec" value="{{ isset($configInv3) ? ($configInv3->intervalo_activo_ms / 1000) : 3 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-full sm:w-16 text-center font-medium">
                         </div>
 
-                        <div class="flex items-center gap-1.5">
-                            <span class="font-semibold text-gray-700">Descanso (min):</span>
-                            <input type="number" name="intervalo_descanso_min" value="{{ isset($configInv3) ? ($configInv3->intervalo_descanso_ms / 60000) : 30 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-16 text-center font-medium">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Descanso(m):</span>
+                            <input type="number" name="intervalo_descanso_min" value="{{ isset($configInv3) ? ($configInv3->intervalo_descanso_ms / 60000) : 30 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-full sm:w-16 text-center font-medium">
                         </div>
                     </div>
 
-                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-1.5 rounded transition shadow-2xs whitespace-nowrap">
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 sm:py-1.5 rounded transition shadow-xs w-full sm:w-auto text-center whitespace-nowrap mt-1 sm:mt-0">
                         <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios
                     </button>
                 </form>
@@ -306,7 +305,7 @@
             </div>
 
             @if(isset($sensoresInvernadero3) && method_exists($sensoresInvernadero3, 'links'))
-            <div class="p-4 border-t border-gray-200 bg-gray-50">
+            <div class="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 overflow-x-auto">
                 {{ $sensoresInvernadero3->appends(['inv3_page' => request('inv3_page')])->links() }}
             </div>
             @endif
@@ -315,7 +314,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="bg-white border-t border-gray-200 py-4 text-center text-sm text-gray-500 w-full mt-auto">
+    <footer class="bg-white border-t border-gray-200 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-500 w-full mt-auto">
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
 
