@@ -24,16 +24,38 @@ class SensorController extends Controller
         $sensoresInvernadero3 = Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])
                                       ->latest()
                                       ->paginate(10, ['*'], 'inv3_page');
+
+        // Obtener la configuración de horarios para el Invernadero 3
+        $configInv3 = DB::table('invernadero_configuraciones')->where('esp32_id', 'INVERNADERO 3')->first();
         
-        return view('telemetria.index', compact('sensoresInvernadero', 'sensoresInvernadero2', 'sensoresInvernadero3'));
+        return view('telemetria.index', compact('sensoresInvernadero', 'sensoresInvernadero2', 'sensoresInvernadero3', 'configInv3'));
+    }
+
+    // Método para guardar los cambios de horarios hechos desde la vista web
+    public function actualizarConfiguracion(Request $request)
+    {
+        $esp32Id = $request->input('esp32_id', 'INVERNADERO 3');
+
+        DB::table('invernadero_configuraciones')->updateOrInsert(
+            ['esp32_id' => $esp32Id],
+            [
+                'hora_inicio' => $request->input('hora_inicio'),
+                'hora_fin' => $request->input('hora_fin'),
+                'intervalo_activo_ms' => $request->input('intervalo_activo_sec') * 1000,
+                'intervalo_descanso_ms' => $request->input('intervalo_descanso_min') * 60000,
+            ]
+        );
+
+        return back()->with('success', 'Configuración de horarios actualizada correctamente.');
     }
 
     public function almacenar(Request $request)
     {
+        $esp32Id = $request->input('esp32_id', 'INVERNADERO 1');
         $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
 
         $id = DB::table('sensores_invernadero')->insertGetId([
-            'esp32_id'          => $request->input('esp32_id', 'INVERNADERO 1'),
+            'esp32_id'          => $esp32Id,
             'temp_ambiente'     => $request->input('temp_ambiente', $request->input('temp_ambient')),
             'humedad_ambiente'  => $request->input('humedad_ambiente', $request->input('hum_ambient')),
             'calidad_aire_eco2' => $request->input('calidad_aire_eco2'),
@@ -59,24 +81,26 @@ class SensorController extends Controller
             'created_at'        => now(),
         ]);
 
-        $horaActual = now()->format('H:i');
+        // --- CONSULTAR HORARIOS DINÁMICOS DESDE LA BASE DE DATOS ---
+        $config = DB::table('invernadero_configuraciones')->where('esp32_id', $esp32Id)->first();
         
-        // Intervalo por defecto: 3 segundos (En milisegundos = 3000)
-        $intervaloMilisegundos = 3000; 
+        $intervaloMilisegundos = 3000; // Valor por defecto en caso de que no exista registro
 
-        // Puedes personalizar las horas activas para el Invernadero 3 (ej: de 08:00 a 18:00)
-        if ($esp32Id === 'INVERNADERO 3') {
-            if ($horaActual < '08:00' || $horaActual > '18:00') {
-                // Fuera de horario: descansa y manda datos cada 30 minutos (1,800,000 ms)
-                $intervaloMilisegundos = 1800000; 
+        if ($config) {
+            $horaActual = now()->format('H:i:s');
+            // Validar si la hora actual está dentro del rango activo configurado
+            if ($horaActual >= $config->hora_inicio && $horaActual <= $config->hora_fin) {
+                $intervaloMilisegundos = $config->intervalo_activo_ms; 
+            } else {
+                $intervaloMilisegundos = $config->intervalo_descanso_ms; 
             }
         }
 
-       return response()->json([
+        return response()->json([
             'status' => 'success',
             'message' => 'Datos guardados correctamente',
             'id_registro' => $id,
-            'siguiente_intervalo_ms' => $intervaloMilisegundos // El servidor le dice al ESP32 cuánto esperar
+            'siguiente_intervalo_ms' => $intervaloMilisegundos // El servidor le indica al ESP32 cuánto esperar
         ], 200);
     }
 }

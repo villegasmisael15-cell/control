@@ -202,14 +202,14 @@
             @endif
         </div>
 
-        <!-- ================= SECCIÓN 3: INVERNADERO 3 (CON CONTROL DE REPOSO) ================= -->
+        <!-- ================= SECCIÓN 3: INVERNADERO 3 (CON FORMULARIO DE HORARIOS DINÁMICOS) ================= -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
                 <div class="flex items-center gap-2">
                     <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
                         <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 3
                     </h3>
-                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Activo / Descanso Dinámico</span>
+                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Dinámico Inteligente</span>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -233,10 +233,38 @@
                 </div>
             </div>
 
-            <!-- Panel informativo de la regla horaria activa -->
-            <div class="bg-amber-50 border-b border-amber-200 px-6 py-3 text-xs text-amber-800 flex items-center justify-between">
-                <span><i class="fa-solid fa-clock mr-1.5"></i> <strong>Horario Activo Configurado:</strong> 08:00 AM – 06:00 PM (Reporte cada 3s). Fuera de este horario, descansa y reporta cada 30 min.</span>
-                <span class="font-semibold text-emerald-700">Estado del ESP32: Sincronizado automáticamente vía API</span>
+            <!-- Formulario interactivo para cambiar horarios desde la vista -->
+            <div class="bg-amber-50 border-b border-amber-200 p-4">
+                <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-wrap items-center justify-between gap-4 text-xs">
+                    @csrf
+                    <input type="hidden" name="esp32_id" value="INVERNADERO 3">
+                    
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-semibold text-gray-700"><i class="fa-solid fa-clock text-emerald-600"></i> Inicio Activo:</span>
+                            <input type="time" name="hora_inicio" value="{{ isset($configInv3) && $configInv3->hora_inicio ? \Carbon\Carbon::parse($configInv3->hora_inicio)->format('H:i') : '08:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium">
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-semibold text-gray-700">Fin Activo:</span>
+                            <input type="time" name="hora_fin" value="{{ isset($configInv3) && $configInv3->hora_fin ? \Carbon\Carbon::parse($configInv3->hora_fin)->format('H:i') : '18:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium">
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-semibold text-gray-700">Activo (seg):</span>
+                            <input type="number" name="intervalo_activo_sec" value="{{ isset($configInv3) ? ($configInv3->intervalo_activo_ms / 1000) : 3 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-16 text-center font-medium">
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-semibold text-gray-700">Descanso (min):</span>
+                            <input type="number" name="intervalo_descanso_min" value="{{ isset($configInv3) ? ($configInv3->intervalo_descanso_ms / 60000) : 30 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-16 text-center font-medium">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-1.5 rounded transition shadow-2xs whitespace-nowrap">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios
+                    </button>
+                </form>
             </div>
 
             <div class="overflow-x-auto">

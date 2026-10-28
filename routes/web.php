@@ -154,6 +154,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/usuarios/{user}', [UsuarioController::class, 'destroy'])->name('usuarios.destroy')->middleware(['auth']);
         Route::get('/telemetria', [SensorController::class, 'index'])->name('telemetria.index')->middleware(['auth', 'verified']);
         Route::post('/invernadero2/store', [InvernaderoController::class, 'storeInvernadero2']);
+        Route::post('/telemetria/configurar', [SensorController::class, 'actualizarConfiguracion'])->name('telemetria.configurar');
     });
 }); // Cierre correcto del middleware global group
 
