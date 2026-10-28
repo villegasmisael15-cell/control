@@ -108,12 +108,49 @@
         <!-- ================= SECCIÓN 2: INVERNADERO 2 ================= -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
             <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-sm sm:text-base flex items-center gap-2">
-                    <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 2
-                </h3>
+                <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="font-bold text-gray-800 text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 2
+                    </h3>
+                    <span class="text-[10px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Dinámico Inteligente</span>
+                </div>
                 <div id="status-inv2">
                     <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
                 </div>
+            </div>
+
+            <!-- Formulario de configuración de tiempos para Invernadero 2 -->
+            <div class="bg-amber-50 border-b border-amber-200 p-3 sm:p-4">
+                <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                    @csrf
+                    <input type="hidden" name="esp32_id" value="INVERNADERO 2">
+                    
+                    <div class="grid grid-cols-2 xs:grid-cols-4 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-clock text-emerald-600"></i> Inicio:</span>
+                            <input type="time" name="hora_inicio" value="{{ isset($configInv2) && $configInv2->hora_inicio ? \Carbon\Carbon::parse($configInv2->hora_inicio)->format('H:i') : '08:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium w-full sm:w-auto">
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Fin:</span>
+                            <input type="time" name="hora_fin" value="{{ isset($configInv2) && $configInv2->hora_fin ? \Carbon\Carbon::parse($configInv2->hora_fin)->format('H:i') : '18:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium w-full sm:w-auto">
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Activo(s):</span>
+                            <input type="number" name="intervalo_activo_sec" value="{{ isset($configInv2) ? ($configInv2->intervalo_activo_ms / 1000) : 3 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-full sm:w-16 text-center font-medium">
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Descanso(m):</span>
+                            <input type="number" name="intervalo_descanso_min" value="{{ isset($configInv2) ? ($configInv2->intervalo_descanso_ms / 60000) : 30 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-full sm:w-16 text-center font-medium">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 sm:py-1.5 rounded transition shadow-xs w-full sm:w-auto text-center whitespace-nowrap mt-1 sm:mt-0">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios
+                    </button>
+                </form>
             </div>
 
             <div class="overflow-x-auto">
@@ -122,12 +159,13 @@
                         <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
                             <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 1</th>
                             <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 2</th>
+                            <th class="py-3 px-3 font-semibold text-amber-600">Suelo (HW-390)</th>
                             <th class="py-3 px-3 font-semibold text-emerald-700">pH</th>
-                            <th class="py-3 px-3 font-semibold text-amber-700">TDS / EC</th>
+                            <th class="py-3 px-3 font-semibold text-amber-700">EC (mS/cm)</th>
+                            <th class="py-3 px-3 font-semibold text-amber-700">TDS (uS/cm)</th>
                             <th class="py-3 px-3 font-semibold text-blue-700">Temp. Amb</th>
                             <th class="py-3 px-3 font-semibold text-blue-600">Hum. Amb</th>
                             <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR</th>
-                            <th class="py-3 px-3 font-semibold text-amber-600">Suelo (HW-390)</th>
                             <th class="py-3 px-3 font-semibold">eCO2</th>
                             <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
                         </tr>
@@ -137,18 +175,19 @@
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
                             <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_2 !== null ? $sensor->peso_bascula_2 . ' kg' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-amber-600">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
                             <td class="py-3.5 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
                             <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-blue-700">{{ $sensor->temp_ambiente !== null ? $sensor->temp_ambiente . ' °C' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-blue-600">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
-                            <td class="py-3.5 px-3 font-medium text-amber-600">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
                             <td class="py-3.5 px-3">{{ $sensor->calidad_aire_eco2 !== null ? $sensor->calidad_aire_eco2 . ' ppm' : '--' }}</td>
                             <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="10" class="py-8 text-center text-gray-400">
+                            <td colspan="11" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
                                 <p>No hay registros para Invernadero 2.</p>
                             </td>
@@ -337,15 +376,18 @@
 
             let html = '';
             registros.forEach(s => {
+                let ecVal = s.tds_valor !== null ? parseFloat(s.tds_valor) : 0;
+                let tdsUs = s.tds_valor !== null ? (ecVal * 1000).toFixed(0) : '--';
                 html += `<tr class="hover:bg-gray-50/80 transition">
                     <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_1 !== null ? s.peso_bascula_1 + ' kg' : '--'}</td>
                     <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_2 !== null ? s.peso_bascula_2 + ' kg' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-amber-600">${s.he390_valor !== null ? s.he390_valor + ' %' : '--'}</td>
                     <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
                     <td class="py-3.5 px-3 font-semibold text-amber-700">${s.tds_valor !== null ? s.tds_valor + ' mS/cm' : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-amber-700">${tdsUs !== '--' ? tdsUs + ' uS/cm' : '--'}</td>
                     <td class="py-3.5 px-3 font-medium text-blue-700">${s.temp_ambiente !== null ? s.temp_ambiente + ' °C' : '--'}</td>
                     <td class="py-3.5 px-3 font-medium text-blue-600">${s.humedad_ambiente !== null ? s.humedad_ambiente + ' %' : '--'}</td>
                     <td class="py-3.5 px-3 font-medium text-purple-700">${s.temp_infrarrojo !== null ? s.temp_infrarrojo + ' °C' : '--'}</td>
-                    <td class="py-3.5 px-3 font-medium text-amber-600">${s.he390_valor !== null ? s.he390_valor + ' %' : '--'}</td>
                     <td class="py-3.5 px-3">${s.calidad_aire_eco2 !== null ? s.calidad_aire_eco2 + ' ppm' : '--'}</td>
                     <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
                 </tr>`;
