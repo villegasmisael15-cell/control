@@ -15,12 +15,17 @@ class SensorController extends Controller
                                      ->latest()
                                      ->paginate(10, ['*'], 'inv_page');
                                      
-        // Consultas para Invernadero 2 (Reemplaza a Electroválvulas)
+        // Consultas para Invernadero 2
         $sensoresInvernadero2 = Sensor::whereIn('esp32_id', ['INVERNADERO 2', 'INVERNADERO_2'])
                                       ->latest()
                                       ->paginate(10, ['*'], 'inv2_page');
+
+        // Consultas para Invernadero 3
+        $sensoresInvernadero3 = Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])
+                                      ->latest()
+                                      ->paginate(10, ['*'], 'inv3_page');
         
-        return view('telemetria.index', compact('sensoresInvernadero', 'sensoresInvernadero2'));
+        return view('telemetria.index', compact('sensoresInvernadero', 'sensoresInvernadero2', 'sensoresInvernadero3'));
     }
 
     public function almacenar(Request $request)
@@ -28,7 +33,7 @@ class SensorController extends Controller
         $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
 
         $id = DB::table('sensores_invernadero')->insertGetId([
-            'esp32_id'          => $request->input('esp32_id', 'INVERNADERO 2'),
+            'esp32_id'          => $request->input('esp32_id', 'INVERNADERO 1'),
             'temp_ambiente'     => $request->input('temp_ambiente', $request->input('temp_ambient')),
             'humedad_ambiente'  => $request->input('humedad_ambiente', $request->input('hum_ambient')),
             'calidad_aire_eco2' => $request->input('calidad_aire_eco2'),

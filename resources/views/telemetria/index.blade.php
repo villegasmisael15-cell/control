@@ -122,13 +122,13 @@
 
             @if(isset($sensoresInvernadero) && method_exists($sensoresInvernadero, 'links'))
             <div class="p-4 border-t border-gray-200 bg-gray-50">
-                {{ $sensoresInvernadero->appends(['elec_page' => request('elec_page')])->links() }}
+                {{ $sensoresInvernadero->appends(['inv_page' => request('inv_page')])->links() }}
             </div>
             @endif
         </div>
 
         <!-- ================= SECCIÓN 2: INVERNADERO 2 ================= -->
-        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-8">
             <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
                 <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
                     <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 2
@@ -163,7 +163,7 @@
                             <th class="py-3 px-3 font-semibold text-amber-700">TDS / EC</th>
                             <th class="py-3 px-3 font-semibold text-blue-700">Temp. Amb</th>
                             <th class="py-3 px-3 font-semibold text-blue-600">Hum. Amb</th>
-                            <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR Obj</th>
+                            <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR</th>
                             <th class="py-3 px-3 font-semibold text-amber-600">Suelo (HW-390)</th>
                             <th class="py-3 px-3 font-semibold">eCO2</th>
                             <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
@@ -179,13 +179,13 @@
                             <td class="py-3.5 px-3 font-medium text-blue-700">{{ $sensor->temp_ambiente !== null ? $sensor->temp_ambiente . ' °C' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-blue-600">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
-                            <td class="py-3.5 px-3 font-medium text-purple-600">{{ $sensor->temp_ir_ambiente !== null ? $sensor->temp_ir_ambiente . ' °C' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-amber-600">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
                             <td class="py-3.5 px-3">{{ $sensor->calidad_aire_eco2 !== null ? $sensor->calidad_aire_eco2 . ' ppm' : '--' }}</td>
                             <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="12" class="py-8 text-center text-gray-400">
+                            <td colspan="10" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
                                 <p>No hay registros para Invernadero 2.</p>
                             </td>
@@ -198,6 +198,77 @@
             @if(isset($sensoresInvernadero2) && method_exists($sensoresInvernadero2, 'links'))
             <div class="p-4 border-t border-gray-200 bg-gray-50">
                 {{ $sensoresInvernadero2->appends(['inv2_page' => request('inv2_page')])->links() }}
+            </div>
+            @endif
+        </div>
+
+        <!-- ================= SECCIÓN 3: INVERNADERO 3 ================= -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
+            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
+                <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+                    <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 3
+                </h3>
+
+                @php
+                $ultimoInv3 = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])->latest()->first();
+                $conectadoInv3 = false;
+                if ($ultimoInv3 && $ultimoInv3->created_at) {
+                    $conectadoInv3 = \Carbon\Carbon::parse($ultimoInv3->created_at)->diffInSeconds(now()) <= 60;
+                }
+                @endphp
+
+                @if($conectadoInv3)
+                <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
+                </span>
+                @else
+                <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                    <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
+                </span>
+                @endif
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
+                            <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 1</th>
+                            <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 2</th>
+                            <th class="py-3 px-3 font-semibold text-amber-600">Suelo (HW-390)</th>
+                            <th class="py-3 px-3 font-semibold text-emerald-700">pH</th>
+                            <th class="py-3 px-3 font-semibold text-amber-700">EC (mS/cm)</th>
+                            <th class="py-3 px-3 font-semibold text-amber-700">TDS (uS/cm)</th>
+                            <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR Objeto</th>
+                            <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200 text-gray-700">
+                        @forelse($sensoresInvernadero3 as $sensor)
+                        <tr class="hover:bg-gray-50/80 transition">
+                            <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_2 !== null ? $sensor->peso_bascula_2 . ' kg' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-amber-600">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
+                            <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="8" class="py-8 text-center text-gray-400">
+                                <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
+                                <p>No hay registros para Invernadero 3.</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            @if(isset($sensoresInvernadero3) && method_exists($sensoresInvernadero3, 'links'))
+            <div class="p-4 border-t border-gray-200 bg-gray-50">
+                {{ $sensoresInvernadero3->appends(['inv3_page' => request('inv3_page')])->links() }}
             </div>
             @endif
         </div>
