@@ -59,10 +59,24 @@ class SensorController extends Controller
             'created_at'        => now(),
         ]);
 
-        return response()->json([
+        $horaActual = now()->format('H:i');
+        
+        // Intervalo por defecto: 3 segundos (En milisegundos = 3000)
+        $intervaloMilisegundos = 3000; 
+
+        // Puedes personalizar las horas activas para el Invernadero 3 (ej: de 08:00 a 18:00)
+        if ($esp32Id === 'INVERNADERO 3') {
+            if ($horaActual < '08:00' || $horaActual > '18:00') {
+                // Fuera de horario: descansa y manda datos cada 30 minutos (1,800,000 ms)
+                $intervaloMilisegundos = 1800000; 
+            }
+        }
+
+       return response()->json([
             'status' => 'success',
             'message' => 'Datos guardados correctamente',
-            'id_registro' => $id
+            'id_registro' => $id,
+            'siguiente_intervalo_ms' => $intervaloMilisegundos // El servidor le dice al ESP32 cuánto esperar
         ], 200);
     }
 }

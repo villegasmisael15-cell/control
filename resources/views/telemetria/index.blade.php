@@ -40,9 +40,9 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
                 <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-cyan-600"></i> Panel de Telemetría Independiente
+                    <i class="fa-solid fa-microchip text-cyan-600"></i> Panel de Telemetría e Intervalos Inteligentes
                 </h1>
-                <p class="text-gray-600 text-sm mt-1">Monitoreo separado por zonas de dispositivos ESP32.</p>
+                <p class="text-gray-600 text-sm mt-1">Monitoreo independiente y gestión de ciclos de descanso por zona ESP32.</p>
             </div>
         </div>
 
@@ -202,30 +202,41 @@
             @endif
         </div>
 
-        <!-- ================= SECCIÓN 3: INVERNADERO 3 ================= -->
+        <!-- ================= SECCIÓN 3: INVERNADERO 3 (CON CONTROL DE REPOSO) ================= -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
-            <div class="p-6 border-b border-gray-200 flex justify-between items-center bg-gray-50/50">
-                <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
-                    <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 3
-                </h3>
+            <div class="p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gray-50/50">
+                <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-gray-800 text-base flex items-center gap-2">
+                        <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 3
+                    </h3>
+                    <span class="text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Activo / Descanso Dinámico</span>
+                </div>
 
-                @php
-                $ultimoInv3 = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])->latest()->first();
-                $conectadoInv3 = false;
-                if ($ultimoInv3 && $ultimoInv3->created_at) {
-                    $conectadoInv3 = \Carbon\Carbon::parse($ultimoInv3->created_at)->diffInSeconds(now()) <= 60;
-                }
-                @endphp
+                <div class="flex items-center gap-3">
+                    @php
+                    $ultimoInv3 = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])->latest()->first();
+                    $conectadoInv3 = false;
+                    if ($ultimoInv3 && $ultimoInv3->created_at) {
+                        $conectadoInv3 = \Carbon\Carbon::parse($ultimoInv3->created_at)->diffInSeconds(now()) <= 60;
+                    }
+                    @endphp
 
-                @if($conectadoInv3)
-                <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
-                </span>
-                @else
-                <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
-                </span>
-                @endif
+                    @if($conectadoInv3)
+                    <span class="bg-cyan-100 text-cyan-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
+                    </span>
+                    @else
+                    <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
+                    </span>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Panel informativo de la regla horaria activa -->
+            <div class="bg-amber-50 border-b border-amber-200 px-6 py-3 text-xs text-amber-800 flex items-center justify-between">
+                <span><i class="fa-solid fa-clock mr-1.5"></i> <strong>Horario Activo Configurado:</strong> 08:00 AM – 06:00 PM (Reporte cada 3s). Fuera de este horario, descansa y reporta cada 30 min.</span>
+                <span class="font-semibold text-emerald-700">Estado del ESP32: Sincronizado automáticamente vía API</span>
             </div>
 
             <div class="overflow-x-auto">
