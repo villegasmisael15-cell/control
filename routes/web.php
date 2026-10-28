@@ -155,6 +155,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/telemetria', [SensorController::class, 'index'])->name('telemetria.index')->middleware(['auth', 'verified']);
         Route::post('/invernadero2/store', [InvernaderoController::class, 'storeInvernadero2']);
         Route::post('/telemetria/configurar', [SensorController::class, 'actualizarConfiguracion'])->name('telemetria.configurar');
+        Route::get('/telemetria/en-vivo', [SensorController::class, 'obtenerDatosEnVivo'])->name('telemetria.envivo');
     });
 }); // Cierre correcto del middleware global group
 

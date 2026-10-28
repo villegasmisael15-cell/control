@@ -39,9 +39,9 @@
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center gap-2">
-                    <i class="fa-solid fa-microchip text-cyan-600"></i> Panel de Telemetría
+                    <i class="fa-solid fa-microchip text-cyan-600"></i> Panel de Telemetría en Vivo
                 </h1>
-                <p class="text-gray-600 text-xs sm:text-sm mt-0.5">Monitoreo independiente y gestión de ciclos de descanso por zona ESP32.</p>
+                <p class="text-gray-600 text-xs sm:text-sm mt-0.5">Monitoreo independiente y actualización inteligente por zona ESP32.</p>
             </div>
         </div>
 
@@ -51,24 +51,9 @@
                 <h3 class="font-bold text-gray-800 text-sm sm:text-base flex items-center gap-2">
                     <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 1
                 </h3>
-
-                @php
-                $ultimoInv = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])->latest()->first();
-                $conectadoInv = false;
-                if ($ultimoInv && $ultimoInv->created_at) {
-                    $conectadoInv = \Carbon\Carbon::parse($ultimoInv->created_at)->diffInSeconds(now()) <= 60;
-                }
-                @endphp
-
-                @if($conectadoInv)
-                <span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
-                </span>
-                @else
-                <span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
-                </span>
-                @endif
+                <div id="status-inv1">
+                    <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                </div>
             </div>
 
             <div class="overflow-x-auto">
@@ -90,7 +75,7 @@
                             <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 text-gray-700">
+                    <tbody id="tabla-inv1" class="divide-y divide-gray-200 text-gray-700">
                         @forelse($sensoresInvernadero as $sensor)
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
@@ -118,12 +103,6 @@
                     </tbody>
                 </table>
             </div>
-
-            @if(isset($sensoresInvernadero) && method_exists($sensoresInvernadero, 'links'))
-            <div class="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 overflow-x-auto">
-                {{ $sensoresInvernadero->appends(['inv_page' => request('inv_page')])->links() }}
-            </div>
-            @endif
         </div>
 
         <!-- ================= SECCIÓN 2: INVERNADERO 2 ================= -->
@@ -132,24 +111,9 @@
                 <h3 class="font-bold text-gray-800 text-sm sm:text-base flex items-center gap-2">
                     <i class="fa-solid fa-tower-broadcast text-emerald-600"></i> INVERNADERO 2
                 </h3>
-
-                @php
-                $ultimoInv2 = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 2', 'INVERNADERO_2'])->latest()->first();
-                $conectadoInv2 = false;
-                if ($ultimoInv2 && $ultimoInv2->created_at) {
-                    $conectadoInv2 = \Carbon\Carbon::parse($ultimoInv2->created_at)->diffInSeconds(now()) <= 60;
-                }
-                @endphp
-
-                @if($conectadoInv2)
-                <span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
-                </span>
-                @else
-                <span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                    <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
-                </span>
-                @endif
+                <div id="status-inv2">
+                    <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                </div>
             </div>
 
             <div class="overflow-x-auto">
@@ -168,7 +132,7 @@
                             <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 text-gray-700">
+                    <tbody id="tabla-inv2" class="divide-y divide-gray-200 text-gray-700">
                         @forelse($sensoresInvernadero2 as $sensor)
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
@@ -193,12 +157,6 @@
                     </tbody>
                 </table>
             </div>
-
-            @if(isset($sensoresInvernadero2) && method_exists($sensoresInvernadero2, 'links'))
-            <div class="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 overflow-x-auto">
-                {{ $sensoresInvernadero2->appends(['inv2_page' => request('inv2_page')])->links() }}
-            </div>
-            @endif
         </div>
 
         <!-- ================= SECCIÓN 3: INVERNADERO 3 ================= -->
@@ -210,29 +168,12 @@
                     </h3>
                     <span class="text-[10px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Dinámico Inteligente</span>
                 </div>
-
-                <div class="flex items-center gap-3">
-                    @php
-                    $ultimoInv3 = \App\Models\Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])->latest()->first();
-                    $conectadoInv3 = false;
-                    if ($ultimoInv3 && $ultimoInv3->created_at) {
-                        $conectadoInv3 = \Carbon\Carbon::parse($ultimoInv3->created_at)->diffInSeconds(now()) <= 60;
-                    }
-                    @endphp
-
-                    @if($conectadoInv3)
-                    <span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo
-                    </span>
-                    @else
-                    <span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                        <span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado
-                    </span>
-                    @endif
+                <div id="status-inv3">
+                    <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
                 </div>
             </div>
 
-            <!-- Formulario interactivo adaptado para móviles -->
+            <!-- Formulario interactivo (NO SE PIERDE NADA AL ACTUALIZAR LA TABLA) -->
             <div class="bg-amber-50 border-b border-amber-200 p-3 sm:p-4">
                 <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
                     @csrf
@@ -280,7 +221,7 @@
                             <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 text-gray-700">
+                    <tbody id="tabla-inv3" class="divide-y divide-gray-200 text-gray-700">
                         @forelse($sensoresInvernadero3 as $sensor)
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
@@ -303,12 +244,6 @@
                     </tbody>
                 </table>
             </div>
-
-            @if(isset($sensoresInvernadero3) && method_exists($sensoresInvernadero3, 'links'))
-            <div class="p-3 sm:p-4 border-t border-gray-200 bg-gray-50 overflow-x-auto">
-                {{ $sensoresInvernadero3->appends(['inv3_page' => request('inv3_page')])->links() }}
-            </div>
-            @endif
         </div>
 
     </main>
@@ -317,6 +252,141 @@
     <footer class="bg-white border-t border-gray-200 py-3 sm:py-4 text-center text-xs sm:text-sm text-gray-500 w-full mt-auto">
         &copy; {{ date('Y') }} Sistema Control. Todos los derechos reservados.
     </footer>
+
+    <!-- SCRIPT DE ACTUALIZACIÓN INDEPENDIENTE POR ID NUEVO -->
+    <script>
+        let ultimoIdInv1 = null;
+        let ultimoIdInv2 = null;
+        let ultimoIdInv3 = null;
+
+        function verificarYActualizarTelemetria() {
+            fetch("{{ route('telemetria.envivo') }}")
+                .then(response => response.json())
+                .then(data => {
+                    if (data.invernadero1.ultimo_id !== ultimoIdInv1) {
+                        ultimoIdInv1 = data.invernadero1.ultimo_id;
+                        actualizarTablaInv1(data.invernadero1.datos);
+                    }
+                    if (data.invernadero2.ultimo_id !== ultimoIdInv2) {
+                        ultimoIdInv2 = data.invernadero2.ultimo_id;
+                        actualizarTablaInv2(data.invernadero2.datos);
+                    }
+                    if (data.invernadero3.ultimo_id !== ultimoIdInv3) {
+                        ultimoIdInv3 = data.invernadero3.ultimo_id;
+                        actualizarTablaInv3(data.invernadero3.datos);
+                    }
+                })
+                .catch(error => console.error('Error al verificar datos en vivo:', error));
+        }
+
+        function formatearFecha(fechaStr) {
+            if (!fechaStr) return '--';
+            const fecha = new Date(fechaStr);
+            return fecha.toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        function actualizarTablaInv1(registros) {
+            const tbody = document.getElementById('tabla-inv1');
+            const statusDiv = document.getElementById('status-inv1');
+            if (registros.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="13" class="py-8 text-center text-gray-400"><p>No hay registros.</p></td></tr>`;
+                return;
+            }
+
+            const ultimo = new Date(registros[0].created_at);
+            const diffSegundos = (new Date() - ultimo) / 1000;
+            if (diffSegundos <= 60) {
+                statusDiv.innerHTML = `<span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo</span>`;
+            } else {
+                statusDiv.innerHTML = `<span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado</span>`;
+            }
+
+            let html = '';
+            registros.forEach(s => {
+                html += `<tr class="hover:bg-gray-50/80 transition">
+                    <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_1 !== null ? s.peso_bascula_1 + ' kg' : '--'}</td>
+                    <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_2 !== null ? s.peso_bascula_2 + ' kg' : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-amber-700">${s.tds_valor !== null ? s.tds_valor + ' mS/cm' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-blue-700">${s.temp_ambiente !== null ? s.temp_ambiente + ' °C' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-blue-600">${s.humedad_ambiente !== null ? s.humedad_ambiente + ' %' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-purple-700">${s.temp_infrarrojo !== null ? s.temp_infrarrojo + ' °C' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-amber-600">${s.he390_valor !== null ? s.he390_valor + ' %' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-green-700">${s.temp_ds18b20 !== null ? s.temp_ds18b20 + ' °C' : '--'}</td>
+                    <td class="py-3.5 px-3">${s.calidad_aire_eco2 !== null ? s.calidad_aire_eco2 + ' ppm' : '--'}</td>
+                    <td class="py-3.5 px-3">${s.calidad_aire_tvoc !== null ? s.calidad_aire_tvoc + ' ppb' : '--'}</td>
+                    <td class="py-3.5 px-3">${s.luz_lux !== null ? s.luz_lux + ' lx' : '--'}</td>
+                    <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function actualizarTablaInv2(registros) {
+            const tbody = document.getElementById('tabla-inv2');
+            const statusDiv = document.getElementById('status-inv2');
+            if (registros.length === 0) return;
+
+            const ultimo = new Date(registros[0].created_at);
+            const diffSegundos = (new Date() - ultimo) / 1000;
+            if (diffSegundos <= 60) {
+                statusDiv.innerHTML = `<span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo</span>`;
+            } else {
+                statusDiv.innerHTML = `<span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado</span>`;
+            }
+
+            let html = '';
+            registros.forEach(s => {
+                html += `<tr class="hover:bg-gray-50/80 transition">
+                    <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_1 !== null ? s.peso_bascula_1 + ' kg' : '--'}</td>
+                    <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_2 !== null ? s.peso_bascula_2 + ' kg' : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-amber-700">${s.tds_valor !== null ? s.tds_valor + ' mS/cm' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-blue-700">${s.temp_ambiente !== null ? s.temp_ambiente + ' °C' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-blue-600">${s.humedad_ambiente !== null ? s.humedad_ambiente + ' %' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-purple-700">${s.temp_infrarrojo !== null ? s.temp_infrarrojo + ' °C' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-amber-600">${s.he390_valor !== null ? s.he390_valor + ' %' : '--'}</td>
+                    <td class="py-3.5 px-3">${s.calidad_aire_eco2 !== null ? s.calidad_aire_eco2 + ' ppm' : '--'}</td>
+                    <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function actualizarTablaInv3(registros) {
+            const tbody = document.getElementById('tabla-inv3');
+            const statusDiv = document.getElementById('status-inv3');
+            if (registros.length === 0) return;
+
+            const ultimo = new Date(registros[0].created_at);
+            const diffSegundos = (new Date() - ultimo) / 1000;
+            if (diffSegundos <= 60) {
+                statusDiv.innerHTML = `<span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo</span>`;
+            } else {
+                statusDiv.innerHTML = `<span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado</span>`;
+            }
+
+            let html = '';
+            registros.forEach(s => {
+                let ecVal = s.tds_valor !== null ? parseFloat(s.tds_valor) : 0;
+                let tdsUs = s.tds_valor !== null ? (ecVal * 1000).toFixed(0) : '--';
+                html += `<tr class="hover:bg-gray-50/80 transition">
+                    <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_1 !== null ? s.peso_bascula_1 + ' kg' : '--'}</td>
+                    <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_2 !== null ? s.peso_bascula_2 + ' kg' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-amber-600">${s.he390_valor !== null ? s.he390_valor + ' %' : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-amber-700">${s.tds_valor !== null ? s.tds_valor + ' mS/cm' : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-amber-700">${tdsUs !== '--' ? tdsUs + ' uS/cm' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-purple-700">${s.temp_infrarrojo !== null ? s.temp_infrarrojo + ' °C' : '--'}</td>
+                    <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
+                </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        // Consultar cada 5 segundos de forma independiente
+        setInterval(verificarYActualizarTelemetria, 5000);
+    </script>
 
 </body>
 

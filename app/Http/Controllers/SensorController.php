@@ -31,6 +31,29 @@ class SensorController extends Controller
         return view('telemetria.index', compact('sensoresInvernadero', 'sensoresInvernadero2', 'sensoresInvernadero3', 'configInv3'));
     }
 
+    // --- MÉTODO ACTUALIZADO PARA LA ACTUALIZACIÓN EN VIVO INDEPENDIENTE ---
+    public function obtenerDatosEnVivo()
+    {
+        $inv1 = Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])->latest()->take(10)->get();
+        $inv2 = Sensor::whereIn('esp32_id', ['INVERNADERO 2', 'INVERNADERO_2'])->latest()->take(10)->get();
+        $inv3 = Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])->latest()->take(10)->get();
+
+        return response()->json([
+            'invernadero1' => [
+                'ultimo_id' => optional($inv1->first())->id,
+                'datos' => $inv1
+            ],
+            'invernadero2' => [
+                'ultimo_id' => optional($inv2->first())->id,
+                'datos' => $inv2
+            ],
+            'invernadero3' => [
+                'ultimo_id' => optional($inv3->first())->id,
+                'datos' => $inv3
+            ],
+        ]);
+    }
+
     // Método para guardar los cambios de horarios hechos desde la vista web
     public function actualizarConfiguracion(Request $request)
     {
