@@ -571,7 +571,7 @@
             let html = '';
             registros.forEach(s => {
                 let ecVal = s.tds_valor !== null ? parseFloat(s.tds_valor) : 0;
-                let tdsUs = s.tds_valor !== null ? (ecVal * 1000).toFixed(0) : '--';
+                let tdsUs = s.tds_valor !== null ? Math.round(ecVal * 1000) : '--';
                 html += `<tr class="hover:bg-gray-50/80 transition">
             <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
             <td class="py-3.5 px-3 font-semibold text-amber-700">${s.tds_valor !== null ? s.tds_valor + ' mS/cm' : '--'}</td>
