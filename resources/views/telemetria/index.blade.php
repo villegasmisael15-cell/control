@@ -323,7 +323,7 @@
                 </table>
             </div>
         </div>
-        <!-- ================= SECCIÓN 4: ELECTROVÁLVULAS (pH y TDS) ================= -->
+      <!-- ================= SECCIÓN 4: ELECTROVÁLVULAS (pH y TDS) ================= -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
             <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
                 <div class="flex flex-wrap items-center gap-2">
@@ -385,7 +385,7 @@
                         @forelse($sensoresElectrovalvulas ?? [] as $sensor)
                         <tr class="hover:bg-gray-50/80 transition">
                             <td class="py-3.5 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
-                            <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? number_format($sensor->tds_valor, 2) . ' mS/cm' : '--' }}</td>
                             <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? round($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
                             <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
                         </tr>
@@ -401,7 +401,6 @@
                 </table>
             </div>
         </div>
-
     </main>
 
     <!-- Footer -->
@@ -555,10 +554,10 @@
             tbody.innerHTML = html;
         }
 
-        function actualizarTablaElectrovalvulas(registros) {
+       function actualizarTablaElectrovalvulas(registros) {
             const tbody = document.getElementById('tabla-electrovalvulas');
             const statusDiv = document.getElementById('status-electrovalvulas');
-            if (registros.length === 0) return;
+            if (!tbody || registros.length === 0) return;
 
             const ultimo = new Date(registros[0].created_at);
             const diffSegundos = (new Date() - ultimo) / 1000;
@@ -571,13 +570,15 @@
             let html = '';
             registros.forEach(s => {
                 let ecVal = s.tds_valor !== null ? parseFloat(s.tds_valor) : 0;
+                let tdsVal = s.tds_valor !== null ? ecVal.toFixed(2) : '--';
                 let tdsUs = s.tds_valor !== null ? Math.round(ecVal * 1000) : '--';
+                
                 html += `<tr class="hover:bg-gray-50/80 transition">
-            <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
-            <td class="py-3.5 px-3 font-semibold text-amber-700">${s.tds_valor !== null ? s.tds_valor + ' mS/cm' : '--'}</td>
-            <td class="py-3.5 px-3 font-semibold text-amber-700">${tdsUs !== '--' ? tdsUs + ' uS/cm' : '--'}</td>
-            <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
-        </tr>`;
+                    <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-amber-700">${tdsVal !== '--' ? tdsVal + ' mS/cm' : '--'}</td>
+                    <td class="py-3.5 px-3 font-semibold text-amber-700">${tdsUs !== '--' ? tdsUs + ' uS/cm' : '--'}</td>
+                    <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
+                </tr>`;
             });
             tbody.innerHTML = html;
         }
