@@ -12,23 +12,36 @@ class SensorController extends Controller
     {
         // Consultas para Invernadero 1
         $sensoresInvernadero = Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])
-                                     ->latest()
-                                     ->paginate(10, ['*'], 'inv_page');
-                                     
+                                    ->latest()
+                                    ->paginate(10, ['*'], 'inv_page');
+                                    
         // Consultas para Invernadero 2
         $sensoresInvernadero2 = Sensor::whereIn('esp32_id', ['INVERNADERO 2', 'INVERNADERO_2'])
-                                      ->latest()
-                                      ->paginate(10, ['*'], 'inv2_page');
+                                    ->latest()
+                                    ->paginate(10, ['*'], 'inv2_page');
 
         // Consultas para Invernadero 3
         $sensoresInvernadero3 = Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])
-                                      ->latest()
-                                      ->paginate(10, ['*'], 'inv3_page');
+                                    ->latest()
+                                    ->paginate(10, ['*'], 'inv3_page');
 
-        // Obtener la configuración de horarios para el Invernadero 3
+        // Consultas para Electroválvulas
+        $sensoresElectrovalvulas = Sensor::whereIn('esp32_id', ['ELECTROVALBULAS', 'ELECTROVÁLVULAS'])
+                                         ->latest()
+                                         ->paginate(10, ['*'], 'electro_page');
+
+        // Obtener la configuración de horarios para los invernaderos y electroválvulas
         $configInv3 = DB::table('invernadero_configuraciones')->where('esp32_id', 'INVERNADERO 3')->first();
+        $configElectro = DB::table('invernadero_configuraciones')->where('esp32_id', 'ELECTROVALBULAS')->first();
         
-        return view('telemetria.index', compact('sensoresInvernadero', 'sensoresInvernadero2', 'sensoresInvernadero3', 'configInv3'));
+        return view('telemetria.index', compact(
+            'sensoresInvernadero', 
+            'sensoresInvernadero2', 
+            'sensoresInvernadero3', 
+            'sensoresElectrovalvulas',
+            'configInv3',
+            'configElectro'
+        ));
     }
 
     // --- MÉTODO ACTUALIZADO PARA LA ACTUALIZACIÓN EN VIVO INDEPENDIENTE ---
@@ -37,6 +50,7 @@ class SensorController extends Controller
         $inv1 = Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])->latest()->take(10)->get();
         $inv2 = Sensor::whereIn('esp32_id', ['INVERNADERO 2', 'INVERNADERO_2'])->latest()->take(10)->get();
         $inv3 = Sensor::whereIn('esp32_id', ['INVERNADERO 3', 'INVERNADERO_3'])->latest()->take(10)->get();
+        $electro = Sensor::whereIn('esp32_id', ['ELECTROVALBULAS', 'ELECTROVÁLVULAS'])->latest()->take(10)->get();
 
         return response()->json([
             'invernadero1' => [
@@ -50,6 +64,10 @@ class SensorController extends Controller
             'invernadero3' => [
                 'ultimo_id' => optional($inv3->first())->id,
                 'datos' => $inv3
+            ],
+            'electrovalvulas' => [
+                'ultimo_id' => optional($electro->first())->id,
+                'datos' => $electro
             ],
         ]);
     }
@@ -74,6 +92,7 @@ class SensorController extends Controller
 
     public function almacenar(Request $request)
     {
+        // Si el ESP32 no manda 'esp32_id', por defecto asume INVERNADERO 1 (o aceptará 'ELECTROVALBULAS' desde su código)
         $esp32Id = $request->input('esp32_id', 'INVERNADERO 1');
         $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
 

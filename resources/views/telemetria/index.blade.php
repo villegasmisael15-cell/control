@@ -64,7 +64,7 @@
                 <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
                     @csrf
                     <input type="hidden" name="esp32_id" value="INVERNADERO 1">
-                    
+
                     <div class="grid grid-cols-2 xs:grid-cols-4 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
                             <span class="font-semibold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-clock text-emerald-600"></i> Inicio:</span>
@@ -163,7 +163,7 @@
                 <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
                     @csrf
                     <input type="hidden" name="esp32_id" value="INVERNADERO 2">
-                    
+
                     <div class="grid grid-cols-2 xs:grid-cols-4 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
                             <span class="font-semibold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-clock text-emerald-600"></i> Inicio:</span>
@@ -256,7 +256,7 @@
                 <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
                     @csrf
                     <input type="hidden" name="esp32_id" value="INVERNADERO 3">
-                    
+
                     <div class="grid grid-cols-2 xs:grid-cols-4 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
                         <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
                             <span class="font-semibold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-clock text-emerald-600"></i> Inicio:</span>
@@ -323,6 +323,84 @@
                 </table>
             </div>
         </div>
+        <!-- ================= SECCIÓN 4: ELECTROVÁLVULAS (pH y TDS) ================= -->
+        <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
+            <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
+                <div class="flex flex-wrap items-center gap-2">
+                    <h3 class="font-bold text-gray-800 text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-faucet-drip text-cyan-600"></i> ELECTROVÁLVULAS (pH y TDS)
+                    </h3>
+                    <span class="text-[10px] sm:text-xs bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-md font-medium">Control Nutricional / Riego</span>
+                </div>
+                <div id="status-electrovalvulas">
+                    <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                </div>
+            </div>
+
+            <!-- Formulario de configuración de tiempos para Electroválvulas -->
+            <div class="bg-amber-50 border-b border-amber-200 p-3 sm:p-4">
+                <form action="{{ route('telemetria.configurar') }}" method="POST" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+                    @csrf
+                    <input type="hidden" name="esp32_id" value="ELECTROVALBULAS">
+
+                    <div class="grid grid-cols-2 xs:grid-cols-4 sm:flex sm:flex-wrap items-center gap-2 sm:gap-3">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap"><i class="fa-solid fa-clock text-emerald-600"></i> Inicio:</span>
+                            <input type="time" name="hora_inicio" value="{{ isset($configElectro) && $configElectro->hora_inicio ? \Carbon\Carbon::parse($configElectro->hora_inicio)->format('H:i') : '08:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium w-full sm:w-auto">
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Fin:</span>
+                            <input type="time" name="hora_fin" value="{{ isset($configElectro) && $configElectro->hora_fin ? \Carbon\Carbon::parse($configElectro->hora_fin)->format('H:i') : '18:00' }}" class="bg-white border border-gray-300 rounded px-2 py-1 font-medium w-full sm:w-auto">
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Activo(s):</span>
+                            <input type="number" name="intervalo_activo_sec" value="{{ isset($configElectro) ? ($configElectro->intervalo_activo_ms / 1000) : 3 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-full sm:w-16 text-center font-medium">
+                        </div>
+
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+                            <span class="font-semibold text-gray-700 whitespace-nowrap">Descanso(m):</span>
+                            <input type="number" name="intervalo_descanso_min" value="{{ isset($configElectro) ? ($configElectro->intervalo_descanso_ms / 60000) : 30 }}" class="bg-white border border-gray-300 rounded px-2 py-1 w-full sm:w-16 text-center font-medium">
+                        </div>
+                    </div>
+
+                    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 sm:py-1.5 rounded transition shadow-xs w-full sm:w-auto text-center whitespace-nowrap mt-1 sm:mt-0">
+                        <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar Cambios
+                    </button>
+                </form>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
+                    <thead>
+                        <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
+                            <th class="py-3 px-3 font-semibold text-emerald-700">pH</th>
+                            <th class="py-3 px-3 font-semibold text-amber-700">EC (mS/cm)</th>
+                            <th class="py-3 px-3 font-semibold text-amber-700">TDS (uS/cm)</th>
+                            <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-electrovalvulas" class="divide-y divide-gray-200 text-gray-700">
+                        @forelse($sensoresElectrovalvulas ?? [] as $sensor)
+                        <tr class="hover:bg-gray-50/80 transition">
+                            <td class="py-3.5 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
+                            <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="4" class="py-8 text-center text-gray-400">
+                                <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
+                                <p>No hay registros para Electroválvulas.</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
     </main>
 
@@ -336,6 +414,7 @@
         let ultimoIdInv1 = null;
         let ultimoIdInv2 = null;
         let ultimoIdInv3 = null;
+        let ultimoIdElectro = null;
 
         function verificarYActualizarTelemetria() {
             fetch("{{ route('telemetria.envivo') }}")
@@ -353,6 +432,10 @@
                         ultimoIdInv3 = data.invernadero3.ultimo_id;
                         actualizarTablaInv3(data.invernadero3.datos);
                     }
+                    if (data.electrovalvulas && data.electrovalvulas.ultimo_id !== ultimoIdElectro) {
+                        ultimoIdElectro = data.electrovalvulas.ultimo_id;
+                        actualizarTablaElectrovalvulas(data.electrovalvulas.datos);
+                    }
                 })
                 .catch(error => console.error('Error al verificar datos en vivo:', error));
         }
@@ -360,7 +443,14 @@
         function formatearFecha(fechaStr) {
             if (!fechaStr) return '--';
             const fecha = new Date(fechaStr);
-            return fecha.toLocaleString('es-MX', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            return fecha.toLocaleString('es-MX', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
         }
 
         function actualizarTablaInv1(registros) {
@@ -461,6 +551,33 @@
                     <td class="py-3.5 px-3 font-medium text-purple-700">${s.temp_infrarrojo !== null ? s.temp_infrarrojo + ' °C' : '--'}</td>
                     <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
                 </tr>`;
+            });
+            tbody.innerHTML = html;
+        }
+
+        function actualizarTablaElectrovalvulas(registros) {
+            const tbody = document.getElementById('tabla-electrovalvulas');
+            const statusDiv = document.getElementById('status-electrovalvulas');
+            if (registros.length === 0) return;
+
+            const ultimo = new Date(registros[0].created_at);
+            const diffSegundos = (new Date() - ultimo) / 1000;
+            if (diffSegundos <= 60) {
+                statusDiv.innerHTML = `<span class="bg-cyan-100 text-cyan-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span> Conectado / En vivo</span>`;
+            } else {
+                statusDiv.innerHTML = `<span class="bg-red-100 text-red-800 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-red-500"></span> Desconectado</span>`;
+            }
+
+            let html = '';
+            registros.forEach(s => {
+                let ecVal = s.tds_valor !== null ? parseFloat(s.tds_valor) : 0;
+                let tdsUs = s.tds_valor !== null ? (ecVal * 1000).toFixed(0) : '--';
+                html += `<tr class="hover:bg-gray-50/80 transition">
+            <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
+            <td class="py-3.5 px-3 font-semibold text-amber-700">${s.tds_valor !== null ? s.tds_valor + ' mS/cm' : '--'}</td>
+            <td class="py-3.5 px-3 font-semibold text-amber-700">${tdsUs !== '--' ? tdsUs + ' uS/cm' : '--'}</td>
+            <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
+        </tr>`;
             });
             tbody.innerHTML = html;
         }
