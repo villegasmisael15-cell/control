@@ -33,7 +33,6 @@
                 <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
                     <thead>
                         <tr class="bg-gray-50 text-gray-600 uppercase tracking-wider border-b border-gray-200">
-                            <th class="py-3 px-3 font-semibold">ID</th>
                             <th class="py-3 px-3 font-semibold text-emerald-700">pH</th>
                             <th class="py-3 px-3 font-semibold text-amber-700">EC (mS/cm)</th>
                             <th class="py-3 px-3 font-semibold text-blue-700">Temp. Amb</th>
@@ -44,7 +43,6 @@
                     <tbody class="divide-y divide-gray-200 text-gray-700">
                         @forelse($registros as $sensor)
                         <tr class="hover:bg-gray-50 transition">
-                            <td class="py-3 px-3 font-bold">#{{ $sensor->id }}</td>
                             <td class="py-3 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor ?? '--' }}</td>
                             <td class="py-3 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor ?? '--' }}</td>
                             <td class="py-3 px-3 text-blue-700">{{ $sensor->temp_ambiente ? $sensor->temp_ambiente . ' °C' : '--' }}</td>
