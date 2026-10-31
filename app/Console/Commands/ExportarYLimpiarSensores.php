@@ -16,7 +16,7 @@ class ExportarYLimpiarSensores extends Command
     public function handle()
     {
         $limiteFecha = Carbon::now()->subDays(7);
-        $correoDestino = 'tucorreo@gmail.com'; // <--- Cambia esto por tu correo real
+        $correoDestino = 'villegasmisael15@gmail.com'; // <--- Cambia esto por tu correo real
 
         // Definir las zonas y sus respectivos identificadores en la base de datos
         $zonas = [
