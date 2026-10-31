@@ -54,8 +54,13 @@
                     </h3>
                     <span class="text-[10px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Dinámico Inteligente</span>
                 </div>
-                <div id="status-inv1">
-                    <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('telemetria.historial', 'invernadero1') }}" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Ver Registros Anteriores
+                    </a>
+                    <div id="status-inv1">
+                        <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                    </div>
                 </div>
             </div>
 
@@ -153,8 +158,13 @@
                     </h3>
                     <span class="text-[10px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Dinámico Inteligente</span>
                 </div>
-                <div id="status-inv2">
-                    <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('telemetria.historial', 'invernadero2') }}" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Ver Registros Anteriores
+                    </a>
+                    <div id="status-inv2">
+                        <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                    </div>
                 </div>
             </div>
 
@@ -246,8 +256,13 @@
                     </h3>
                     <span class="text-[10px] sm:text-xs bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-md font-medium">Ciclo Dinámico Inteligente</span>
                 </div>
-                <div id="status-inv3">
-                    <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('telemetria.historial', 'invernadero3') }}" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Ver Registros Anteriores
+                    </a>
+                    <div id="status-inv3">
+                        <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                    </div>
                 </div>
             </div>
 
@@ -332,8 +347,13 @@
                     </h3>
                     <span class="text-[10px] sm:text-xs bg-cyan-100 text-cyan-800 px-2 py-0.5 rounded-md font-medium">Control Nutricional / Riego</span>
                 </div>
-                <div id="status-electrovalvulas">
-                    <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                <div class="flex items-center gap-3">
+                    <a href="{{ route('telemetria.historial', 'electrovalvulas') }}" class="bg-cyan-600 hover:bg-cyan-700 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition flex items-center gap-1.5 shadow-xs">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Ver Registros Anteriores
+                    </a>
+                    <div id="status-electrovalvulas">
+                        <span class="bg-gray-100 text-gray-600 text-[11px] sm:text-xs font-semibold px-2.5 py-1 rounded-full">Verificando...</span>
+                    </div>
                 </div>
             </div>
 
