@@ -97,7 +97,7 @@
                                 <td class="py-3.5 px-3">{{ $sensor->calidad_aire_eco2 !== null ? $sensor->calidad_aire_eco2 . ' ppm' : '--' }}</td>
                                 <td class="py-3.5 px-3">{{ $sensor->calidad_aire_tvoc !== null ? $sensor->calidad_aire_tvoc . ' ppb' : '--' }}</td>
                                 <td class="py-3.5 px-3">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td>
-                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
+                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : '--' }}</td>
 
                             @elseif($tipo === 'invernadero2')
                                 <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
@@ -110,7 +110,7 @@
                                 <td class="py-3.5 px-3 font-medium text-blue-600">{{ $sensor->humedad_ambiente !== null ? $sensor->humedad_ambiente . ' %' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
                                 <td class="py-3.5 px-3">{{ $sensor->calidad_aire_eco2 !== null ? $sensor->calidad_aire_eco2 . ' ppm' : '--' }}</td>
-                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
+                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : '--' }}</td>
 
                             @elseif($tipo === 'invernadero3')
                                 <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
@@ -120,13 +120,13 @@
                                 <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
-                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
+                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : '--' }}</td>
 
                             @elseif($tipo === 'electrovalvulas')
                                 <td class="py-3.5 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
                                 <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? number_format($sensor->tds_valor, 2) . ' mS/cm' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? round($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
-                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
+                                <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : '--' }}</td>
                             @endif
                         </tr>
                         @empty
@@ -141,9 +141,20 @@
                 </table>
             </div>
 
-            <!-- Paginación -->
-            <div class="mt-4">
-                {{ $registros->links() }}
+            <!-- Paginación en Español -->
+            <div class="mt-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-600">
+                <div>
+                    Mostrando 
+                    <span class="font-semibold">{{ $registros->firstItem() ?? 0 }}</span> 
+                    a 
+                    <span class="font-semibold">{{ $registros->lastItem() ?? 0 }}</span> 
+                    de 
+                    <span class="font-semibold">{{ $registros->total() }}</span> 
+                    resultados
+                </div>
+                <div>
+                    {{ $registros->links() }}
+                </div>
             </div>
         </div>
     </main>
