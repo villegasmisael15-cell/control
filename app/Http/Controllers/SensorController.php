@@ -27,8 +27,8 @@ class SensorController extends Controller
 
         // Consultas para Electroválvulas
         $sensoresElectrovalvulas = Sensor::whereIn('esp32_id', ['ELECTROVALBULAS', 'ELECTROVÁLVULAS'])
-                                         ->latest()
-                                         ->paginate(10, ['*'], 'electro_page');
+                                       ->latest()
+                                       ->paginate(10, ['*'], 'electro_page');
 
         // Obtener la configuración de horarios para los invernaderos y electroválvulas
         $configInv3 = DB::table('invernadero_configuraciones')->where('esp32_id', 'INVERNADERO 3')->first();
@@ -44,7 +44,25 @@ class SensorController extends Controller
         ));
     }
 
-    // --- MÉTODO ACTUALIZADO PARA LA ACTUALIZACIÓN EN VIVO INDEPENDIENTE ---
+    // --- NUEVO MÉTODO PARA MOSTRAR LA VISTA DE HISTORIAL PAGINADO ---
+    public function historial($tipo)
+    {
+        $esp32Ids = match ($tipo) {
+            'invernadero1'    => ['INVERNADERO 1', 'INVERNADERO_1'],
+            'invernadero2'    => ['INVERNADERO 2', 'INVERNADERO_2'],
+            'invernadero3'    => ['INVERNADERO 3', 'INVERNADERO_3'],
+            'electrovalvulas' => ['ELECTROVALBULAS', 'ELECTROVÁLVULAS'],
+            default           => abort(404),
+        };
+
+        $registros = Sensor::whereIn('esp32_id', $esp32Ids)
+                        ->latest()
+                        ->paginate(25);
+
+        return view('telemetria.historial', compact('registros', 'tipo'));
+    }
+
+    // --- MÉTODO PARA LA ACTUALIZACIÓN EN VIVO INDEPENDIENTE ---
     public function obtenerDatosEnVivo()
     {
         $inv1 = Sensor::whereIn('esp32_id', ['INVERNADERO 1', 'INVERNADERO_1'])->latest()->take(10)->get();
@@ -92,7 +110,7 @@ class SensorController extends Controller
 
     public function almacenar(Request $request)
     {
-        // Si el ESP32 no manda 'esp32_id', por defecto asume INVERNADERO 1 (o aceptará 'ELECTROVALBULAS' desde su código)
+        // Si el ESP32 no manda 'esp32_id', por defecto asume INVERNADERO 1
         $esp32Id = $request->input('esp32_id', 'INVERNADERO 1');
         $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
 
@@ -126,11 +144,10 @@ class SensorController extends Controller
         // --- CONSULTAR HORARIOS DINÁMICOS DESDE LA BASE DE DATOS ---
         $config = DB::table('invernadero_configuraciones')->where('esp32_id', $esp32Id)->first();
         
-        $intervaloMilisegundos = 3000; // Valor por defecto en caso de que no exista registro
+        $intervaloMilisegundos = 3000; // Valor por defecto
 
         if ($config) {
             $horaActual = now()->format('H:i:s');
-            // Validar si la hora actual está dentro del rango activo configurado
             if ($horaActual >= $config->hora_inicio && $horaActual <= $config->hora_fin) {
                 $intervaloMilisegundos = $config->intervalo_activo_ms; 
             } else {
@@ -142,7 +159,7 @@ class SensorController extends Controller
             'status' => 'success',
             'message' => 'Datos guardados correctamente',
             'id_registro' => $id,
-            'siguiente_intervalo_ms' => $intervaloMilisegundos // El servidor le indica al ESP32 cuánto esperar
+            'siguiente_intervalo_ms' => $intervaloMilisegundos
         ], 200);
     }
 }
