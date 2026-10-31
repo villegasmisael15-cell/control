@@ -16,7 +16,7 @@ class ExportarYLimpiarSensores extends Command
     public function handle()
     {
         $limiteFecha = Carbon::now()->subDays(7);
-        $correoDestino = 'villegasmisael15@gmail.com'; // <--- Cambia esto por tu correo real
+        $correoDestino = 'villegasmisael15@gmail.com'; // Correo destino configurado
 
         // Definir las zonas y sus respectivos identificadores en la base de datos
         $zonas = [
@@ -30,7 +30,11 @@ class ExportarYLimpiarSensores extends Command
         $idsTotalBorrar = [];
 
         $rutaCarpeta = 'respaldos';
-        Storage::makeDirectory($rutaCarpeta);
+        
+        // Asegurar que la carpeta exista de forma segura en el almacenamiento de Laravel
+        if (!Storage::exists($rutaCarpeta)) {
+            Storage::makeDirectory($rutaCarpeta);
+        }
 
         foreach ($zonas as $key => $esp32Ids) {
             // Obtener registros de más de 7 días para esta zona específica
@@ -46,9 +50,9 @@ class ExportarYLimpiarSensores extends Command
             // Acumular IDs para borrar después
             $idsTotalBorrar = array_merge($idsTotalBorrar, $registros->pluck('id')->toArray());
 
-            // Crear el CSV específico para esta zona
+            // Crear el CSV específico para esta zona usando la ruta segura de Storage
             $nombreArchivo = 'respaldo_' . $key . '_' . Carbon::now()->format('Y-m-d') . '.csv';
-            $rutaCompleta = storage_path('app/' . $rutaCarpeta . '/' . $nombreArchivo);
+            $rutaCompleta = Storage::path($rutaCarpeta . '/' . $nombreArchivo);
 
             $file = fopen($rutaCompleta, 'w');
 
