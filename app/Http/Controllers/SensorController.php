@@ -108,10 +108,14 @@ class SensorController extends Controller
         return back()->with('success', 'Configuración de horarios actualizada correctamente.');
     }
 
-    public function almacenar(Request $request)
+   public function almacenar(Request $request)
     {
-        // Si el ESP32 no manda 'esp32_id', por defecto asume INVERNADERO 1
-        $esp32Id = $request->input('esp32_id', 'INVERNADERO 1');
+        // Validamos que el dispositivo envíe obligatoriamente un identificador válido
+        $request->validate([
+            'esp32_id' => 'required|string|in:INVERNADERO 1,INVERNADERO_1,INVERNADERO 2,INVERNADERO_2,INVERNADERO 3,INVERNADERO_3,ELECTROVALBULAS,ELECTROVÁLVULAS'
+        ]);
+
+        $esp32Id = $request->input('esp32_id');
         $pesoRecibido = $request->input('peso_hx711', $request->input('peso', 0));
 
         $id = DB::table('sensores_invernadero')->insertGetId([
