@@ -53,6 +53,7 @@
                                 <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 1</th>
                                 <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 2</th>
                                 <th class="py-3 px-3 font-semibold text-amber-600">Suelo (HW-390)</th>
+                                <th class="py-3 px-3 font-semibold text-green-700">Temp. Suelo</th>
                                 <th class="py-3 px-3 font-semibold text-emerald-700">pH</th>
                                 <th class="py-3 px-3 font-semibold text-amber-700">EC (mS/cm)</th>
                                 <th class="py-3 px-3 font-semibold text-amber-700">TDS (uS/cm)</th>
@@ -70,6 +71,7 @@
                                 <th class="py-3 px-3 font-semibold text-amber-700">EC (mS/cm)</th>
                                 <th class="py-3 px-3 font-semibold text-amber-700">TDS (uS/cm)</th>
                                 <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR Objeto</th>
+                                <th class="py-3 px-3 font-semibold text-yellow-600">Luz (Lux)</th>
                                 <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
 
                             @elseif($tipo === 'electrovalvulas')
@@ -103,6 +105,7 @@
                                 <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_2 !== null ? $sensor->peso_bascula_2 . ' kg' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-medium text-amber-600">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
+                                <td class="py-3.5 px-3 font-medium text-green-700">{{ $sensor->temp_ds18b20 !== null ? $sensor->temp_ds18b20 . ' °C' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
                                 <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
@@ -120,6 +123,7 @@
                                 <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
                                 <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
+                                <td class="py-3.5 px-3 font-medium text-yellow-600">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td>
                                 <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : '--' }}</td>
 
                             @elseif($tipo === 'electrovalvulas')

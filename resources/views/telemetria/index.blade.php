@@ -209,6 +209,7 @@
                             <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 1</th>
                             <th class="py-3 px-3 font-semibold text-cyan-700">Báscula 2</th>
                             <th class="py-3 px-3 font-semibold text-amber-600">Suelo (HW-390)</th>
+                            <th class="py-3 px-3 font-semibold text-green-700">Temp. Suelo</th> <!-- NUEVA COLUMNA -->
                             <th class="py-3 px-3 font-semibold text-emerald-700">pH</th>
                             <th class="py-3 px-3 font-semibold text-amber-700">EC (mS/cm)</th>
                             <th class="py-3 px-3 font-semibold text-amber-700">TDS (uS/cm)</th>
@@ -225,6 +226,7 @@
                             <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_1 !== null ? $sensor->peso_bascula_1 . ' kg' : '--' }}</td>
                             <td class="py-3.5 px-3 font-bold text-cyan-700">{{ $sensor->peso_bascula_2 !== null ? $sensor->peso_bascula_2 . ' kg' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-amber-600">{{ $sensor->he390_valor !== null ? $sensor->he390_valor . ' %' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-green-700">{{ $sensor->temp_ds18b20 !== null ? $sensor->temp_ds18b20 . ' °C' : '--' }}</td> <!-- NUEVA CELDA -->
                             <td class="py-3.5 px-3 font-semibold text-emerald-700">{{ $sensor->ph_valor !== null ? $sensor->ph_valor : '--' }}</td>
                             <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
                             <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
@@ -236,7 +238,7 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="11" class="py-8 text-center text-gray-400">
+                            <td colspan="12" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
                                 <p>No hay registros para Invernadero 2.</p>
                             </td>
@@ -311,7 +313,7 @@
                             <th class="py-3 px-3 font-semibold text-amber-700">EC (mS/cm)</th>
                             <th class="py-3 px-3 font-semibold text-amber-700">TDS (uS/cm)</th>
                             <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR Objeto</th>
-                            <th class="py-3 px-3 font-semibold text-yellow-600">Luz (Lux)</th> <!-- NUEVA COLUMNA -->
+                            <th class="py-3 px-3 font-semibold text-yellow-600">Luz (Lux)</th>
                             <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
                         </tr>
                     </thead>
@@ -325,12 +327,12 @@
                             <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? $sensor->tds_valor . ' mS/cm' : '--' }}</td>
                             <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
-                            <td class="py-3.5 px-3 font-medium text-yellow-600">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td> <!-- NUEVA CELDA -->
+                            <td class="py-3.5 px-3 font-medium text-yellow-600">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td>
                             <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="py-8 text-center text-gray-400"> <!-- CAMBIADO A 9 -->
+                            <td colspan="9" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
                                 <p>No hay registros para Invernadero 3.</p>
                             </td>
@@ -340,6 +342,7 @@
                 </table>
             </div>
         </div>
+
         <!-- ================= SECCIÓN 4: ELECTROVÁLVULAS (pH y TDS) ================= -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
             <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
@@ -532,6 +535,7 @@
                     <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_1 !== null ? s.peso_bascula_1 + ' kg' : '--'}</td>
                     <td class="py-3.5 px-3 font-bold text-cyan-700">${s.peso_bascula_2 !== null ? s.peso_bascula_2 + ' kg' : '--'}</td>
                     <td class="py-3.5 px-3 font-medium text-amber-600">${s.he390_valor !== null ? s.he390_valor + ' %' : '--'}</td>
+                    <td class="py-3.5 px-3 font-medium text-green-700">${s.temp_ds18b20 !== null ? s.temp_ds18b20 + ' °C' : '--'}</td>
                     <td class="py-3.5 px-3 font-semibold text-emerald-700">${s.ph_valor !== null ? s.ph_valor : '--'}</td>
                     <td class="py-3.5 px-3 font-semibold text-amber-700">${s.tds_valor !== null ? s.tds_valor + ' mS/cm' : '--'}</td>
                     <td class="py-3.5 px-3 font-semibold text-amber-700">${tdsUs !== '--' ? tdsUs + ' uS/cm' : '--'}</td>
