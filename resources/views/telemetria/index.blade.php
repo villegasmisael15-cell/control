@@ -248,8 +248,7 @@
                 </table>
             </div>
         </div>
-
-        <!-- ================= SECCIÓN 3: INVERNADERO 3 ================= -->
+<!-- ================= SECCIÓN 3: INVERNADERO 3 ================= -->
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-6">
             <div class="p-4 sm:p-6 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 bg-gray-50/50">
                 <div class="flex flex-wrap items-center gap-2">
@@ -314,6 +313,7 @@
                             <th class="py-3 px-3 font-semibold text-amber-700">TDS (uS/cm)</th>
                             <th class="py-3 px-3 font-semibold text-purple-700">Temp. IR Objeto</th>
                             <th class="py-3 px-3 font-semibold text-yellow-600">Luz (Lux)</th>
+                            <th class="py-3 px-3 font-semibold text-green-700">Temp. DS18B20</th>
                             <th class="py-3 px-3 font-semibold">Fecha y Hora</th>
                         </tr>
                     </thead>
@@ -328,11 +328,12 @@
                             <td class="py-3.5 px-3 font-semibold text-amber-700">{{ $sensor->tds_valor !== null ? ($sensor->tds_valor * 1000) . ' uS/cm' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-purple-700">{{ $sensor->temp_infrarrojo !== null ? $sensor->temp_infrarrojo . ' °C' : '--' }}</td>
                             <td class="py-3.5 px-3 font-medium text-yellow-600">{{ $sensor->luz_lux !== null ? $sensor->luz_lux . ' lx' : '--' }}</td>
+                            <td class="py-3.5 px-3 font-medium text-green-700">{{ $sensor->temp_ds18b20 !== null ? $sensor->temp_ds18b20 . ' °C' : '--' }}</td>
                             <td class="py-3.5 px-3 text-gray-500 text-[11px]">{{ $sensor->created_at ? \Carbon\Carbon::parse($sensor->created_at)->format('d/m/Y H:i:s') : 'Ahora' }}</td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="9" class="py-8 text-center text-gray-400">
+                            <td colspan="10" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
                                 <p>No hay registros para Invernadero 3.</p>
                             </td>
@@ -575,6 +576,7 @@
             <td class="py-3.5 px-3 font-semibold text-amber-700">${tdsUs !== '--' ? tdsUs + ' uS/cm' : '--'}</td>
             <td class="py-3.5 px-3 font-medium text-purple-700">${s.temp_infrarrojo !== null ? s.temp_infrarrojo + ' °C' : '--'}</td>
             <td class="py-3.5 px-3 font-medium text-yellow-600">${s.luz_lux !== null ? s.luz_lux + ' lx' : '--'}</td>
+            <td class="py-3.5 px-3 font-medium text-green-700">${s.temp_ds18b20 !== null ? s.temp_ds18b20 + ' °C' : '--'}</td>
             <td class="py-3.5 px-3 text-gray-500 text-[11px]">${formatearFecha(s.created_at)}</td>
         </tr>`;
             });
