@@ -50,30 +50,38 @@ class ExportarYLimpiarSensores extends Command
 
             $file = fopen($rutaCompleta, 'w');
 
-            // Definir columnas sin ID y dar formato limpio a la fecha
+           // Definir columnas sin ID y dar formato limpio a la fecha
             if ($key === 'invernadero1') {
-                fputcsv($file, ['ESP32', 'Bascula 1', 'Bascula 2', 'pH', 'EC (mS)', 'Temp Amb', 'Hum Amb', 'Temp IR', 'Suelo HW390', 'Temp Suelo', 'eCO2', 'TVOC', 'Luz', 'Fecha y Hora']);
+                // Faltaba: TDS (uS/cm)
+                fputcsv($file, ['ESP32', 'Bascula 1', 'Bascula 2', 'pH', 'EC (mS/cm)', 'TDS (uS/cm)', 'Temp Amb', 'Hum Amb', 'Temp IR', 'Suelo HW390', 'Temp Suelo', 'eCO2', 'TVOC', 'Luz', 'Fecha y Hora']);
                 foreach ($registros as $reg) {
                     $fechaFormateada = $reg->created_at ? Carbon::parse($reg->created_at)->format('d/m/Y H:i:s') : '--';
-                    fputcsv($file, [$reg->esp32_id, $reg->peso_bascula_1, $reg->peso_bascula_2, $reg->ph_valor, $reg->tds_valor, $reg->temp_ambiente, $reg->humedad_ambiente, $reg->temp_infrarrojo, $reg->he390_valor, $reg->temp_ds18b20, $reg->calidad_aire_eco2, $reg->calidad_aire_tvoc, $reg->luz_lux, $fechaFormateada]);
+                    $tds = $reg->tds_valor !== null ? ($reg->tds_valor * 1000) : null; // Calculo TDS
+                    fputcsv($file, [$reg->esp32_id, $reg->peso_bascula_1, $reg->peso_bascula_2, $reg->ph_valor, $reg->tds_valor, $tds, $reg->temp_ambiente, $reg->humedad_ambiente, $reg->temp_infrarrojo, $reg->he390_valor, $reg->temp_ds18b20, $reg->calidad_aire_eco2, $reg->calidad_aire_tvoc, $reg->luz_lux, $fechaFormateada]);
                 }
             } elseif ($key === 'invernadero2') {
-                fputcsv($file, ['ESP32', 'Bascula 1', 'Bascula 2', 'Suelo HW390', 'pH', 'EC (mS)', 'Temp Amb', 'Hum Amb', 'Temp IR', 'eCO2', 'Fecha y Hora']);
+                // Faltaban: Temp Suelo, TDS (uS/cm)
+                fputcsv($file, ['ESP32', 'Bascula 1', 'Bascula 2', 'Suelo HW390', 'Temp Suelo', 'pH', 'EC (mS/cm)', 'TDS (uS/cm)', 'Temp Amb', 'Hum Amb', 'Temp IR', 'eCO2', 'Fecha y Hora']);
                 foreach ($registros as $reg) {
                     $fechaFormateada = $reg->created_at ? Carbon::parse($reg->created_at)->format('d/m/Y H:i:s') : '--';
-                    fputcsv($file, [$reg->esp32_id, $reg->peso_bascula_1, $reg->peso_bascula_2, $reg->he390_valor, $reg->ph_valor, $reg->tds_valor, $reg->temp_ambiente, $reg->humedad_ambiente, $reg->temp_infrarrojo, $reg->calidad_aire_eco2, $fechaFormateada]);
+                    $tds = $reg->tds_valor !== null ? ($reg->tds_valor * 1000) : null; // Calculo TDS
+                    fputcsv($file, [$reg->esp32_id, $reg->peso_bascula_1, $reg->peso_bascula_2, $reg->he390_valor, $reg->temp_ds18b20, $reg->ph_valor, $reg->tds_valor, $tds, $reg->temp_ambiente, $reg->humedad_ambiente, $reg->temp_infrarrojo, $reg->calidad_aire_eco2, $fechaFormateada]);
                 }
             } elseif ($key === 'invernadero3') {
-                fputcsv($file, ['ESP32', 'Bascula 1', 'Bascula 2', 'Suelo HW390', 'pH', 'EC (mS)', 'Temp IR', 'Fecha y Hora']);
+                // Faltaban: TDS (uS/cm), Luz, Temp DS18B20
+                fputcsv($file, ['ESP32', 'Bascula 1', 'Bascula 2', 'Suelo HW390', 'pH', 'EC (mS/cm)', 'TDS (uS/cm)', 'Temp IR', 'Luz (Lux)', 'Temp DS18B20', 'Fecha y Hora']);
                 foreach ($registros as $reg) {
                     $fechaFormateada = $reg->created_at ? Carbon::parse($reg->created_at)->format('d/m/Y H:i:s') : '--';
-                    fputcsv($file, [$reg->esp32_id, $reg->peso_bascula_1, $reg->peso_bascula_2, $reg->he390_valor, $reg->ph_valor, $reg->tds_valor, $reg->temp_infrarrojo, $fechaFormateada]);
+                    $tds = $reg->tds_valor !== null ? ($reg->tds_valor * 1000) : null; // Calculo TDS
+                    fputcsv($file, [$reg->esp32_id, $reg->peso_bascula_1, $reg->peso_bascula_2, $reg->he390_valor, $reg->ph_valor, $reg->tds_valor, $tds, $reg->temp_infrarrojo, $reg->luz_lux, $reg->temp_ds18b20, $fechaFormateada]);
                 }
             } elseif ($key === 'electrovalvulas') {
-                fputcsv($file, ['ESP32', 'pH', 'EC (mS)', 'Fecha y Hora']);
+                // Faltaba: TDS (uS/cm)
+                fputcsv($file, ['ESP32', 'pH', 'EC (mS/cm)', 'TDS (uS/cm)', 'Fecha y Hora']);
                 foreach ($registros as $reg) {
                     $fechaFormateada = $reg->created_at ? Carbon::parse($reg->created_at)->format('d/m/Y H:i:s') : '--';
-                    fputcsv($file, [$reg->esp32_id, $reg->ph_valor, $reg->tds_valor, $fechaFormateada]);
+                    $tds = $reg->tds_valor !== null ? round($reg->tds_valor * 1000) : null; // Calculo TDS
+                    fputcsv($file, [$reg->esp32_id, $reg->ph_valor, $reg->tds_valor, $tds, $fechaFormateada]);
                 }
             }
 
