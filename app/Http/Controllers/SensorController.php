@@ -44,9 +44,10 @@ class SensorController extends Controller
         ));
     }
 
-    // --- NUEVO MÉTODO PARA MOSTRAR LA VISTA DE HISTORIAL PAGINADO ---
-    public function historial($tipo)
+    // --- NUEVO MÉTODO PARA MOSTRAR LA VISTA DE HISTORIAL PAGINADO CON FILTROS DE FECHA ---
+    public function historial(Request $request, $tipo)
     {
+        // 1. Determinar los IDs del ESP32 según el $tipo que llega por URL
         $esp32Ids = match ($tipo) {
             'invernadero1'    => ['INVERNADERO 1', 'INVERNADERO_1'],
             'invernadero2'    => ['INVERNADERO 2', 'INVERNADERO_2'],
@@ -55,9 +56,22 @@ class SensorController extends Controller
             default           => abort(404),
         };
 
-        $registros = Sensor::whereIn('esp32_id', $esp32Ids)
-                        ->latest()
-                        ->paginate(25);
+        // 2. Iniciar la consulta base
+        $query = Sensor::whereIn('esp32_id', $esp32Ids);
+
+        // 3. Aplicar los filtros de fecha si el usuario los mandó
+        if ($request->filled('fecha_inicio')) {
+            $query->where('created_at', '>=', $request->fecha_inicio);
+        }
+
+        if ($request->filled('fecha_fin')) {
+            $query->where('created_at', '<=', $request->fecha_fin);
+        }
+
+        // 4. Obtener registros paginados, usando ->withQueryString() para no perder los filtros al cambiar de página
+        $registros = $query->latest()
+                           ->paginate(25)
+                           ->withQueryString();
 
         return view('telemetria.historial', compact('registros', 'tipo'));
     }

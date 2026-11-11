@@ -25,9 +25,39 @@
     <!-- Contenido Principal -->
     <main class="max-w-[95%] mx-auto px-4 py-8 w-full flex-grow">
         <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden p-6 mb-6">
+            
             <h1 class="text-xl font-bold text-gray-800 uppercase mb-4 flex items-center gap-2">
                 <i class="fa-solid fa-clock-rotate-left text-cyan-600"></i> Historial de Registros: {{ str_replace('_', ' ', $tipo) }}
             </h1>
+
+            <!-- INICIO DEL FILTRO POR FECHA Y HORA -->
+            <div class="bg-gray-50 border border-gray-200 p-4 mb-4 rounded-lg">
+                <form action="{{ route('telemetria.historial', $tipo) }}" method="GET" class="flex flex-col sm:flex-row items-end gap-4 text-sm">
+                    <div class="flex flex-col w-full sm:w-auto">
+                        <label for="fecha_inicio" class="font-semibold text-gray-700 mb-1"><i class="fa-regular fa-calendar text-emerald-600 mr-1"></i> Desde:</label>
+                        <input type="datetime-local" id="fecha_inicio" name="fecha_inicio" value="{{ request('fecha_inicio') }}" class="bg-white border border-gray-300 rounded-md px-3 py-1.5 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                    </div>
+                    
+                    <div class="flex flex-col w-full sm:w-auto">
+                        <label for="fecha_fin" class="font-semibold text-gray-700 mb-1"><i class="fa-regular fa-calendar-check text-emerald-600 mr-1"></i> Hasta:</label>
+                        <input type="datetime-local" id="fecha_fin" name="fecha_fin" value="{{ request('fecha_fin') }}" class="bg-white border border-gray-300 rounded-md px-3 py-1.5 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                    </div>
+
+                    <div class="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                        <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-4 py-1.5 rounded-md transition shadow-sm w-full sm:w-auto flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-magnifying-glass"></i> Filtrar
+                        </button>
+
+                        <!-- Botón para limpiar los filtros si hay alguno activo -->
+                        @if(request()->hasAny(['fecha_inicio', 'fecha_fin']))
+                            <a href="{{ route('telemetria.historial', $tipo) }}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium px-4 py-1.5 rounded-md transition shadow-sm w-full sm:w-auto flex items-center justify-center gap-1.5">
+                                <i class="fa-solid fa-eraser"></i> Limpiar
+                            </a>
+                        @endif
+                    </div>
+                </form>
+            </div>
+            <!-- FIN DEL FILTRO -->
 
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse whitespace-nowrap text-xs">
@@ -139,7 +169,7 @@
                         <tr>
                             <td colspan="14" class="py-8 text-center text-gray-400">
                                 <i class="fa-solid fa-folder-open text-3xl mb-2"></i>
-                                <p>No hay registros históricos almacenados para esta sección.</p>
+                                <p>No hay registros históricos almacenados para esta sección en el rango seleccionado.</p>
                             </td>
                         </tr>
                         @endforelse
