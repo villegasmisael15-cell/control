@@ -42,41 +42,26 @@
             <p class="text-gray-600 text-sm mt-1">Bienvenido al sistema. Selecciona un módulo para comenzar a trabajar.</p>
         </div>
 
-        {{-- ⚙️ RECUADRO DE GESTIÓN / MODIFICACIÓN DE CARACTERÍSTICAS DE SECTORES --}}
+        {{-- ⚙️ RECUADRO DE GESTIÓN / MODIFICACIÓN DE CARACTERÍSTICAS DE SECTORES (Solo para Dueños/Operadores) --}}
+        @if(auth()->user()->rol !== 'admin_general')
         @php
             $user = auth()->user();
-            $esAdmin = str_contains($user->rol, 'admin_general') || str_contains($user->rol, 'administrador');
-            $misSectores = collect();
-            $tieneHidroponia = $esAdmin;
-            $tieneSuelo = $esAdmin;
-
-            if ($esAdmin) {
-                // El admin general ve todos los sectores del sistema
-                $misSectores = \App\Models\SectorCaracteristica::all();
-            } else {
-                // Dueños u operadores ven sus sectores vinculados
-                $misSectores = \App\Models\SectorCaracteristica::where('user_id', $user->id)->get();
-                $tieneHidroponia = $misSectores->where('tipo', 'hidroponia')->count() > 0;
-                $tieneSuelo = $misSectores->where('tipo', 'suelo')->count() > 0;
-            }
+            $misSectores = \App\Models\SectorCaracteristica::where('user_id', $user->id)->get();
         @endphp
 
-        @if($esAdmin || $misSectores->count() > 0)
+        @if($misSectores->count() > 0)
         <div class="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="bg-emerald-50 px-5 py-3 border-b border-emerald-100 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-emerald-800 font-bold text-sm">
-                    <i class="fa-solid fa-seedling"></i> {{ $esAdmin ? 'Todos los Sectores Registrados en el Sistema' : 'Mis Sectores e Invernaderos Asignados' }}
+                    <i class="fa-solid fa-seedling"></i> Mis Sectores e Invernaderos Asignados
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded-full">
                         {{ $misSectores->count() }} registrados
                     </span>
-                    {{-- El botón "Nuevo Sector" solo aparece si NO es administrador --}}
-                    @if(!$esAdmin)
                     <a href="{{ route('sectores.crear') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md text-xs font-bold transition flex items-center gap-1 shadow-2xs">
                         <i class="fa-solid fa-plus text-[10px]"></i> Nuevo Sector
                     </a>
-                    @endif
                 </div>
             </div>
             <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -104,11 +89,12 @@
             </div>
         </div>
         @endif
+        @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- MÓDULO: HIDROPONÍA -->
-            @if($tieneHidroponia && (str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' )))
+            @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' ))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
@@ -126,7 +112,7 @@
             @endif
 
             <!-- MÓDULO: SUELO -->
-            @if($tieneSuelo && (str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' )))
+            @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' ))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-700 text-xl mb-4">
