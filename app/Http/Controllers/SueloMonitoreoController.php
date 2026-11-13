@@ -97,36 +97,44 @@ class SueloMonitoreoController extends Controller
     }
 
     public function create()
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        if (in_array($user->rol, ['administrador', 'admin_general'])) {
-            $sectores = SectorCaracteristica::all();
-        } elseif ($user->rol === 'dueno') {
-            $sectores = SectorCaracteristica::where('user_id', $user->id)->get();
-        } else {
-            // Operador: Carga exclusivamente los sectores e invernaderos elegidos en OperadorSector
-            $asignaciones = OperadorSector::where('user_id', $user->id)->get();
-            $sectores = collect();
-            foreach ($asignaciones as $asig) {
-                $encontrado = SectorCaracteristica::where('user_id', $asig->dueno_id)
-                    ->where('invernadero', trim($asig->invernadero))
-                    ->where('sector', trim($asig->sector))
-                    ->first();
-                if ($encontrado) {
-                    $sectores->push($encontrado);
-                }
-            }
-            if ($sectores->isEmpty()) {
-                $sectoresTexto = $user->sectores ?? '';
-                $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
-                $sectores = SectorCaracteristica::whereIn('sector', $sectoresAsignados)->get();
+    if (in_array($user->rol, ['administrador', 'admin_general'])) {
+        // Administradores: Todos los sectores que sean de SUELO
+        $sectores = SectorCaracteristica::where('tipo', 'suelo')->get();
+    } elseif ($user->rol === 'dueno') {
+        // Dueños: Sus propios sectores que sean de SUELO
+        $sectores = SectorCaracteristica::where('user_id', $user->id)
+            ->where('tipo', 'suelo')
+            ->get();
+    } else {
+        // Operador: Carga exclusivamente los sectores e invernaderos elegidos en OperadorSector
+        $asignaciones = OperadorSector::where('user_id', $user->id)->get();
+        $sectores = collect();
+        foreach ($asignaciones as $asig) {
+            $encontrado = SectorCaracteristica::where('user_id', $asig->dueno_id)
+                ->where('invernadero', trim($asig->invernadero))
+                ->where('sector', trim($asig->sector))
+                ->where('tipo', 'suelo') // <-- Filtro agregado aquí
+                ->first();
+            if ($encontrado) {
+                $sectores->push($encontrado);
             }
         }
-
-        return view('suelo.create', compact('sectores'));
+        
+        // Si no encontró por tabla cruzada, busca por la columna en el usuario
+        if ($sectores->isEmpty()) {
+            $sectoresTexto = $user->sectores ?? '';
+            $sectoresAsignados = $sectoresTexto ? array_map('trim', explode(',', $sectoresTexto)) : [];
+            $sectores = SectorCaracteristica::whereIn('sector', $sectoresAsignados)
+                ->where('tipo', 'suelo') // <-- Filtro agregado aquí también
+                ->get();
+        }
     }
 
+    return view('suelo.create', compact('sectores'));
+}
     public function store(Request $request)
     {
         $user = auth()->user();

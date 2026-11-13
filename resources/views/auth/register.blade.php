@@ -51,10 +51,17 @@
 
             <div id="contenedor-invernaderos-dueno" class="space-y-3">
                 <div class="p-3 bg-white border border-gray-200 rounded-md shadow-sm bloque-inv-dueno space-y-3">
-                    <div class="flex items-center justify-between gap-2">
-                        <div class="w-full">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
                             <label class="block text-xs font-semibold text-gray-600 uppercase">Nombre del Invernadero</label>
                             <input type="text" name="invernaderos_dueno[0][nombre]" placeholder="Ej: Invernadero 1" class="w-full mt-1 bg-white border border-gray-300 rounded-md text-sm p-2 text-gray-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase">Tipo de Cultivo / Sistema</label>
+                            <select name="invernaderos_dueno[0][tipo]" class="w-full mt-1 bg-white border border-gray-300 rounded-md text-sm p-2 text-gray-800">
+                                <option value="hidroponia">Hidroponía</option>
+                                <option value="suelo">Suelo</option>
+                            </select>
                         </div>
                     </div>
                     <div>
@@ -134,9 +141,18 @@
             
             nuevoDiv.innerHTML = `
                 <div class="flex items-center justify-between gap-2">
-                    <div class="w-full">
-                        <label class="block text-xs font-semibold text-gray-600 uppercase">Nombre del Invernadero</label>
-                        <input type="text" name="invernaderos_dueno[${contadorInvDueno}][nombre]" placeholder="Ej: Invernadero ${contadorInvDueno + 1}" class="w-full mt-1 bg-white border border-gray-300 rounded-md text-sm p-2 text-gray-800">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 w-full">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase">Nombre del Invernadero</label>
+                            <input type="text" name="invernaderos_dueno[${contadorInvDueno}][nombre]" placeholder="Ej: Invernadero ${contadorInvDueno + 1}" class="w-full mt-1 bg-white border border-gray-300 rounded-md text-sm p-2 text-gray-800">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-600 uppercase">Tipo de Cultivo / Sistema</label>
+                            <select name="invernaderos_dueno[${contadorInvDueno}][tipo]" class="w-full mt-1 bg-white border border-gray-300 rounded-md text-sm p-2 text-gray-800">
+                                <option value="hidroponia">Hidroponía</option>
+                                <option value="suelo">Suelo</option>
+                            </select>
+                        </div>
                     </div>
                     <button type="button" onclick="this.closest('.bloque-inv-dueno').remove()" class="bg-red-500 hover:bg-red-600 text-white font-bold h-10 w-12 rounded-lg flex items-center justify-center cursor-pointer self-end">✕</button>
                 </div>
@@ -146,7 +162,7 @@
                 </div>
             `;
             contenedor.appendChild(nuevoDiv);
-            contadorInvDueno++; // Incrementa de forma segura para que cada bloque tenga su índice único
+            contadorInvDueno++; 
         }
 
         function filtrarSectoresPorDueno(duenoId) {

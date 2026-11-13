@@ -10,6 +10,7 @@ class SectorCaracteristica extends Model
         'user_id',
         'invernadero',
         'sector',
+        'tipo',
         'superficie_m2',
         'variedad',
         'numero_plantas',

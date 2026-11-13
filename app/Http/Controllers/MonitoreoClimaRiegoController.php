@@ -113,31 +113,37 @@ class MonitoreoClimaRiegoController extends Controller
         return view('monitoreo.index', compact('monitoreos'));
     }
     public function create()
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
 
-        if (in_array($user->rol, ['administrador', 'admin_general'])) {
-            $sectores = SectorCaracteristica::all();
-        } elseif ($user->rol === 'dueno') {
-            $sectores = SectorCaracteristica::where('user_id', $user->id)->get();
-        } else {
-            // Operador: Carga exclusivamente los sectores y los invernaderos que eligió en OperadorSector
-            $asignaciones = OperadorSector::where('user_id', $user->id)->get();
-            $sectores = collect();
-            foreach ($asignaciones as $asig) {
-                $encontrado = SectorCaracteristica::where('user_id', $asig->dueno_id)
-                    ->where('invernadero', trim($asig->invernadero))
-                    ->where('sector', trim($asig->sector))
-                    ->first();
-                if ($encontrado) {
-                    $sectores->push($encontrado);
-                }
+    if (in_array($user->rol, ['administrador', 'admin_general'])) {
+        // Administradores: Todos los sectores que sean de hidroponía
+        $sectores = SectorCaracteristica::where('tipo', 'hidroponia')->get();
+    } elseif ($user->rol === 'dueno') {
+        // Dueños: Sus propios sectores que sean de hidroponía
+        $sectores = SectorCaracteristica::where('user_id', $user->id)
+            ->where('tipo', 'hidroponia')
+            ->get();
+    } else {
+        // Operador: Carga exclusivamente los sectores asignados que sean de hidroponía
+        $asignaciones = OperadorSector::where('user_id', $user->id)->get();
+        $sectores = collect();
+        
+        foreach ($asignaciones as $asig) {
+            $encontrado = SectorCaracteristica::where('user_id', $asig->dueno_id)
+                ->where('invernadero', trim($asig->invernadero))
+                ->where('sector', trim($asig->sector))
+                ->where('tipo', 'hidroponia') // <-- Filtro agregado aquí también
+                ->first();
+                
+            if ($encontrado) {
+                $sectores->push($encontrado);
             }
         }
-
-        return view('monitoreo.create', compact('sectores'));
     }
 
+    return view('monitoreo.create', compact('sectores'));
+}
     public function store(Request $request)
     {
         try {

@@ -60,6 +60,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/monitoreo/nuevo', [MonitoreoClimaRiegoController::class, 'create'])->name('monitoreo.create');
     Route::post('/monitoreo/guardar', [MonitoreoClimaRiegoController::class, 'store'])->name('monitoreo.store');
     Route::post('/actualizar-fcm-token', [AuthenticatedSessionController::class, 'guardarTokenFcm'])->middleware('auth');
+    Route::get('/sectores/crear', function () { return view('sectores.crear'); })->name('sectores.crear');
+
+    // AQUI ES DONDE PEGAS LA NUEVA RUTA POST
+    Route::post('/sectores/crear', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'invernadero' => 'required|string',
+        'sector'      => 'required|string',
+        'tipo'        => 'required|string|in:hidroponia,suelo'
+    ]);
+
+    // Usamos firstOrCreate, pero ahora el 'tipo' es parte de la clave principal para diferenciarlos
+    \App\Models\SectorCaracteristica::firstOrCreate(
+        [
+            'user_id'     => auth()->id(),
+            'invernadero' => $request->invernadero,
+            'sector'      => $request->sector,
+            'tipo'        => $request->tipo, // <-- Ahora Laravel sabe que si cambia el tipo, es un sector diferente
+        ]
+    );
+
+    return redirect()->route('dashboard');
+})->name('sectores.almacenar');
 
     // 3. IMPLEMENTACIÓN: REGISTRO OBLIGATORIO Y EDICIÓN DE CARACTERÍSTICAS DE SECTOR
     Route::get('/sectores/configurar-inicial/{sector?}/{invernadero?}', function ($sector = null, $invernadero = null) {
@@ -95,24 +117,27 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('sectores.editar');
 
     Route::post('/sectores/configurar-inicial', function (Request $request) {
+        // 1. Actualizamos la validación
         $request->validate([
             'invernadero'        => 'required|string',
             'sector'             => 'required|string',
+            'tipo'               => 'required|string|in:hidroponia,suelo', // <-- Validamos que el tipo exista y sea correcto
             'superficie_m2'      => 'required|numeric|min:1',
             'variedad'           => 'required|string|max:255',
             'numero_plantas'     => 'required|integer|min:1',
-            'macetas_por_gotero' => 'required|integer|min:1',
+            'macetas_por_gotero' => 'required_if:tipo,hidroponia|nullable|integer|min:1', // <-- Solo es obligatorio en hidroponía
             'fecha_trasplante'   => 'required|date',
         ]);
 
         $user = auth()->user();
 
-        // Actualizamos amarrado estrictamente al USUARIO, INVERNADEROS Y SECTOR exactos
+        // 2. Actualizamos amarrado estrictamente al USUARIO, INVERNADEROS Y SECTOR exactos
         \App\Models\SectorCaracteristica::updateOrCreate(
             [
                 'user_id'     => $user->id,
                 'invernadero' => $request->invernadero,
-                'sector'      => $request->sector
+                'sector'      => $request->sector,
+                'tipo'        => $request->tipo // <-- LO MOVIMOS AQUÍ ARRIBA (Criterio de búsqueda)
             ],
             [
                 'superficie_m2'      => $request->superficie_m2,

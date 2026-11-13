@@ -14,9 +14,22 @@
     <form method="POST" action="{{ route('sectores.guardar_inicial') }}" class="space-y-4">
         @csrf
         
-        <div class="bg-gray-100 border border-gray-300 rounded-lg p-3 text-center font-mono text-sm text-gray-700 font-bold shadow-inner space-y-1">
+        <div class="bg-gray-100 border border-gray-300 rounded-lg p-3 text-center font-mono text-sm text-gray-700 font-bold shadow-inner space-y-1 relative">
             <div>INVERNADERO: {{ $invernadero }}</div>
             <div class="text-xs text-emerald-700">SECTOR: {{ $sector }}</div>
+            
+            {{-- Etiqueta visual para indicar si es Hidroponía o Suelo y envío oculto del tipo --}}
+            @if(isset($tipo))
+                <span class="absolute top-2 right-2 text-[9px] px-2 py-0.5 rounded-full {{ $tipo === 'hidroponia' ? 'bg-emerald-200 text-emerald-800' : 'bg-stone-200 text-stone-800' }} uppercase font-bold tracking-wider">
+                    {{ $tipo }}
+                </span>
+                <input type="hidden" name="tipo" value="{{ $tipo }}">
+            @elseif(isset($pendiente->tipo))
+                <span class="absolute top-2 right-2 text-[9px] px-2 py-0.5 rounded-full {{ $pendiente->tipo === 'hidroponia' ? 'bg-emerald-200 text-emerald-800' : 'bg-stone-200 text-stone-800' }} uppercase font-bold tracking-wider">
+                    {{ $pendiente->tipo }}
+                </span>
+                <input type="hidden" name="tipo" value="{{ $pendiente->tipo }}">
+            @endif
             
             <input type="hidden" name="invernadero" value="{{ $invernadero }}">
             <input type="hidden" name="sector" value="{{ $sector }}">
@@ -43,11 +56,23 @@
             <x-input-error :messages="$errors->get('numero_plantas')" class="mt-2" />
         </div>
 
+        {{-- Lógica para mostrar/ocultar el campo de Macetas por Gotero --}}
+        @php
+            $esHidroponia = false;
+            if(isset($tipo) && $tipo === 'hidroponia') $esHidroponia = true;
+            if(isset($pendiente->tipo) && $pendiente->tipo === 'hidroponia') $esHidroponia = true;
+        @endphp
+
+        @if($esHidroponia)
         <div>
             <x-input-label for="macetas_por_gotero" value="Número de Macetas por Gotero" />
             <x-text-input id="macetas_por_gotero" class="block mt-1 w-full" type="number" name="macetas_por_gotero" min="1" step="1" required placeholder="Ej: 2" value="{{ old('macetas_por_gotero', $pendiente->macetas_por_gotero ?? 1) }}" />
             <x-input-error :messages="$errors->get('macetas_por_gotero')" class="mt-2" />
         </div>
+        @else
+            {{-- Como la BD y validación ya permiten nulos (Option B), mandamos el campo vacío para suelo --}}
+            <input type="hidden" name="macetas_por_gotero" value="">
+        @endif
 
         <div>
             <x-input-label for="fecha_trasplante" value="Fecha de Trasplante" />

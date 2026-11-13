@@ -42,33 +42,61 @@
             <p class="text-gray-600 text-sm mt-1">Bienvenido al sistema. Selecciona un módulo para comenzar a trabajar.</p>
         </div>
 
-        {{-- ⚙️ RECUADRO DE GESTIÓN / MODIFICACIÓN DE CARACTERÍSTICAS DE SECTORES --}}
-        @if(auth()->user()->rol !== 'admin_general')
         @php
-        $user = auth()->user();
-        // Si es dueño o operador, buscamos sus sectores vinculados
-        $misSectores = \App\Models\SectorCaracteristica::where('user_id', $user->id)->get();
+            $user = auth()->user();
+            $misSectores = collect();
+            $tieneHidroponia = false;
+            $tieneSuelo = false;
+            
+            if ($user->rol !== 'admin_general') {
+                $misSectores = \App\Models\SectorCaracteristica::where('user_id', $user->id)->get();
+                $tieneHidroponia = $misSectores->where('tipo', 'hidroponia')->count() > 0;
+                $tieneSuelo = $misSectores->where('tipo', 'suelo')->count() > 0;
+            } else {
+                $tieneHidroponia = true;
+                $tieneSuelo = true;
+            }
         @endphp
 
-        @if($misSectores->count() > 0)
+        {{-- ⚙️ RECUADRO DE GESTIÓN / MODIFICACIÓN DE CARACTERÍSTICAS DE SECTORES --}}
+        @if($user->rol !== 'admin_general')
         <div class="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="bg-emerald-50 px-5 py-3 border-b border-emerald-100 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-emerald-800 font-bold text-sm">
                     <i class="fa-solid fa-seedling"></i> Mis Sectores e Invernaderos Asignados
                 </div>
-                <span class="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded-full">
-                    {{ $misSectores->count() }} registrados
-                </span>
+                
+                {{-- Contenedor para el contador y el botón de agregar --}}
+                <div class="flex items-center gap-2 shrink-0">
+                    <span class="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded-full hidden sm:inline-block">
+                        {{ $misSectores->count() }} registrados
+                    </span>
+                    <a href="{{ route('sectores.crear') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1.5 rounded-md text-xs font-bold transition flex items-center gap-1 shadow-2xs">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Agregar Nuevo
+                    </a>
+                </div>
             </div>
+            
+            @if($misSectores->count() > 0)
             <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 @foreach($misSectores as $sec)
                 <div class="bg-gray-50 border border-gray-200 rounded-lg p-3.5 flex items-center justify-between gap-3 hover:border-emerald-300 transition">
                     <div class="min-w-0">
                         <span class="block text-xs font-bold text-emerald-700 uppercase truncate">
-                            <i class="fa-solid fa-house-chimney mr-1"></i>{{ $sec->invernadero }} — {{ $sec->sector }}
+                            {{-- Icono dinámico dependiendo del tipo --}}
+                            @if($sec->tipo === 'hidroponia')
+                                <i class="fa-solid fa-cloud-sun-rain text-emerald-600 mr-1" title="Hidroponía"></i>
+                            @elseif($sec->tipo === 'suelo')
+                                <i class="fa-solid fa-mound text-stone-600 mr-1" title="Suelo"></i>
+                            @else
+                                <i class="fa-solid fa-house-chimney mr-1"></i>
+                            @endif
+                            {{ $sec->invernadero }} — {{ $sec->sector }}
                         </span>
                         <span class="block text-[11px] text-gray-500 truncate mt-0.5">
                             Variedad: <strong class="text-gray-700">{{ $sec->variedad ?? 'Sin definir' }}</strong>
+                            {{-- Texto indicando el tipo --}}
+                            <span class="text-[9px] font-normal uppercase ml-1 text-gray-400">({{ $sec->tipo ?? 'N/A' }})</span>
                         </span>
                     </div>
                     <a href="{{ route('sectores.editar', ['sector' => $sec->sector, 'invernadero' => $sec->invernadero]) }}" class="bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs shrink-0 flex items-center gap-1" title="Modificar datos de este sector">
@@ -77,14 +105,19 @@
                 </div>
                 @endforeach
             </div>
+            @else
+            {{-- Mensaje por si no hay sectores --}}
+            <div class="p-6 text-center text-sm text-gray-500">
+                Aún no tienes sectores registrados. Haz clic en "Agregar Nuevo" para empezar.
+            </div>
+            @endif
         </div>
-        @endif
         @endif
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- MÓDULO: HIDROPONÍA -->
-            @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' ))
+            @if($tieneHidroponia && (str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' )))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
@@ -102,7 +135,7 @@
             @endif
 
             <!-- MÓDULO: SUELO -->
-            @if(str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' ))
+            @if($tieneSuelo && (str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' )))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-700 text-xl mb-4">
