@@ -42,7 +42,7 @@
             <p class="text-gray-600 text-sm mt-1">Bienvenido al sistema. Selecciona un módulo para comenzar a trabajar.</p>
         </div>
 
-        {{-- LÓGICA DE SECTORES Y VISIBILIDAD DE MÓDULOS --}}
+        {{-- ⚙️ RECUADRO DE GESTIÓN / MODIFICACIÓN DE CARACTERÍSTICAS DE SECTORES --}}
         @php
             $user = auth()->user();
             $esAdmin = str_contains($user->rol, 'admin_general') || str_contains($user->rol, 'administrador');
@@ -50,32 +50,33 @@
             $tieneHidroponia = $esAdmin;
             $tieneSuelo = $esAdmin;
 
-            // Obtenemos los sectores si no es admin general
-            if ($user->rol !== 'admin_general') {
+            if ($esAdmin) {
+                // El admin general ve todos los sectores del sistema
+                $misSectores = \App\Models\SectorCaracteristica::all();
+            } else {
+                // Dueños u operadores ven sus sectores vinculados
                 $misSectores = \App\Models\SectorCaracteristica::where('user_id', $user->id)->get();
-                
-                // Si no es admin, verificamos qué tipos de cultivo tiene exactamente
-                if (!$esAdmin) {
-                    $tieneHidroponia = $misSectores->where('tipo', 'hidroponia')->count() > 0;
-                    $tieneSuelo = $misSectores->where('tipo', 'suelo')->count() > 0;
-                }
+                $tieneHidroponia = $misSectores->where('tipo', 'hidroponia')->count() > 0;
+                $tieneSuelo = $misSectores->where('tipo', 'suelo')->count() > 0;
             }
         @endphp
 
-        {{-- RECUADRO DE GESTIÓN DE SECTORES --}}
-        @if($user->rol !== 'admin_general' && $misSectores->count() > 0)
+        @if($esAdmin || $misSectores->count() > 0)
         <div class="mb-8 bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden">
             <div class="bg-emerald-50 px-5 py-3 border-b border-emerald-100 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-emerald-800 font-bold text-sm">
-                    <i class="fa-solid fa-seedling"></i> Mis Sectores e Invernaderos Asignados
+                    <i class="fa-solid fa-seedling"></i> {{ $esAdmin ? 'Todos los Sectores Registrados en el Sistema' : 'Mis Sectores e Invernaderos Asignados' }}
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-[11px] bg-emerald-100 text-emerald-800 font-semibold px-2.5 py-0.5 rounded-full">
                         {{ $misSectores->count() }} registrados
                     </span>
+                    {{-- El botón "Nuevo Sector" solo aparece si NO es administrador --}}
+                    @if(!$esAdmin)
                     <a href="{{ route('sectores.crear') }}" class="bg-emerald-600 hover:bg-emerald-700 text-white px-2.5 py-1 rounded-md text-xs font-bold transition flex items-center gap-1 shadow-2xs">
                         <i class="fa-solid fa-plus text-[10px]"></i> Nuevo Sector
                     </a>
+                    @endif
                 </div>
             </div>
             <div class="p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -91,11 +92,11 @@
                             {{ $sec->invernadero }} — {{ $sec->sector }}
                         </span>
                         <span class="block text-[11px] text-gray-500 truncate mt-0.5">
-                            Variedad: <strong class="text-gray-700">{{ $sec->variedad ?? 'Sin definir' }}</strong> 
+                            Variedad: <strong class="text-gray-700">{{ $sec->variedad ?? 'Sin definir' }}</strong>
                             <span class="text-[9px] font-normal uppercase ml-1">({{ $sec->tipo ?? 'N/A' }})</span>
                         </span>
                     </div>
-                    <a href="{{ route('sectores.editar', ['sector' => $sec->sector, 'invernadero' => $sec->invernadero]) }}" class="bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs shrink-0 flex items-center gap-1" title="Modificar datos">
+                    <a href="{{ route('sectores.editar', ['sector' => $sec->sector, 'invernadero' => $sec->invernadero]) }}" class="bg-white hover:bg-emerald-600 hover:text-white text-emerald-700 border border-emerald-300 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-2xs shrink-0 flex items-center gap-1" title="Modificar datos de este sector">
                         <i class="fa-solid fa-pen-to-square"></i> Editar
                     </a>
                 </div>
@@ -107,7 +108,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 
             <!-- MÓDULO: HIDROPONÍA -->
-            @if($tieneHidroponia && (str_contains($user->rol, 'administrador') || str_contains($user->rol, 'admin_general') || str_contains($user->rol, 'operador') || str_contains($user->rol, 'dueno' )))
+            @if($tieneHidroponia && (str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' )))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-emerald-100 rounded-lg flex items-center justify-center text-emerald-600 text-xl mb-4">
@@ -125,14 +126,14 @@
             @endif
 
             <!-- MÓDULO: SUELO -->
-            @if($tieneSuelo && (str_contains($user->rol, 'administrador') || str_contains($user->rol, 'admin_general') || str_contains($user->rol, 'operador') || str_contains($user->rol, 'dueno' )))
+            @if($tieneSuelo && (str_contains(auth()->user()->rol, 'administrador') || str_contains(auth()->user()->rol, 'admin_general') || str_contains(auth()->user()->rol, 'operador') || str_contains(auth()->user()->rol, 'dueno' )))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-stone-100 rounded-lg flex items-center justify-center text-stone-700 text-xl mb-4">
                         <i class="fa-solid fa-mound"></i>
                     </div>
                     <h3 class="text-lg font-bold text-gray-800 mb-2">Suelo</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed">Monitoreo periódico y control de las condiciones directas del suelo, humedad de la tierra, nutrientes y análisis edafológicos del cultivo.</p>
+                    <p class="text-gray-600 text-sm leading-relaxed">Monitoreo periódico y control de las condiciones directas del suelo, humedad de la tierra, nutrients y análisis edafológicos del cultivo.</p>
                 </div>
                 <div class="bg-gray-50 px-6 py-3 border-t border-gray-100 flex justify-end">
                     <a href="{{ route('suelo.index') }}" class="text-sm text-stone-600 hover:text-stone-700 font-bold flex items-center gap-1">
@@ -143,7 +144,7 @@
             @endif
 
             <!-- MÓDULO: SANIDAD Y NUTRICIÓN -->
-            @if(in_array($user->rol, ['administrador', 'admin_general', 'dueno']))
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'dueno']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center text-red-600 text-xl mb-4">
@@ -161,7 +162,7 @@
             @endif
 
             <!-- MÓDULO: GRÁFICAS Y ANÁLISIS -->
-            @if(in_array($user->rol, ['administrador', 'admin_general']))
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 text-xl mb-4">
@@ -179,7 +180,7 @@
             @endif
 
             <!-- MÓDULO: RECEPCIÓN -->
-            @if(count(array_intersect(explode(',', $user->rol), ['administrador', 'admin_general', 'usuario_comercial', 'usuario_rechazo'])) > 0)
+            @if(count(array_intersect(explode(',', auth()->user()->rol), ['administrador', 'admin_general', 'usuario_comercial', 'usuario_rechazo'])) > 0)
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center text-amber-600 text-xl mb-4">
@@ -197,7 +198,7 @@
             @endif
 
             <!-- MÓDULO: REPORTES COMERCIALES -->
-            @if(in_array($user->rol, ['administrador', 'admin_general', 'dueno']))
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general', 'dueno']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center text-indigo-600 text-xl mb-4">
@@ -215,7 +216,7 @@
             @endif
 
             <!-- MÓDULO: TELEMETRÍA E IoT -->
-            @if(in_array($user->rol, ['administrador', 'admin_general']))
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-cyan-100 rounded-lg flex items-center justify-center text-cyan-600 text-xl mb-4">
@@ -233,7 +234,7 @@
             @endif
 
             <!-- MÓDULO: CONTROL DE USUARIOS -->
-            @if(in_array($user->rol, ['administrador', 'admin_general']))
+            @if(in_array(auth()->user()->rol, ['administrador', 'admin_general']))
             <div class="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition duration-200 flex flex-col">
                 <div class="p-6 flex-grow">
                     <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center text-purple-600 text-xl mb-4">
