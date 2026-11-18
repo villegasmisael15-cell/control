@@ -31,6 +31,8 @@ class SensorController extends Controller
                                        ->paginate(10, ['*'], 'electro_page');
 
         // Obtener la configuración de horarios para los invernaderos y electroválvulas
+        $configInv1 = DB::table('invernadero_configuraciones')->where('esp32_id', 'INVERNADERO 1')->first();
+        $configInv2 = DB::table('invernadero_configuraciones')->where('esp32_id', 'INVERNADERO 2')->first();
         $configInv3 = DB::table('invernadero_configuraciones')->where('esp32_id', 'INVERNADERO 3')->first();
         $configElectro = DB::table('invernadero_configuraciones')->where('esp32_id', 'ELECTROVALBULAS')->first();
         
@@ -39,6 +41,8 @@ class SensorController extends Controller
             'sensoresInvernadero2', 
             'sensoresInvernadero3', 
             'sensoresElectrovalvulas',
+            'configInv1',
+            'configInv2',
             'configInv3',
             'configElectro'
         ));
